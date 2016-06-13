@@ -1,4 +1,4 @@
 PartnerData/*
 *.bak
 pgpass
-
+*/.ipynb_checkpoints/*
