@@ -1,3 +1,28 @@
+"""
+MVESC Project
+
+Upload raw csv data into postgres database
+Team Ohio, DSSG 2016
+"""
+
+"""
+How to use this script
+
+1. update the json file "file_to_table_name.json" with the 
+   format of "data_file_name: corresponding_table_name";
+   only file:table_name in the json file will be uploaded.
+2. specify file/directory to upload with options;
+   Usage example:
+   upload a file: 
+	python csv2postgres_mvesc.py -f /mnt/data/PartnerData/OAAGAT.txt
+   upload a directory:
+	python csv2postgres_mvesc.py -d /mnt/data/PartnerData 
+   check help message for more options: 
+	python csv2postgres_mvesc.py -h
+"""
+
+
+
 import os
 from os.path import isfile, join, abspath, basename
 from optparse import OptionParser
@@ -18,7 +43,7 @@ def postgresql_engine_generator_mvesc():
     :return str sql_eng_str: string for function create_engine() in sqlalchemy
     :rtype str
     """
-    pass_file = "/mnt/data/mvesc/pgpass" # username, db information
+    pass_file = "/mnt/data/mvesc/pgpass" # file of credential information
     with open(pass_file, 'r') as f:
         passinfo = f.read()
     passinfo = passinfo.strip().split(':')
@@ -38,7 +63,7 @@ def read_csv_noheader(filepath):
     :rtype pandas.DataFrame
     """
     df = pd.read_csv(filepath, header=None, low_memory=False) # read csv data with no header
-    colnames = {i:'col'+str(i) for i in df.columns} # column names of col0, col1, col2, ... 
+    colnames = {i:'col'+str(i) for i in df.columns} # rename column names of col0, col1, col2, ... 
     df = df.rename(columns=colnames)
     return df
 
@@ -50,7 +75,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     :return str table_name: table name of the sql table
     :rtype str
     """
-    # read the data frame 
+    # read the data frame with or without header
     if header:
         df = pd.read_csv(filepath, low_memory=False)
     else:
@@ -62,6 +87,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     sqlalchemy_eng = postgresql_engine_generator_mvesc() # a string with info to create engine
     engine = create_engine(sqlalchemy_eng)
     
+    # get existing table names in the DB and schema 
     sqlcmd_table_names = "SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'" % schema
     conn = engine.raw_connection()
     all_table_names = list(pd.read_sql(sqlcmd_table_names, conn).table_name)
@@ -69,18 +95,18 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
  
     #write the data frame to postgres
     file_name = filepath.split('/')[-1]
-    file_table_names = json.load(open('file_to_table_name.json','r'))
+    file_table_names = json.load(open('file_to_table_name.json','r')) # load json of mapping from filenames to table names
     #table_name = filepath.split('/')[-1].split('.')[0] # table name is filename without .txt or other extension
-    table_name = file_table_names[file_name]
+    table_name = file_table_names[file_name] # get the table name
     
     # check existing tables in sql first to avoid errors
     if table_name not in all_table_names or if_exists=='replace':
-        if nrows==-1:
+        if nrows==-1: # upload all rows
             df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-        else:
+        else: # upload the first n rows
             df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
     else:
-        print("Table already in mvesc: ", table_name)
+        print "Table already in mvesc: ", table_name
     return table_name
 
 
@@ -89,11 +115,11 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
     
     :param str filepath: file path name
     :param bool header: True means there is header;
-    :return str table_name: table name of the sql table
+    :return str table_names: table names of the sql tables
     :rtype str
     """
     data_dir = directory
-    data_file_names = os.listdir(data_dir)
+    data_file_names = os.listdir(data_dir) # get all filenames in a directory
     # full path name of filenames
     fnames = [data_dir + fn for fn in data_file_names]
     table_names = []
@@ -105,6 +131,7 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
     
 
 if __name__ == '__main__':
+	# options of this script
 	parser = OptionParser()
 	parser.add_option('-f','--file', dest='filename_to_upload',
                       help='abs path of one file; just upload this one')
@@ -115,36 +142,40 @@ if __name__ == '__main__':
 	parser.add_option('-r','--header', dest='header_TrueFalse',
                       help='whether there is header or not (True or False);')
 	parser.add_option('-n','--nrows', dest='nrows',
-                      help='number of rows to upload;')      
+                      help='number of rows to upload;')
+	parser.add_option('-e', '--ifexists', dest='if_exists', 
+		      help='option if the table exists in the schema: \'fail\' or \'replace\'')
+      
 	(options, args) = parser.parse_args()
-    ### Parameters to enter or use default####
+
+    ### Parameters to entered from the options or use default####
 	schema = 'raw'
 	if options.schema_to_upload:
 		schema = options.schema_to_upload
-	#print "schema: ", schema
+
 	header = True
 	if options.header_TrueFalse:
 		if options.header_TrueFalse.lower()=='false':
 			header = False
-	#print "header: ", header
+
 	nrows=-1
 	if options.nrows:
 		nrows = int(options.nrows)
-	#print "nrows: ", nrows
+
+	if_exists = 'fail'
+	if options.if_exists:
+		if_exists = options.if_exists
 	
 	if options.filename_to_upload:
 		print "Preparing file %s to upload to postgresql" % options.filename_to_upload
-		table_name = csv2postgres_file(options.filename_to_upload, header=header, nrows=nrows, if_exists='fail', schema=schema)
+		table_name = csv2postgres_file(options.filename_to_upload, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print "Table uploaded: ", table_name, '\n'
 	elif options.dir_to_upload:
 		directory = options.dir_to_upload
 		if directory[-1]!='/':
 			directory = directory+'/'
 		print "Preparing dir %s to upload to postgresql" % options.dir_to_upload
-		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists='fail', schema=schema)
+		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print "Tables uploaded:", table_names, '\n'
 	else:
-		print 'No files specified to upload...quiting\n'
-        sys.exit(0)
-
-	print("Done")                       
+		print 'No files specified to upload...quiting\n'                    
