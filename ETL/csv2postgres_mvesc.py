@@ -138,13 +138,13 @@ if __name__ == '__main__':
 	parser.add_option('-d','--dir', dest='dir_to_upload',
                       help='abs path of a dir; upload everything in this dir')
 	parser.add_option('-s','--schema', dest='schema_to_upload',
-                      help='schema to upload to in the database;')
+                      help='schema to upload to in the database; default: \'raw\'')
 	parser.add_option('-r','--header', dest='header_TrueFalse',
-                      help='whether there is header or not (True or False);')
+                      help='whether there is header or not:True, False; default: True')
 	parser.add_option('-n','--nrows', dest='nrows',
-                      help='number of rows to upload;')
+                      help='number of rows to upload; default: all rows' )
 	parser.add_option('-e', '--ifexists', dest='if_exists', 
-		      help='option if the table exists in the schema: \'fail\' or \'replace\'')
+		      help='option if the table exists in the schema: \'fail\' or \'replace\'; default: \'fail\'')
       
 	(options, args) = parser.parse_args()
 
