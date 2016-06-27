@@ -83,8 +83,8 @@ def all_grades_query():
    
     :rtype: string
     """
-    my_query = "drop table if exists clean.all_student_lookup; "
-    my_query += "create table clean.all_student_lookup as " 
+    my_query = "drop table if exists clean.all_grades; "
+    my_query += "create table clean.all_grades as " 
     my_query += """
     select  "StudentLookup", 
     "Course" as "course_code", 
@@ -92,7 +92,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year"
+    "Schoolyear" as "year",
+    'Ridgewood' as "district"
     from "Ridgewoodgrades2007_2016"
     union all
     select  "StudentLookup", 
@@ -101,7 +102,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year"
+    "Schoolyear" as "year",
+    'Riverview' as "district"
     from "RiverViewgrades2006_16"
     union all
     select "StudentLookup", 
@@ -110,7 +112,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year" 
+    "Schoolyear" as "year",
+    'TriValley' as "district"
     from "TriValleyGrades2006_16"
     union all
     select "StudentLookup", 
@@ -119,7 +122,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year"
+    "Schoolyear" as "year",
+    'West Muskingum' as "district"
     from "WestMuskingumgrades2006_16"
     union all
     select "StudentLookup", 
@@ -128,7 +132,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year"
+    "Schoolyear" as "year",
+    'Franklin' as "district"
     from "Franklingrades2006_16"
     union all
     select "StudentLookup", 
@@ -137,7 +142,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "Schoolyear" as "year"
+    "Schoolyear" as "year",
+    'Maysville' as "district"
     from "Maysvillegrades2006_16"
     union all
     select "StudentLookup", 
@@ -146,7 +152,8 @@ def all_grades_query():
     "term", 
     cast("Grade" as text) as "grade", 
     "Mark" as "mark", 
-    "SchoolYear" as "year"
+    "SchoolYear" as "year",
+    'Coshocton' as "district"
     from "CoshoctonGrades2006_16"
     union all
     select "StudentLookup", 
@@ -155,7 +162,8 @@ def all_grades_query():
     "Term" as "term", 
     cast("Grade" as text) as "grade", 
     "FinalMark" as "mark", 
-    "SchoolYear" as "year"
+    "SchoolYear" as "year",
+    NULL as "district"
     from "HSGrades\""""
     return my_query
 
@@ -165,8 +173,8 @@ def all_absences_query():
     
     :rtype: string
     """
-    my_query = "drop table if exists clean.all_student_lookup; "
-    my_query += "create table clean.all_student_lookup as " 
+    my_query = "drop table if exists clean.all_absences; "
+    my_query += "create table clean.all_absences as " 
     my_query += """
     select  "StudentLookup", 
     "Date" as "date", 
@@ -202,8 +210,8 @@ def all_absences_query():
 connection = open_db_connection()
 table_names = get_student_table_names(connection)
 cursor = connection.cursor()
-cursor.execute(student_lookup_query(table_names))
-#cursor.execute(all_grades_query())
+#cursor.execute(student_lookup_query(table_names))
+cursor.execute(all_grades_query())
 #cursor.execute(all_absences_query())
 cursor.close() 
 connection.commit()
