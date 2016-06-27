@@ -1,22 +1,31 @@
 /*
--- getting unique absence lengths (only 0, 0.5, and 1)
-select distinct absence_length from clean.all_absences
+ * This series of SQL commands is the ingredients for cleaning up the all_absences table
+ * It contains the appropriate case statements and choices
+ * It DOES NOT the actual creation of the tables yet though
+ * These commands can be copied into a bigger script or transformed into a SQL script
+ */
 
--- create copy of all_absences
-select * into clean.wrk_all_absences from clean.all_absences; 
+-- StudentLookup Column -- Assume this is fine
+--		there are no empty student lookup numbers
+select * from clean.all_absences where "StudentLookup" is null;
 
--- getting unique absence codes & descriptions
-select distinct absence_code, absence_desc, school from clean.all_absences sorted
-	order by absence_desc;
+-- Date Column -- This needs a simple date conversion function
+ALTER TABLE clean.all_absences
+	ALTER COLUMN date type date using to_date(date, 'YYYY-MM-DD');
+
+-- Absence Length -- These only take on 3 distinct and sensible values, so don't need any changes
+select distinct absence_length from clean.all_absences;
+
+-- Absence Codes -- These are actually being IGNORED because we're using absence descriptions only
+--select distinct absence_code, absence_desc, school from clean.all_absences sorted order by absence_desc;
 	
--- Counting the unique absence codes available
-select distinct absence_desc, count(absence_desc) from clean.all_absences group by absence_desc order by count desc;
-*/
-
--- SQL code for standardizing absence codes
-select distinct clean_absence_desc, count(clean_absence_desc)
-from
-	(select absence_code, absence_desc, absence_length,
+-- Absence Descriptions -- These provide the information to clean and standardize the descriptions
+--		In this code, none of the descriptions repeat, they are all collected in one place and
+--		They are attempted to be grouped in groups of similar descriptions
+-- 		This list can be aggregated further 
+update only clean.all_absences
+set
+	absence_desc =
 		case
 		-- ** popular values near the top for speed ** --
 		-- > 20k -- general absences or tardies --
@@ -44,14 +53,14 @@ from
 		when Lower(absence_desc) in ('all day med. ex./legal', 'all day med./leg ex')
 			then 'med_legal_all_day'
 		when Lower(absence_desc)  in ('am med. ex./legal', 'am med/leg ex', 'ame med/leg excused')
-			then 'med_or_legal_am'
+			then 'med_legal_am'
 		when Lower(absence_desc)  in ('pm med. ex./legal', 'pm med./legal ex.')
-			then 'med_or_legal_pm'
+			then 'med_legal_pm'
 		when Lower(absence_desc) = 'late arrival to school due to an appt.' 
 			then 'tardy_medical'
-			
-		-- keep medical separate from med_legal because it might send a more specific signal
-		when Lower(absence_desc) in ('medical', 'doctor with instruction') then 'medical'
+		-- 		keep medical separate from med_legal because it might send a more specific signal
+		when Lower(absence_desc) in ('medical', 'doctor with instruction')
+			then 'medical'
 		
 		when Lower(absence_desc) in ('school related', 'school related/activity', 'sr school related') 
 			then 'misc'
@@ -123,8 +132,15 @@ from
 		when Lower(absence_desc) = 'other placement' then 'misc' -- seems to be miscellany category
 		when absence_code = 'N' then 'missing_desc' -- likely 'not counted absent' based on other schools, likely not serious
 		
-		else 'CANNOT FIND CHECK VALUES'
-		end
-		as "clean_absence_desc"
-		from clean.all_absences
-) as zzq1 group by clean_absence_desc;
+		else 'CANNOT_FIND_CHECK_VALUES'
+		end;
+
+-- Show the distinct outcomes to ensure this worked correctly
+select distinct absence_desc from clean.all_absences;
+
+-- School Abbreviations -- These all look fine, except one school which spread the
+--		absence description across these two columns and the school code is missing.
+--		We could do a exhaustive search to identify which school this is
+--		BUT this hasn't been done yet.
+--			Should be investigated if possible
+select distinct school from clean.all_absences order by school asc;
