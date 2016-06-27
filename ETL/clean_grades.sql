@@ -45,7 +45,7 @@ from
 select distinct year from clean.all_grades;
 -- convert years like 2007-08 to 2007
 alter table clean.all_grades
-			alter column year type int
-					using cast(left(nullif(year, ''), strpos(year, '-') - 1) as integer) ;
---		we have some 99,455 records with an empty year field (as an empty string), why?
-select count(*) from clean.all_grades where year = '';
+	alter column year type int using cast(left(nullif(year, ''),
+				strpos(nullif(year, ''), '-') - 1) as integer) ;
+--		we have some 99,455 records with a null year field, why?
+select year, count(*) from clean.all_grades group by year;
