@@ -33,17 +33,16 @@ import psycopg2 as pg
 import re
 from sqlalchemy import create_engine
 import sqlalchemy
-
+import json
 
 # functions to read and dump csv to sql server
-def postgresql_engine_generator_mvesc():
-    """ generate a string to create postgres engine
+def postgresql_engine_generator_mvesc(pass_file="/mnt/data/mvesc/pgpass"):
+    """ Generate a string to create postgres engine
     Note: you can only run it on the mvesc-AWS-server
-    :param None: None
-    :return str sql_eng_str: string for function create_engine() in sqlalchemy
-    :rtype str
+    :param str pass_file: file with the credential information
+    :return sqlalchemy.engine object engine: object created create_engine() in sqlalchemy
+    :rtype sqlalchemy.engine
     """
-    pass_file = "/mnt/data/mvesc/pgpass" # file of credential information
     with open(pass_file, 'r') as f:
         passinfo = f.read()
     passinfo = passinfo.strip().split(':')
@@ -53,10 +52,10 @@ def postgresql_engine_generator_mvesc():
     name_of_database = passinfo[3]
     user_password = passinfo[4]
     sql_eng_str = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
-    return sql_eng_str
-
+    engine = create_engine(sql_eng_str)
+    return engine
 def read_csv_noheader(filepath):
-    """ read a csv file with no header
+    """ Read a csv file with no header
     
     :param str filepath: file path name
     :return pandas.DataFrame with header 'col1', 'col2', ...
@@ -68,7 +67,7 @@ def read_csv_noheader(filepath):
     return df
 
 def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema="raw"):
-    """ upload csv file to postgres database
+    """ Upload csv file to postgres database
     
     :param str filepath: file path name
     :param bool header: True means there is header;
@@ -81,11 +80,8 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     else:
         df = read_csv_noheader(filepath) # header: col0, col1, col2
     
-    # create a postgresql engine to wirte to postgres
-    from sqlalchemy import create_engine
-    import json
-    sqlalchemy_eng = postgresql_engine_generator_mvesc() # a string with info to create engine
-    engine = create_engine(sqlalchemy_eng)
+    # postgres engine for connection and operations
+    engine = postgresql_engine_generator_mvesc()
     
     # get existing table names in the DB and schema 
     sqlcmd_table_names = "SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'" % schema
@@ -111,7 +107,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
 
 
 def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema='raw'):
-    """ upload a directory of csv files to postgres database
+    """ Upload a directory of csv files to postgres database
     
     :param str filepath: file path name
     :param bool header: True means there is header;
