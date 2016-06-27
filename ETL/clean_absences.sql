@@ -10,9 +10,8 @@
 select * from clean.all_absences where "StudentLookup" is null;
 
 -- Date Column -- This needs a simple date conversion function
-update only clean.wrk_all_absences
-set
-	date = to_date(date, 'YYYY-MM-DD'); 
+ALTER TABLE clean.all_absences
+	ALTER COLUMN date type date using to_date(date, 'YYYY-MM-DD');
 
 -- Absence Length -- These only take on 3 distinct and sensible values, so don't need any changes
 select distinct absence_length from clean.all_absences;
