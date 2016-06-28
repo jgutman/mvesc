@@ -266,13 +266,13 @@ def all_snapshots_query(snapshot_tables,connection):
 
 connection = open_db_connection()
 table_names = get_student_table_names(connection)
-snapshot_tables = ["Districts{0:02}{1:02}".format(x,x+1) for x in range(6,15)]
-snapshot_tables + ["Districts{0:02}{1:02}_CREM".format(x,x+1) for x in range(10,15)]
+snapshot_tables = ["Districts{0:02}{1:02}".format(x,x+1) for x in range(6,16)]
+snapshot_tables + ["Districts{0:02}{1:02}_CREM".format(x,x+1) for x in range(10,16)]
 cursor = connection.cursor()
 #cursor.execute(student_lookup_query(table_names))
 #cursor.execute(all_grades_query())
 #cursor.execute(all_absences_query())
-#cursor.execute(all_snapshots_query(snapshot_tables,connection))
+cursor.execute(all_snapshots_query(snapshot_tables,connection))
 cursor.close() 
 connection.commit()
 
