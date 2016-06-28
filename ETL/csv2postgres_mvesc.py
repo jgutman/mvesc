@@ -29,15 +29,13 @@ from optparse import OptionParser
 import sys
 import numpy as np
 import pandas as pd
-import psycopg2 as pg
-import re
 from sqlalchemy import create_engine
 import sqlalchemy
 import json
 
 # functions to read and dump csv to sql server
 def postgresql_engine_generator_mvesc(pass_file="/mnt/data/mvesc/pgpass"):
-    """ Generate a string to create postgres engine
+    """ Create postgres engine from credential-file
     Note: you can only run it on the mvesc-AWS-server
     :param str pass_file: file with the credential information
     :return sqlalchemy.engine object engine: object created create_engine() in sqlalchemy
@@ -54,6 +52,7 @@ def postgresql_engine_generator_mvesc(pass_file="/mnt/data/mvesc/pgpass"):
     sql_eng_str = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
     engine = create_engine(sql_eng_str)
     return engine
+
 def read_csv_noheader(filepath):
     """ Read a csv file with no header
 
@@ -66,13 +65,15 @@ def read_csv_noheader(filepath):
     df = df.rename(columns=colnames)
     return df
 
-def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail',
-schema="raw"):
+def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema="raw"):
     """ Upload csv file to postgres database
 
-    :param str filepath: file path name
-    :param bool header: True means there is header;
-    :return str table_name: table name of the sql table
+    :param str filepath: file absolute path name
+    :param bool header: True means there is header
+    :param int nrows: number of rows to upload; -1 means all rows
+    :param str if_exists: options of what to do if the table already exists
+		'fail': return error; 'replace': replace original table
+    :return str table_name: the table name uploaded to the database
     :rtype str
     """
     # read the data frame with or without header
@@ -93,7 +94,6 @@ schema="raw"):
     #write the data frame to postgres
     file_name = filepath.split('/')[-1]
     file_table_names = json.load(open('file_to_table_name.json','r')) # load json of mapping from filenames to table names
-    #table_name = filepath.split('/')[-1].split('.')[0] # table name is filename without .txt or other extension
     table_name = file_table_names[file_name] # get the table name
 
     # check existing tables in sql first to avoid errors
@@ -107,14 +107,16 @@ schema="raw"):
     return table_name
 
 
-def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail',
-schema='raw'):
+def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema='raw'):
     """ Upload a directory of csv files to postgres database
 
-    :param str filepath: file path name
-    :param bool header: True means there is header;
-    :return str table_names: table names of the sql tables
-    :rtype str
+    :param str filepath: file absolute path name
+    :param bool header: True means there is header
+    :param int nrows: number of rows to upload; -1 means all rows
+    :param str if_exists: options of what to do if the table already exists
+                'fail': return error; 'replace': replace original table
+    :return str list table_names: table names of the sql tables
+    :rtype str list
     """
     data_dir = directory
     data_file_names = os.listdir(data_dir) # get all filenames in a directory
