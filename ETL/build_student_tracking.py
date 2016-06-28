@@ -39,6 +39,20 @@ def get_all_student_lookups(connection, schema = 'clean',
     student_list = [i[0] for i in student_list]
     return student_list
 
+def sql_gen_tracking_students(year_begin, year_end):
+    start_string = """ create view clean.wrk_tracking_students as 
+        select * from clean.all_student_lookups """
+    end_string = """ order by "StudentLookup"; """
+    middle_string = """"""
+    for yearNum in range(year_begin, year_end+1):
+        print(str(yearNum))
+        middle_string = middle_string + """
+            left join (select distinct "StudentLookup", grade as "{}"
+            from clean.all_snapshots where year = '{}')
+	    as zzq{} using ("StudentLookup")""".format(yearNum, yearNum, yearNum)
+    return start_string + middle_string + end_string
+
+
 def build_wide_format(connection, student_list):
     cursor = connection.cursor()
     get_year_range = """select min(year), max(year) from clean.all_snapshots"""
