@@ -42,7 +42,11 @@ def get_all_student_lookups(connection, schema = 'clean',
 def sql_gen_tracking_students(year_begin, year_end):
     start_string = """ create view clean.wrk_tracking_students as 
         select * from clean.all_student_lookups """
-    end_string = """ order by "StudentLookup"; """
+    end_string = """ order by "StudentLookup";
+        create table clean.wrk_track_students as
+        (SELECT * FROM clean.wrk_tracking_students LEFT JOIN
+	(SELECT DISTINCT "StudentLookup", withdraw_reason FROM clean.all_snapshots 
+		WHERE withdraw_reason <> 'did not withdraw') AS zzx01 USING ("StudentLookup"));"""
     middle_string = """"""
     for yearNum in range(year_begin, year_end+1):
         print(str(yearNum))
