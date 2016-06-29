@@ -5,8 +5,11 @@ Team Ohio, DSSG 2016
 """
 """
 Top functions:
-postgres_engine_generator(): generate sqlalchemy engine
-postgres_pgconnection_generator(): generate psycopg2 postres connection
+1. `postgres_engine_generator()`: returns a `sqlalchemy` engine, similar to function 2;
+2. `postgres_pgconnection_generator()`: returns a `psycopg2` connection, similar to function 1;
+3. `get_all_table_names(schema='public')`: returns all table names as a list from a schema
+4. `get_column_names(table, schema='public')`: returns all column names as a list from a schema
+5. `read_table_to_df(table, schema='public', nrows=20)`: returns a pd.dataframe of first nrows;
 """
 import numpy as np
 import pandas as pd
