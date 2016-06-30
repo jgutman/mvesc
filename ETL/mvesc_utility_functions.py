@@ -20,7 +20,7 @@ import sqlalchemy
 import sys
 import os
 import json
-
+from contextlib import contextmanager
 
 ############ ETL Functions ############
 def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -42,12 +42,12 @@ def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
     engine = create_engine(sql_eng_str)
     return engine
 
+@contextmanager
 def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
-    """ Generate a psycopg2 connector
+    """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
-    :return ps.engine object engine: object created  by create_engine() in sqlalchemy
-    :rtype sqlalchemy.engine
+    :yield pg.connection generator: connection to database 
     """
     with open(pass_file, 'r') as f:
         passinfo = f.read()
@@ -57,51 +57,80 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     user_name = passinfo[2]
     name_of_database = passinfo[3]
     user_password = passinfo[4]
-    connection = pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
-    return connection
+    yield pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
 
 
 
 ############ Reterive Database Information ############
-def get_all_table_names(schema='public'):
+def get_all_table_names(cursor, schema='public'):
     """ Get all the table names as a list from a `schema` in mvesc
     
+    :param pg cursor object cursor: cursor for psql database
     :param str schema: schema name in the database
     :return list all_table_names: all table names in a `schema` in mvesc database
     """
-    sqlcmd = "SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'" % schema
-    engine = postgres_engine_generator()
-    conn = engine.raw_connection()
-    all_table_names = list(pd.read_sql(sqlcmd, conn).table_name)
-    conn.close()
+    sqlcmd = "SELECT table_name FROM information_schema.tables WHERE table_schema = (%s)"
+    cursor.execute(sqlcmd, [schema])
+    all_table_names = [t[0] for t in cursor.fetchall()]
     return all_table_names
 
-def get_column_names(table, schema='public'):
-    """Get column names of a table  in a schema
+def get_student_table_names(cursor):
+    """                                                                                    
+    Retrieves the list of names of tables in the database which have StudentLookups
+                                                                                           
+    :param pg object cursor: cursor in psql database                       
+    :rtype: list of strings                                       
+    """
+    table_names = get_all_table_names(cursor)
+    to_remove = []
+    for t in table_names:
+        if "StudentLookup" not in get_column_names(cursor,t):
+            to_remove.append(t)
+    for t in to_remove:
+        table_names.remove(t)
+    return table_names
+
+def get_column_names(cursor, table, schema='public'):
+    """Get column names of a ntable  in a schema
     
-    :param pg.extensions.connection object connection: sql connection
+    :param pg cursor object cursor: cursor for psql database
     :param string table: table name in the database
+    :param str schema: schema name in database
     :rtype: list 
     """
-    connection = postgres_pgconnection_generator()
-    columns = pd.read_sql("SELECT column_name FROM information_schema.columns \
-    WHERE table_name = '%s' and table_schema='%s'" % (table, schema), connection)
-    return list(columns.iloc[:, 0])
+    cursor.execute("SELECT column_name FROM information_schema.columns \
+    WHERE table_name = (%s) and table_schema=(%s)", [table, schema])
+    columns = cursor.fetchall()
+    return [c[0] for c in columns]
 
-def read_table_to_df(table_name, schema='public', nrows=20):
+def read_table_to_df(connection, table_name, schema='public', nrows=20):
     """ Read the first n rows of a table
     
+    :param pg connection object connection: connection to psql database
     :param str table_name: Name of table to read in
     :param int nrows: number of rows to read in; default 20; -1 means all rows
     :return: a pandas.dataframe object with n-rows
     :rtype: pandas.dataframe
     """
-    connection = postgres_pgconnection_generator()
     sqlcmd = "SELECT * FROM %s.\"%s\" LIMIT %s;" % (schema, table_name, str(int(nrows)))
     if nrows == -1:
         sqlcmd = "SELECT * FROM %s.\"%s\";" % (schema, table_name)
     df = pd.read_sql(sqlcmd, connection)
     return df
+
+def get_column_type(cursor, table_name, column_name):
+    """                                                                                    
+    Returns the data type of the given column in the given table                           
+                                                                                           
+    :param pg cursor:                                                                      
+    :param string: table name                                                              
+    :param string: column name'                                                            
+    """
+    my_query = "select data_type from information_schema.columns where table_name = (%s) a\
+nd column_name =(%s) ;"
+    cursor.execute(my_query, [table_name, column_name])
+    column_type = cursor.fetchall()[0][0]
+    return column_type
 
 ############ Upload file or directory to postgres (not useful in most cases)############### 
 def read_csv_noheader(filepath):
