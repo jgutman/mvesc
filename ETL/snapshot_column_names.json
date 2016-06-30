@@ -1,4 +1,4 @@
-{ "column_names":{	
+{ "column_names":{
     "birth_date": {"name": ["BirthDate"], "type": "date"},
     "ethnicity": {"name": ["Ethnicity"], "type": "text"},
     "gender": {"name": ["Gender"], "type": "text"},
@@ -21,9 +21,9 @@
 			       "AttendanceCalendarWithdrawDate"], 
 			       "type": "date"},
     "withdraw_reason": {"name":["WithdrawalReason"], "type": "text"},
-    "withdrawn_to_IRN": {"name": ["WithdrawnToIRN"], "type": "text"},
-    "sent_to_1_IRN": {"name": ["SentTo1IRN"], "type": "text"},
-    "sent_to_2_IRN": {"name": ["SentTo2IRN"], "type": "text"},
+    "withdrawn_to_irn": {"name": ["WithdrawnToIRN"], "type": "text"},
+    "sent_to_1_irn": {"name": ["SentTo1IRN"], "type": "text"},
+    "sent_to_2_irn": {"name": ["SentTo2IRN"], "type": "text"},
     "days_present": {"name": ["SchoolYearAttendanceDays"], "type": "float"},
     "days_absent": {"name": ["Absence", "Absences"], "type": "float"},
     "days_absent_excused": {"name": ["SchoolYearExcusedAbsenceDays"], "type": "float"},
@@ -34,7 +34,7 @@
     "disability_code": {"name": ["DisabilityCondition"], "type": "text"},
     "disability_desc": {"name": ["Disability"], "type": "text"},
     "disadvantagement_code": {"name": ["Disadvantagement"], "type": "text"},
-    "disadvantagement_desc": {"name":[ "Disadvatagement_Desc"], "type": "text"},
+    "disadvantagement_desc": {"name":[ "Disadvantagement_Desc"], "type": "text"},
     "gifted": {"name": ["Gifted"], "type": "text"},
     "special_ed": {"name": ["SpecialEducation"], "type":"text"},
     "program": {"name": ["Program"], "type":"text"},
@@ -43,10 +43,7 @@
     "graduation_date": {"name": ["GraduationDate"], "type": "date"},
     "diploma_type": {"name": ["DiplomaType"], "type": "text"},
     "district": {"name": ["District"], "type": "text"},
-    "flag1": {"name": "Flag1", "type":"text"},
-    "flag2": {"name": "Flag2", "type":"text"},
-    "flag3": {"name": "Flag3", "type":"text"},
-    "flag4": {"name": "Flag4", "type":"text"},
-    "flag5": {"name": "Flag5", "type":"text"}
+    "flag1": {"name": ["Flag1"], "type":"text"},
+    "flag2": {"name": ["Flag2"], "type":"text"}
 }
 }
