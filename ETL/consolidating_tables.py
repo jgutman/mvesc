@@ -5,7 +5,7 @@ import itertools
 import json
 from contextlib import contextmanager
 
-##### these should be in a general utility module once that exists
+##### these are in the general utility module, will be updated when its merged
 @contextmanager
 def open_db_connection(pass_file):
     """
@@ -20,7 +20,8 @@ def open_db_connection(pass_file):
     user_name = passinfo[2]
     name_of_database = passinfo[3]
     user_password = passinfo[4]
-    yield pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
+    yield pg.connect(host=host_address, database=name_of_database, \
+                     user=user_name, password=user_password)
 
 
 def get_column_type(cursor, table_name, column_name):
@@ -31,7 +32,8 @@ def get_column_type(cursor, table_name, column_name):
     :param string: table name
     :param string: column name'
     """
-    my_query = "select data_type from information_schema.columns where table_name = (%s) and column_name =(%s) ;"
+    my_query = "select data_type from information_schema.columns where "
+    my_query += "table_name = (%s) and column_name =(%s) ;"
     cursor.execute(my_query, [table_name, column_name])
     column_type = cursor.fetchall()[0][0]
     return column_type
@@ -44,21 +46,24 @@ def get_column_names(cursor, table, schema="public"):
     :param pg object cursor: cursor in psql database 
     :param string table: table name in the database
     :rtype: list
-    """
-
-    cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = (%s) and table_name = (%s)", [schema, table])
+    """ 
+    my_query = "SELECT column_name FROM information_schema.columns WHERE"
+    my_query += " table_schema = (%s) and table_name = (%s)"
+    cursor.execute(my_query, [schema, table])
     raw_col_names = cursor.fetchall()
     return list([x[0] for x in raw_col_names])
 
 def get_student_table_names(cursor):
     """
-    Retrieves the list of names of tables in the database which are indexed by StudentLookup
+    Retrieves the list of names of tables in the database which are 
+    indexed by StudentLookup
 
     :param pg object cursor: cursor in psql database
     :rtype: list of strings
     """
 
-    my_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+    my_query = "SELECT table_name FROM information_schema.tables "
+    my_query += "WHERE table_schema = 'public'"
     cursor.execute(my_query)
     table_names = cursor.fetchall()
     table_names = [t[0] for t in table_names]
@@ -75,8 +80,9 @@ def get_student_table_names(cursor):
 
 def student_lookup_query(table_names):
     """
-    Writes a SQL query to drop the current all_student_lookups table and create a new one
-    using all the StudentLookup numbers in the given list of tables
+    Writes a SQL query to drop the current all_student_lookups table 
+    and create a new one using all the StudentLookup numbers in the 
+    given list of tables
 
     :param list table_names: list of table names
     :retype: string
@@ -85,7 +91,8 @@ def student_lookup_query(table_names):
     my_query = "drop table if exists clean.all_student_lookups; "
     my_query += "create table clean.all_student_lookups as "
     for t in table_names:
-        my_query += "select \"StudentLookup\" as student_lookup from \"" + t + "\""
+        my_query += "select \"StudentLookup\" as student_lookup from "
+        my_query += "\"" + t + "\""
         union_clause = " union \n"
         my_query += union_clause
     my_query = my_query[:-len(union_clause)] + ";"
@@ -196,7 +203,8 @@ def all_grades_query():
 
 def all_absences_query():
     """
-    Writes a SQL query to drop the current all_absences_table and create a new one
+    Writes a SQL query to drop the current all_absences_table 
+    and create a new one
 
     :rtype: string
     """
@@ -231,7 +239,8 @@ def all_absences_query():
 
 def all_snapshots_query(cursor, snapshot_tables):
     """
-    Writes a SQL query to drop the current all_snapshots table and create a new one
+    Writes a SQL query to drop the current all_snapshots table 
+    and create a new one
 
     :param list snapshot_tables: list of tables to include
     :param pg object cursor: 
@@ -243,7 +252,8 @@ def all_snapshots_query(cursor, snapshot_tables):
     new_cols = new_cols_file[u'column_names']
 
     my_query = "drop table if exists clean.all_snapshots; "
-    my_query +=  """create table clean.all_snapshots as select "StudentLookup" as student_lookup, """
+    my_query +=  """create table clean.all_snapshots as """
+    my_query += """select "StudentLookup" as student_lookup, """
     for t in snapshot_tables:
         old_cols = get_column_names(cursor,t)
         #iterating through new table column names
@@ -265,22 +275,24 @@ def all_snapshots_query(cursor, snapshot_tables):
             if found == 0:
                 my_query += "\n cast(null as " + str(item[u'type']) + ")"
                 my_query += " as \"" + str(key) + "\","
-        my_query += " cast( 20" + t[9:11]  + " as int) as school_year from \"" + t + "\""
+        my_query += " cast( 20"+t[9:11]+" as int) as school_year from \""+t+"\""
         union_clause = " union select \"StudentLookup\" as student_lookup, "
         my_query += union_clause
     my_query = my_query[:-len(union_clause)]+";"
     return my_query
 
 ###### script to build tables
+
 pass_file = "/mnt/data/mvesc/pgpass" # username, db information
 with open_db_connection(pass_file) as connection:
     with connection.cursor() as cursor:
         table_names = get_student_table_names(cursor)
-        snapshot_tables = ["Districts{0:02}{1:02}".format(x,x+1) for x in range(6,16)]
-        snapshot_tables + ["Districts{0:02}{1:02}_CREM".format(x,x+1) for x in range(10,16)]
+        snapshot_tables = ["Districts{0:02}{1:02}".format(x,x+1) \
+                           for x in range(6,16)]
+        snapshot_tables + ["Districts{0:02}{1:02}_CREM".format(x,x+1) \
+                           for x in range(10,16)]
         #cursor.execute(student_lookup_query(table_names))
         #cursor.execute(all_grades_query())
         #cursor.execute(all_absences_query())
         #cursor.execute(all_snapshots_query(cursor, snapshot_tables))
     connection.commit()
-connection.close()
