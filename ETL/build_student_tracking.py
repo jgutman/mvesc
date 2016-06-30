@@ -1,4 +1,6 @@
-import mvesc_utility_functions
+#from mvesc_utility_functions import postgres_pgconnection_generator
+import psycopg2 as pg
+from contextlib import contextmanager
 
 # Zhe Overall Note:
 #   I have not yet checked to ensure the utility functions work
@@ -9,100 +11,85 @@ import mvesc_utility_functions
 #   This problem is tricky because students can have multiple observations
 #       per year.
 
-# Zhe: I commented out Jackie's older code
-# def get_all_student_lookups(connection, schema = 'clean',
-#     table = 'all_snapshots'):
-#     """ Takes a postgres connection, schema, and table, and returns
-#     a list of all the unique students in the table
-#     :param psycopg2.connection: connection to the database
-#     :param str schema: name of the schema from which to draw tables
-#     :param str table: name of the table from which to draw student_list
-#     :return list of student lookup numbers
-#     :rtype list[int]
-#     """
-#     cursor = connection.cursor()
-#     union_lookups_query = """select distinct("StudentLookup") from {}.{}""".format(schema, table)
-#     union_lookups_query += """ order by "StudentLookup\""""
-#     cursor.execute(union_lookups_query)
-#     student_list = cursor.fetchall()
-#     # change list of tuples into list of ints
-#     student_list = [i[0] for i in student_list]
-#     return student_list
-# def build_wide_format(connection, student_list):
-#     cursor = connection.cursor()
-#     get_year_range = """select min(year), max(year) from clean.all_snapshots"""
-#     cursor.execute(get_year_range)
-#     min_year, max_year = cursor.fetchone()
+# delete this function once Hanna has updated utility functions
+# use commented import statement above instead
+@contextmanager
+def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
+    """ Generate a psycopg2 connection (to use in a with statement)
+    Note: you can only run it on the mvesc server
+    :param str pass_file: file with the credential information
+    :yield pg.connection generator: connection to database
+    """
+    with open(pass_file, 'r') as f:
+        passinfo = f.read()
+    passinfo = passinfo.strip().split(':')
+    host_address = passinfo[0]
+    port = passinfo[1]
+    user_name = passinfo[2]
+    name_of_database = passinfo[3]
+    user_password = passinfo[4]
+    yield pg.connect(host=host_address, database=name_of_database,
+        user=user_name, password=user_password)
 
-def sql_gen_tracking_students(year_begin, year_end):
-    """ Generates sql code to create a table that tracks a student's
-    grade over time. First, it gets all the unique StudentLookup numbers
-    from the all_student_lookup numbers. (This can be changed to the list
-        of unique lookup numbers in the snapshots table)
-    From this set, it repeatedly performs left joins for all the 
-    students we observe in a given year, from year_begin to year_end. 
-    The for loop adds a left join command looping across the appropriate 
-    years. Each left join searches the all_snapshots table, filtered by
-    the appropriate year and only keeping distinct rows for each student 
-        (this avoids repeated grades).
-    After all the years are joined together, we left join the students
+def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
+     get_year_range = """select min(school_year), max(school_year) from """ \
+            """{}.{}""".format(schema, snapshots)
+     cursor.execute(get_year_range)
+     min_year, max_year = cursor.fetchone()
+     query = sql_gen_tracking_students(min_year, max_year,
+            schema = schema, snapshots = snapshots)
+     cursor.execute(query)
+
+def sql_gen_tracking_students(year_begin, year_end,
+    schema = 'clean', snapshots = 'all_snapshots',
+    table = 'wrk_tracking_students'):
+
+    """ Generates sql query to create a table that tracks a student's
+    grade over time. Repeatedly performs full outer joins for all the
+    students we observe in a given year, from year_begin to year_end.
+
+    If a student appears multiple times with the same grade level, or if their
+    grade level is missing in some but not all entries, they will appear only
+    once. Duplicate entries will happen only when there is conflicting grade
+    level information for some years.
+
+    This subquery is then left-joined with all withdrawal reasons, creating a
+    distinct row for each given withdrawal reason, except did not withdraw.
 
     :param int year_begin: the first year we'd like to start tracking with
     :param int year_end: the last year to track a student to
+    :return: sql query string with a %s placeholder for non-withdrawal value
+    :rtype: str
     """
-    # create a view temporarily for convenience
-    #   improve: skip the view and instead make this into a sub-query
-    start_string = """ create view clean.wrk_tracking_students as 
-        select * from clean.all_student_lookups """
+    query_frame = """drop table if exists {}.{}; """.format(schema, table)
+    query_frame += """ create table {}.{} as (select * from """ \
+        """(select * from ( """.format(schema, table)
 
-    # end by ordering by StudentLookup
-    end_string = """ order by "StudentLookup"; """
+    for year in range(year_begin, year_end+1):
+        if (year > year_begin):
+            query_frame += """ full join """
+        query_frame += """(select distinct student_lookup, grade as "{}" """ \
+            """from {}.{} where school_year = {} and grade is not null) """ \
+            """as grades_{} """.format(year, schema, snapshots, year, year)
+        if (year > year_begin):
+            query_frame += """ using (student_lookup) """
 
-    # create table with withdrawal info string
-    #   merge the view just made, with tracking info for the students
-    #   with each student's distinct withdrawal reason
-    #       note: (each student may have multiple withdrawal reasons)
-    #               leading to mutiple rows
-    #       note: we do not merge the withdrawl code 'did not withdraw'
-    #           because this would result in multiple rows per student
-    #           since some students may have 'did not withdraw' in year 1
-    #           but in year 3 have 'graduated'.
-    #           This reduces the number of duplicate rows we have
-    withdraw_table_string = """
-            create table clean.wrk_track_students as
-            (SELECT * FROM clean.wrk_tracking_students LEFT JOIN
-            (SELECT DISTINCT "StudentLookup", withdraw_reason FROM clean.all_snapshots 
-            WHERE withdraw_reason <> 'did not withdraw') AS zzx01 USING ("StudentLookup"));"""
-    
-    # for loop to perform left joins for each year we have data for
-    middle_string = """"""
-    for yearNum in range(year_begin, year_end+1):
-        # left join all the unique student-grade combinations in a given year
-        #   note: some students have multiple grades per year, resulting in
-        #       a duplicate row for a student
-        middle_string = middle_string + """
-            left join (select distinct "StudentLookup", grade as "{}"
-            from clean.all_snapshots where year = '{}')
-	    as zzq{} using ("StudentLookup")""".format(yearNum, yearNum, yearNum)
-    
-    # concatenate all these strings together with .format()
-    return "{}{}{}{}".format(start_string, middle_string, end_string, withdraw_table_string)
+    query_frame += """) order by student_lookup) as students_grades_only """ \
+        """left join (select distinct student_lookup, withdraw_reason from """ \
+        """{}.{} where withdraw_reason <> 'did not withdraw' """ \
+        """and withdraw_reason is not null) as all_withdraw_reasons """ \
+        """using (student_lookup));""".format(schema, snapshots)
 
+    # call query as cursor.execute(sql_gen_tracking_students())
+    return query_frame
 
 def main():
-    connection = postgres_pgconnection_generator()
-    # all_students = get_all_student_lookups(connection)
-    # hard code year_begin = 2006 and year_end = 2015
-    sql_code_to_gen_tracking = sql_gen_tracking_students(2006, 2015)
-
-    # get cursor
-    cur = conn.cursor()
-    # execute sql command
-    cur.execute(sql_code_to_gen_tracking)
-    # commit sql command, close cursor & connection
-    connection.commit()
-    connection.close()
-    cur.close()
+    with postgres_pgconnection_generator() as connection:
+        with connection.cursor() as cursor:
+            # cursor.execute(query)
+            build_wide_format(cursor)
+        connection.commit()
+    print('done!')
 
 if __name__ == "__main__":
     main()
