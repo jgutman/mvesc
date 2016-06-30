@@ -111,7 +111,7 @@ ALTER TABLE clean.oaaogt_0616 DROP COLUMN mi;
 ALTER TABLE clean.oaaogt_0616 ALTER COLUMN dob TYPE DATE using to_date(dob, 'MM/DD/YYYY');
 --select dob, count(*) from clean.oaaogt_0616 where dob is null group by dob; 
 
--- column 4: gender (NULL: 1485) data type converted to DATE
+-- column 4: gender (NULL: 9645) 
 --select trim(gender), count(*) from clean.oaaogt_0616 group by gender;
 --select upper(left(trim(gender), 1)), count(*) from clean.oaaogt_0616 group by left(trim(gender), 1);
 UPDATE clean.oaaogt_0616 SET gender=upper(left(trim(gender), 1));
@@ -119,7 +119,7 @@ UPDATE clean.oaaogt_0616 SET gender=upper(left(trim(gender), 1));
 -- column: ssn: dropped
 ALTER TABLE clean.oaaogt_0616 DROP COLUMN ssn;
 
--- column: ethnicity (!!! need codes and categories to clean)
+-- column: ethnicity (NULL: 10031)
 --select trim(ethnicity) as ethn, count(*) from clean.oaaogt_0616 group by trim(ethnicity) order by ethn;
 --select ethnicity, count(*) from clean.oaaogt_0616 group by ethnicity order by ethnicity;
 
@@ -129,10 +129,10 @@ SET ethnicity =
 		when trim(ethnicity)='*' then 'Multiracial'
 		when trim(ethnicity)='1' then 'American Indian'
 		when trim(ethnicity)='2' then 'Asian/Pacific Islander'
-		when trim(ethnicity)='3' then 'Black/African American'
+		when trim(ethnicity)='3' then 'Black'
 		when trim(ethnicity)='4' then 'Hispanic'
 		when trim(ethnicity)='5' then 'White'
-		when trim(ethnicity)='6' then 'Multi-Racial'
+		when trim(ethnicity)='6' then 'Multiracial'
 		when trim(ethnicity)='7' then 'Other'
 		when lower(trim(ethnicity))='i' then 'American Indian'
 		when lower(trim(ethnicity))='a' then 'Asian/Pacific Islander'
@@ -147,7 +147,7 @@ SET ethnicity =
 		when lower(trim(ethnicity))='asian_pac isl' then 'Asian/Pacific Islander'
 		when lower(trim(ethnicity))='black, non-hispanic' then 'Black'
 		when lower(trim(ethnicity))='black/african american' then 'Black'
-		when lower(trim(ethnicity))='black_afr am' then 'Black/African American'
+		when lower(trim(ethnicity))='black_afr am' then 'Black'
 		when lower(trim(ethnicity))='hispanic' then 'Hispanic'
 		when lower(trim(ethnicity))='multi' then 'Multiracial'
 		when lower(trim(ethnicity))='multiple mark' then 'Multiracial'
