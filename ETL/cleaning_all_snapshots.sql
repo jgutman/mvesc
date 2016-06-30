@@ -5,10 +5,6 @@ select student_lookup, birth_date, grade, school_name, school_year from clean.al
 	-- 17 questionable birth_dates	
 	-- 63878 is a 30 year old 1st grader at tri-valley high school?
 
--- grades
-select distinct grade from clean.all_snapshots order by grade;
-alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
-
 -- cities
 select city, count(city) from clean.all_snapshots group by city order by city;
 alter table clean.all_snapshots alter column city type text using lower(city);
@@ -90,7 +86,15 @@ select date_part('year', district_withdraw_date) as d, count(*) from clean.all_s
 select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- flags
-select "Flag5" as d, count(*) from "Districts0708" group by d order by d;
+select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
+alter table clean.all_snapshots alter column flag1 type text using coalesce(flag1,flag2);
+alter table clean.all_snapshots rename column flag1 to lunch;
+alter table clean.all_snapshots drop column flag2;
+alter table clean.all_snapshots alter column lunch type text using 
+case 
+when lower(lunch) like 'f' then 'free'
+when lower(lunch) like 'r' then 'reduced'
+else null end; -- tossing a few (~50) miscelanous values
 
 -- gender
 select gender as d, count(*) from clean.all_snapshots group by d order by d;
@@ -98,8 +102,9 @@ select gender as d, count(*) from clean.all_snapshots group by d order by d;
 -- gifted
 select gifted as d, count(*) from clean.all_snapshots group by d order by d;
 
--- grade
-select grade as d, count(*) from clean.all_snapshots group by d order by d;
+-- grades
+select distinct grade from clean.all_snapshots order by grade;
+alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
 -- graduation date
 select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
@@ -120,9 +125,14 @@ select school_code, lower(school_name), count(*) from clean.all_snapshots group 
 -- section 504
 select section_504_plan as d, count(*) from clean.all_snapshots group by d order by d;
 
--- IRNs (withdrawn_to_IRN, sent_to_1_IRN, sent_to_2_IRN)
-select "sent_to_1_IRN" as d, count(*) from clean.all_snapshots group by d order by d;
-	-- make lookup table for irns?
+-- IRNs
+select coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn) as d, count(*) from clean.all_snapshots group by d order by d;
+alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
+coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn);
+alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
+nullif(withdrawn_to_irn, '******');
+alter table clean.all_snapshots drop column sent_to_1_irn;
+alter table clean.all_snapshots drop column sent_to_2_irn;
 
 -- special_ed
 select cast(special_ed as int) as d, count(*) from clean.all_snapshots group by d order by d;
@@ -131,6 +141,9 @@ select cast(special_ed as int) as d, count(*) from clean.all_snapshots group by 
 select state as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- status 
+select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
+
+
 
 -- withdrawal codes
 select distinct withdraw_reason from clean.all_snapshots;
@@ -162,4 +175,6 @@ when withdraw_reason like '99' then 'graduate'
 when withdraw_reason like '**' then 'did not withdraw'
 else withdraw_reason
 end;
+
+
 
