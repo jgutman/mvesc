@@ -34,7 +34,6 @@ import mvesc_utility_functions
 #     cursor.execute(get_year_range)
 #     min_year, max_year = cursor.fetchone()
 
-
 def sql_gen_tracking_students(year_begin, year_end):
     """ Generates sql code to create a table that tracks a student's
     grade over time. First, it gets all the unique StudentLookup numbers
@@ -104,7 +103,6 @@ def main():
     connection.commit()
     connection.close()
     cur.close()
-
 
 if __name__ == "__main__":
     main()
