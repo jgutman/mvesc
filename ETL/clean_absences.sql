@@ -6,6 +6,7 @@
  */
 
 -- StudentLookup Column -- Assume this is fine
+--		this is a quick visual check
 --		there are no empty student lookup numbers
 select * from clean.all_absences where "StudentLookup" is null;
 
@@ -14,6 +15,7 @@ ALTER TABLE clean.all_absences
 	ALTER COLUMN date type date using to_date(date, 'YYYY-MM-DD');
 
 -- Absence Length -- These only take on 3 distinct and sensible values, so don't need any changes
+--		this is a quick visual check
 select distinct absence_length from clean.all_absences;
 
 -- Absence Codes -- These are actually being IGNORED because we're using absence descriptions only
@@ -136,6 +138,7 @@ set
 		end;
 
 -- Show the distinct outcomes to ensure this worked correctly
+--		this is a quick visual check
 select distinct absence_desc from clean.all_absences;
 
 -- School Abbreviations -- These all look fine, except one school which spread the
@@ -143,4 +146,5 @@ select distinct absence_desc from clean.all_absences;
 --		We could do a exhaustive search to identify which school this is
 --		BUT this hasn't been done yet.
 --			Should be investigated if possible
-select distinct school from clean.all_absences order by school asc;
+--		this is a quick visual check
+select school, count(school) from clean.all_absences group by school order by count asc;
