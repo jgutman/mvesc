@@ -1,3 +1,5 @@
 PartnerData/*
+credentials/*
 *.bak
 pgpass
+*/.ipynb_checkpoints/*
