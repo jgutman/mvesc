@@ -1,5 +1,5 @@
 {
-    "active": ["a", "active","t","preschool","flsd preschool","aps2", "valueations","v"],
+    "active": ["a", "active","t","preschool","flsd preschool","aps2", "valueations","v", "afoe","dys", "nf3"],
     "inactive": ["i","inactive"],
     "three_way": ["3", "3-way student"],
     "resident":["r","res a/res r out","resident","q","resident out special","spec","reas a/res u","u"],
@@ -9,7 +9,7 @@
     "full_college":["p", "full time post secondary", "post secondary","psec","ps","psev","pa"], 
     "part_college":["ptps","parttime post secondary"],
     "esc":["county unit/esc","c", "rps1"],
-    "mrdd":[],
+    "mrdd":["mrdd"],
     "a_plus": ["a -plus","a-plus","apls"], 
     "open_enrollment, jvs":["nj","non_resident open enrolled jvs", "joe"],
     "open_enrollment, foster, jvs":["nfj","non-resident foster jvs"],
@@ -19,7 +19,7 @@
     "deleted":["d","deleted"],
     "graduate":["g","graduate"],
     "excel":["e","excel"],
-    "eagle_wings":["w","eagle wings"],
+    "eagle_wings":["w","eagle wings", "eg"],
     "nova_net_home":["nn","nova_net home"],
     "non_puplic_services":["np","non public receiving services"]
 }
