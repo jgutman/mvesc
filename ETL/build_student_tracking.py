@@ -2,14 +2,29 @@
 import psycopg2 as pg
 from contextlib import contextmanager
 
-# Zhe Overall Note:
-#   I have not yet checked to ensure the utility functions work
-#   While this code repeats duplicate rows, I have not yet error checked to
-#       ensure we didn't lose students in the process (perhaps those
-#       without a grade or withdrawal code?)
-#   This SQL code is not great and may not be the best way to do this.
-#   This problem is tricky because students can have multiple observations
-#       per year.
+'''
+Zhe Overall Note:
+   I have not yet checked to ensure the utility functions work
+   While this code repeats duplicate rows, I have not yet error checked to
+   ensure we didn't lose students in the process (perhaps those
+   without a grade or withdrawal code?)
+
+   This SQL code is not great and may not be the best way to do this.
+   This problem is tricky because students can have multiple observations
+   per year (multiple grades or multiple withdrawals).
+'''
+
+'''
+Zhe's note is somewhat obsolete now, have tried to deal with some of the issues
+he mentions above. We don't lose students in the process, except the 34 students
+I chose to remove because they never appear with a grade level. These are all
+students from Riverview district that seemed to enter and leave district in
+same year, inc. errors, pre-k students, not useful.
+
+Left in duplicate records because of grade level errors, we will need to clean
+these later. As for withdrawals, retained only the most recent withdrawal Date
+and reason. Each of 37,914 is in table at least once. (JG)
+'''
 
 # delete this function once Hanna has updated utility functions
 # use commented import statement above instead
@@ -32,10 +47,22 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
         user=user_name, password=user_password)
 
 def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
+    """ Gets the range of school years covered by the data in the snapshots
+    table, and generates the appropriate sql query to track all students in
+    the snapshots table over that range of years. Executes query to build this
+    data table, by default in clean.wrk_tracking_students.
+    :param psycopg2.cursor cursor: cursor to execute queries
+    :param str schema: name of schema where snapshots table lives
+    :param str snapshots: name of table where snapshots table lives
+    :return nothing (executes query in database)
+    """
+
      get_year_range = """select min(school_year), max(school_year) from """ \
             """{}.{}""".format(schema, snapshots)
      cursor.execute(get_year_range)
      min_year, max_year = cursor.fetchone()
+     min_year = int(min_year) # these should already be integers anyway
+     max_year = int(max_year)
      query = sql_gen_tracking_students(min_year, max_year,
             schema = schema, snapshots = snapshots)
      cursor.execute(query)
@@ -107,6 +134,13 @@ def sql_gen_tracking_students(year_begin, year_end,
     return query_frame
 
 def main():
+    """
+    Build a table (clean.wrk_tracking_students) that shows for all students in
+    clean.all_snapshots, what grade they were in during each school year, and
+    if they have a withdrawal reason and date, their most recent withdrawal
+    information. Student may be duplicated if there are records of them
+    attending different conflicting grades during same school year.
+    """
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # cursor.execute(query)
