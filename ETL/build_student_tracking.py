@@ -58,27 +58,50 @@ def sql_gen_tracking_students(year_begin, year_end,
 
     :param int year_begin: the first year we'd like to start tracking with
     :param int year_end: the last year to track a student to
-    :return: sql query string with a %s placeholder for non-withdrawal value
+    :return: sql query string
     :rtype: str
     """
-    query_frame = """drop table if exists {}.{}; """.format(schema, table)
-    query_frame += """ create table {}.{} as (select * from """ \
-        """(select * from ( """.format(schema, table)
+    query_frame = """
+    drop table if exists {}.{};
+    create table {}.{} as
+		(select * from
+			(select * from (
+    """.format(schema, table, schema, table)
 
     for year in range(year_begin, year_end+1):
-        if (year > year_begin):
-            query_frame += """ full join """
-        query_frame += """(select distinct student_lookup, grade as "{}" """ \
-            """from {}.{} where school_year = {} and grade is not null) """ \
-            """as grades_{} """.format(year, schema, snapshots, year, year)
-        if (year > year_begin):
-            query_frame += """ using (student_lookup) """
+        subquery = """
+        (select distinct student_lookup, grade as "{}" from {}.{}
+            where school_year = {} and grade is not null) as grades_{}
+        """.format(year, schema, snapshots, year, year)
+        if year == year_begin:
+            query_frame += subquery
+        else:
+            query_frame += """
+            full join {} using (student_lookup)
+            """.format(subquery)
 
-    query_frame += """) order by student_lookup) as students_grades_only """ \
-        """left join (select distinct student_lookup, withdraw_reason from """ \
-        """{}.{} where withdraw_reason <> 'did not withdraw' """ \
-        """and withdraw_reason is not null) as all_withdraw_reasons """ \
-        """using (student_lookup));""".format(schema, snapshots)
+    query_frame += """ )
+    order by student_lookup) as students_grades_only
+    left join
+    	(select latest_reason.* from
+    		(select student_lookup, max(district_withdraw_date)
+            as last_date from
+    			(select distinct student_lookup, withdraw_reason,
+                district_withdraw_date from {}.{}
+    				where withdraw_reason <> '{}'
+                    and withdraw_reason is not null
+    			order by student_lookup, district_withdraw_date) as all_withdraw_reasons
+    		group by student_lookup) as latest_withdrawal
+        """.format(schema, snapshots, 'did not withdraw')
+
+    query_frame += """
+    	left join
+            (select distinct student_lookup, withdraw_reason,
+            district_withdraw_date from {}.{}) as latest_reason
+    	on latest_withdrawal.student_lookup = latest_reason.student_lookup and
+    	latest_withdrawal.last_date = latest_reason.district_withdraw_date)
+        as last_withdrawal_only using (student_lookup));
+    """.format(schema, snapshots)
 
     # call query as cursor.execute(sql_gen_tracking_students())
     return query_frame
@@ -87,6 +110,7 @@ def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # cursor.execute(query)
+            # print(sql_gen_tracking_students(2006, 2015))
             build_wide_format(cursor)
         connection.commit()
     print('done!')
