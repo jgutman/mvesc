@@ -8,7 +8,7 @@
 -- StudentLookup Column -- Assume this is fine
 --		this is a quick visual check
 --		there are no empty student lookup numbers
-select * from clean.all_absences where "StudentLookup" is null;
+select count(*) from clean.all_absences where "StudentLookup" is null;
 
 -- Date Column -- This needs a simple date conversion function
 ALTER TABLE clean.all_absences
@@ -19,12 +19,14 @@ ALTER TABLE clean.all_absences
 select distinct absence_length from clean.all_absences;
 
 -- Absence Codes -- These are actually being IGNORED because we're using absence descriptions only
+--        there is no 1-to-1 mapping between absence codes & descriptions, they vary by school
 --select distinct absence_code, absence_desc, school from clean.all_absences sorted order by absence_desc;
 	
 -- Absence Descriptions -- These provide the information to clean and standardize the descriptions
 --		In this code, none of the descriptions repeat, they are all collected in one place and
 --		They are attempted to be grouped in groups of similar descriptions
--- 		This list can be aggregated further 
+-- 		This list can be aggregated further
+--          	Future: Consider using Hanna's JSON format for case statement 
 update only clean.all_absences
 set
 	absence_desc =
