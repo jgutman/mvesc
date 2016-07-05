@@ -76,7 +76,9 @@ def get_all_table_names(cursor, schema='public'):
 
 def get_specific_table_names(cursor, column_name):
     """
-    Retrieves the list of names of tables in the database which have StudentLookups
+    Retrieves the list of names of tables in the database which contain a 
+    column with the given name
+
     :param pg object cursor: cursor in psql database                       
     :param string column_name: column that should be in each of the returned tables
     :rtype: list of strings                                       
@@ -126,8 +128,8 @@ def get_column_type(cursor, table_name, column_name):
     :param string: table name
     :param string: column name
     """
-    my_query = "select data_type from information_schema.columns where table_name = (%s) and column_name =(%s);"
-    cursor.execute(my_query, [table_name, column_name])
+    column_type_query = "select data_type from information_schema.columns where table_name = (%s) and column_name =(%s);"
+    cursor.execute(column_type_query, [table_name, column_name])
     column_type = cursor.fetchall()
     if len(column_type) > 0:
         column_type = column_type[0][0]
@@ -136,14 +138,15 @@ def get_column_type(cursor, table_name, column_name):
 def clean_column(cursor, values, old_column_name, table_name, \
                  new_column_name=None, schema_name='clean', replace = 1):
     """
-    Cleans the given column by replacing values according to the given json file, which 
-    should be in the form:
+    Cleans the given column by replacing values according to the given 
+    json file, which should be in the form:
     {
     "desired_name":["existing_name1", "existing_name2", ...],
     "desired_name":["existing_name1", "existing_name2", ...],
     ...
     }
 
+    Any existing name not in the json file is left unchanged.
     By default, replaces the current column with the cleaned values.
     If replace=0, should provide a distinct new_column_name to avoid duplicates.
     In the json all values should be lowercase.
@@ -157,50 +160,52 @@ def clean_column(cursor, values, old_column_name, table_name, \
     :param bool replace: if yes, replaces the old_column_name and re-names it, if no makes a new column called new_column_name
     """
     col_type = get_column_type(cursor, table_name, old_column_name)
-
+    if not col_type:
+        print("old column does not exist")
+        return
     if new_column_name is None:
         new_column_name = old_column_name
 
-    my_query = "alter table {0}.\"{1}\" ".format(schema_name,table_name)
+    clean_col_query = "alter table {0}.\"{1}\" ".format(schema_name,table_name)
     if replace:
-        my_query += "alter column \"{0}\" ".format(old_column_name)
-        my_query += "type {} using case ".format(col_type)
+        clean_col_query += "alter column \"{old}\" type {type} using case "\
+            .format_map({'old': old_column_name, 'type': col_type})
     else:
-        my_query += "add column \"{0}\" {1}; ".format(new_column_name, col_type)
-        my_query += "alter table {0}.\"{1}\" ".format(schema_name,table_name)
-        my_query += "alter column \"{0}\" ".format(new_column_name)
-        my_query += "type {} using case ".format(col_type)
+        clean_col_query += """
+        add column "{new_name}" {type};
+        alter table {schema}."{table}"
+        alter column {new_name} type {type} using case 
+        """.format_map({'new_name':new_column_name, 'type': col_type, \
+                    'schema': schema_name, 'table':table_name})
 
-    params = {}
+    params = {} # dictionary to hold parameters for cursor.execute()
 
     with open(values, 'r') as f:
         json_dict = json.load(f)
 
-    count = 0;
+    count = 0; # to identify parameters for cursor.execute()
     for new_name, old_name_list in json_dict.items():
-        my_query += "when "
-        or_clause = "or \n"
+        clean_col_query += "when "
+        or_clause = "or "
         for old_name in old_name_list:
-            my_query += "lower({0}) like %(item{1})s ".format(old_column_name,count)
-            my_query += or_clause
+            clean_col_query += """
+            lower({old}) like %(item{n})s 
+            """.format_map({'old':old_column_name, 'n':count})
+            clean_col_query += or_clause
             params['item{0}'.format(count)] = str(old_name)
             count +=1
-        my_query = my_query[:-len(or_clause)]
-        my_query += "then  %(item{0})s \n".format(count)
+        clean_col_query = clean_col_query[:-len(or_clause)]
+        clean_col_query += "then  %(item{0})s \n".format(count)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
-    my_query = my_query[:-20]
-    my_query += "else {0} end; ".format(old_column_name)
+    clean_col_query = clean_col_query[:-20]
+    clean_col_query += "else {0} end; ".format(old_column_name)
     if replace:
-        my_query += "alter table {0}.\"{1}\" ".format(schema_name,table_name)
-        my_query += "rename column \"{0}\" to \"{1}\"; ".format(old_column_name, new_column_name)
-    cursor.execute(my_query,params)
-
-with postgres_pgconnection_generator() as connection:
-    with connection.cursor() as cursor:
-        clean_column(cursor, "student_status.json", "status_code", "all_snapshots",
-                     "status", replace=0)
-    connection.commit()
+        clean_col_query += """
+        alter table {schema}."{table}" rename column "{old}" to "{new}"
+        """.format_map({'schema':schema_name,'table':table_name,\
+                        'old':old_column_name, 'new':new_column_name})
+    cursor.execute(clean_col_query,params)
 
 ############ Upload file or directory to postgres (not useful in most cases)############### 
 def read_csv_noheader(filepath):
