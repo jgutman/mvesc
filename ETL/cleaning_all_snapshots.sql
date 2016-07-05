@@ -142,7 +142,8 @@ select state as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- status 
 select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
-
+select status as d, count(*) from clean.all_snapshots group by d order by d;
+-- cleaned using a json file in cleaning_student_status.py
 
 
 -- withdrawal codes
@@ -175,6 +176,3 @@ when withdraw_reason like '99' then 'graduate'
 when withdraw_reason like '**' then 'did not withdraw'
 else withdraw_reason
 end;
-
-
-
