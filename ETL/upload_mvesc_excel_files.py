@@ -11,7 +11,8 @@ from csv2postgres_mvesc import postgresql_engine_generator_mvesc
 
 #++++++ Functions only for the Excel files ++++++#
 def combine_colnames(col1, col2):
-    """combine the colnames from 2 rows: !! Only works in this specific case
+    """Combine the colnames from 2 rows: !! Only works in this specific case
+    
     :param str col1: first column-name
     :param str col2: second column-name
     :return str new_col: combined new column name
@@ -34,7 +35,7 @@ def combine_colnames(col1, col2):
 
 
 def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
-    """ dump dataframe object to postgres database
+    """ Dump dataframe object to postgres database
     
     :param pandas.DataFrame df: dataframe
     :param int nrows: number of rows to write to table;
