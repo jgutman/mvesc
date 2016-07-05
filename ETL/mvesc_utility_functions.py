@@ -20,7 +20,7 @@ import sqlalchemy
 import sys
 import os
 import json
-
+from contextlib import contextmanager
 
 ############ ETL Functions ############
 def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -42,12 +42,12 @@ def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
     engine = create_engine(sql_eng_str)
     return engine
 
+@contextmanager
 def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
-    """ Generate a psycopg2 connector
+    """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
-    :return ps.engine object engine: object created  by create_engine() in sqlalchemy
-    :rtype sqlalchemy.engine
+    :yield pg.connection generator: connection to database 
     """
     with open(pass_file, 'r') as f:
         passinfo = f.read()
@@ -57,51 +57,155 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     user_name = passinfo[2]
     name_of_database = passinfo[3]
     user_password = passinfo[4]
-    connection = pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
-    return connection
+    yield pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
 
 
 
 ############ Reterive Database Information ############
-def get_all_table_names(schema='public'):
+def get_all_table_names(cursor, schema='public'):
     """ Get all the table names as a list from a `schema` in mvesc
     
+    :param pg cursor object cursor: cursor for psql database
     :param str schema: schema name in the database
     :return list all_table_names: all table names in a `schema` in mvesc database
     """
-    sqlcmd = "SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'" % schema
-    engine = postgres_engine_generator()
-    conn = engine.raw_connection()
-    all_table_names = list(pd.read_sql(sqlcmd, conn).table_name)
-    conn.close()
+    sqlcmd = "SELECT table_name FROM information_schema.tables WHERE table_schema = (%s)"
+    cursor.execute(sqlcmd, [schema])
+    all_table_names = [t[0] for t in cursor.fetchall()]
     return all_table_names
 
-def get_column_names(table, schema='public'):
-    """Get column names of a table  in a schema
+def get_specific_table_names(cursor, column_name):
+    """
+    Retrieves the list of names of tables in the database which contain a 
+    column with the given name
+
+    :param pg object cursor: cursor in psql database                       
+    :param string column_name: column that should be in each of the returned tables
+    :rtype: list of strings                                       
+    """
+    table_names = get_all_table_names(cursor)
+    to_remove = []
+    for t in table_names:
+        if column_name not in get_column_names(cursor,t):
+            to_remove.append(t)
+    for t in to_remove:
+        table_names.remove(t)
+    return table_names
+
+def get_column_names(cursor, table, schema='public'):
+    """Get column names of a ntable  in a schema
     
-    :param pg.extensions.connection object connection: sql connection
+    :param pg cursor object cursor: cursor for psql database
     :param string table: table name in the database
+    :param str schema: schema name in database
     :rtype: list 
     """
-    connection = postgres_pgconnection_generator()
-    columns = pd.read_sql("SELECT column_name FROM information_schema.columns \
-    WHERE table_name = '%s' and table_schema='%s'" % (table, schema), connection)
-    return list(columns.iloc[:, 0])
+    cursor.execute("SELECT column_name FROM information_schema.columns \
+    WHERE table_name = (%s) and table_schema=(%s)", [table, schema])
+    columns = cursor.fetchall()
+    return [c[0] for c in columns]
 
-def read_table_to_df(table_name, schema='public', nrows=20):
+def read_table_to_df(connection, table_name, schema='public', nrows=20):
     """ Read the first n rows of a table
     
+    :param pg connection object connection: connection to psql database
     :param str table_name: Name of table to read in
     :param int nrows: number of rows to read in; default 20; -1 means all rows
     :return: a pandas.dataframe object with n-rows
     :rtype: pandas.dataframe
     """
-    connection = postgres_pgconnection_generator()
-    sqlcmd = "SELECT * FROM %s.\"%s\" LIMIT %s;" % (schema, table_name, str(int(nrows)))
     if nrows == -1:
         sqlcmd = "SELECT * FROM %s.\"%s\";" % (schema, table_name)
+    else:
+        sqlcmd = "SELECT * FROM %s.\"%s\" LIMIT %s;" % (schema, table_name, str(int(nrows)))
     df = pd.read_sql(sqlcmd, connection)
     return df
+
+def get_column_type(cursor, table_name, column_name):
+    """
+    Returns the data type of the given column in the given table
+    :param pg cursor:
+    :param string: table name
+    :param string: column name
+    """
+    column_type_query = "select data_type from information_schema.columns where table_name = (%s) and column_name =(%s);"
+    cursor.execute(column_type_query, [table_name, column_name])
+    column_type = cursor.fetchall()
+    if len(column_type) > 0:
+        column_type = column_type[0][0]
+    return column_type
+
+def clean_column(cursor, values, old_column_name, table_name, \
+                 new_column_name=None, schema_name='clean', replace = 1):
+    """
+    Cleans the given column by replacing values according to the given 
+    json file, which should be in the form:
+    {
+    "desired_name":["existing_name1", "existing_name2", ...],
+    "desired_name":["existing_name1", "existing_name2", ...],
+    ...
+    }
+
+    Any existing name not in the json file is left unchanged.
+    By default, replaces the current column with the cleaned values.
+    If replace=0, should provide a distinct new_column_name to avoid duplicates.
+    In the json all values should be lowercase.
+
+    :param pg object cursor: cursor in psql database
+    :param string values: name of a json file
+    :param string old_column_name:
+    :param string new_column_name:
+    :param string table_name:
+    :param string schema_name:
+    :param bool replace: if yes, replaces the old_column_name and re-names it, if no makes a new column called new_column_name
+    """
+    col_type = get_column_type(cursor, table_name, old_column_name)
+    if not col_type:
+        print("old column does not exist")
+        return
+    if new_column_name is None:
+        new_column_name = old_column_name
+
+    clean_col_query = "alter table {0}.\"{1}\" ".format(schema_name,table_name)
+    if replace:
+        clean_col_query += "alter column \"{old}\" type {type} using case "\
+            .format_map({'old': old_column_name, 'type': col_type})
+    else:
+        clean_col_query += """
+        add column "{new_name}" {type};
+        alter table {schema}."{table}"
+        alter column {new_name} type {type} using case 
+        """.format_map({'new_name':new_column_name, 'type': col_type, \
+                    'schema': schema_name, 'table':table_name})
+
+    params = {} # dictionary to hold parameters for cursor.execute()
+
+    with open(values, 'r') as f:
+        json_dict = json.load(f)
+
+    count = 0; # to identify parameters for cursor.execute()
+    for new_name, old_name_list in json_dict.items():
+        clean_col_query += "when "
+        or_clause = "or "
+        for old_name in old_name_list:
+            clean_col_query += """
+            lower({old}) like %(item{n})s 
+            """.format_map({'old':old_column_name, 'n':count})
+            clean_col_query += or_clause
+            params['item{0}'.format(count)] = str(old_name)
+            count +=1
+        clean_col_query = clean_col_query[:-len(or_clause)]
+        clean_col_query += "then  %(item{0})s \n".format(count)
+        params['item{0}'.format(count)] = str(new_name)
+        count += 1
+    clean_col_query = clean_col_query[:-20]
+    clean_col_query += "else {0} end; ".format(old_column_name)
+    if replace:
+        clean_col_query += """
+        alter table {schema}."{table}" rename column "{old}" to "{new}"
+        """.format_map({'schema':schema_name,'table':table_name,\
+                        'old':old_column_name, 'new':new_column_name})
+    cursor.execute(clean_col_query,params)
 
 ############ Upload file or directory to postgres (not useful in most cases)############### 
 def read_csv_noheader(filepath):
