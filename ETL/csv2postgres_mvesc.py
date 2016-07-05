@@ -65,6 +65,44 @@ def read_csv_noheader(filepath):
     df = df.rename(columns=colnames)
     return df
 
+def fetch_or_add_file2table_jsonfile(datafile, jsonfile='file_to_table_name.json'):
+    """ Fetch table name from json file OR Add file:table to json
+    
+    step 1: check whether file and table exist in json file;
+    step 2: if exist, return table_name; 
+    if not exist, add file:table to json, then return table_name
+    
+    :param str datafile: datafile name, either absolute or relative path
+    :param str jsonfile: json file name, default: 'file_to_table_name.json'
+    :return str table_name
+    :rtype str
+    """
+    # load json, keys, values
+    with open(jsonfile, 'r') as f:
+        file_table_names = json.load(f)
+    existing_keys = list(file_table_names.keys())
+    existing_values = list(file_table_names.values())
+    
+    # check datafile in json
+    if '/' in datafile:
+        datafile = datafile.split('/')[-1]
+    if datafile in existing_keys:
+        print("""File "{}" already in json with table name "{}" """.format(datafile, file_table_names[datafile]))
+        return(file_table_names[datafile])
+    else:
+        table_name = datafile.split('.')[0]
+        if table_name in existing_values:
+            print("""Table "{}" already in json for a file """.format(table_name))
+            return(None)
+        else:
+            file_table_names[datafile] = table_name
+            with open(jsonfile, 'w') as f:
+                json.dump(file_table_names, f, ensure_ascii=True, sort_keys=True, indent=4)
+            print("""file:table "{}":"{}" added to json file """.format(datafile, file_table_names[datafile]))
+            return table_name
+    return(None)
+
+
 def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema="raw"):
     """ Upload csv file to postgres database
 
@@ -93,9 +131,11 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
 
     #write the data frame to postgres
     file_name = filepath.split('/')[-1]
-    file_table_names = json.load(open('file_to_table_name.json','r')) # load json of mapping from filenames to table names
-    table_name = file_table_names[file_name] # get the table name
-
+    table_name = fetch_or_add_file2table_jsonfile(file_name)
+    if table_name is None:
+        print("""File "{}": No table name can be determined """.format(file_name))
+        return(None)
+    print("""uploading data file "{}" """.format(file_name))
     # check existing tables in sql first to avoid errors
     if table_name not in all_table_names or if_exists=='replace':
         if nrows==-1: # upload all rows
@@ -124,7 +164,7 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
     fnames = [data_dir + fn for fn in data_file_names]
     table_names = []
     for filepath in fnames:
-        print("working on ", filepath)
+        print("\n-------- working on {} -------- ".format(filepath))
         tab_name = csv2postgres_file(filepath, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
         table_names.append(tab_name)
     return table_names
@@ -175,9 +215,8 @@ if __name__ == '__main__':
 		directory = options.dir_to_upload
 		if directory[-1]!='/':
 			directory = directory+'/'
-		print("Preparing dir %s to upload to postgresql" %
-            options.dir_to_upload)
+		print("\nPreparing dir %s to upload to postgresql" % options.dir_to_upload)
 		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
-		print("Tables uploaded:", table_names)
+		print("\nTables uploaded:\n",table_names, "\n")
 	else:
-		print("No files specified to upload...quiting")
+		print("No files specified to upload...quiting\n")
