@@ -135,7 +135,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     if table_name is None:
         print("""File "{}": No table name can be determined """.format(file_name))
         return(None)
-    print("""Working on file "{}" """.format(file_name))
+    print("""uploading data file "{}" """.format(file_name))
     # check existing tables in sql first to avoid errors
     if table_name not in all_table_names or if_exists=='replace':
         if nrows==-1: # upload all rows
@@ -164,7 +164,7 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
     fnames = [data_dir + fn for fn in data_file_names]
     table_names = []
     for filepath in fnames:
-        print("working on ", filepath)
+        print("\n-------- working on {} -------- ".format(filepath))
         tab_name = csv2postgres_file(filepath, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
         table_names.append(tab_name)
     return table_names
@@ -215,9 +215,8 @@ if __name__ == '__main__':
 		directory = options.dir_to_upload
 		if directory[-1]!='/':
 			directory = directory+'/'
-		print("Preparing dir %s to upload to postgresql" %
-            options.dir_to_upload)
+		print("\nPreparing dir %s to upload to postgresql" % options.dir_to_upload)
 		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
-		print("Tables uploaded:", table_names)
+		print("\nTables uploaded:\n",table_names, "\n")
 	else:
-		print("No files specified to upload...quiting")
+		print("No files specified to upload...quiting\n")
