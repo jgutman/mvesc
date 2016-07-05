@@ -207,7 +207,7 @@ if __name__ == '__main__':
 		if_exists = options.if_exists
 
 	if options.filename_to_upload:
-		print("Preparing file %s to upload to postgresql" %
+		print("Preparing file %s to upload to psql" %
             options.filename_to_upload)
 		table_name = csv2postgres_file(options.filename_to_upload, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print("Table uploaded:", table_name)
@@ -215,7 +215,7 @@ if __name__ == '__main__':
 		directory = options.dir_to_upload
 		if directory[-1]!='/':
 			directory = directory+'/'
-		print("\nPreparing dir %s to upload to postgresql" % options.dir_to_upload)
+		print("\nPreparing dir %s to upload to psql" % options.dir_to_upload)
 		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print("\nTables uploaded:\n",table_names, "\n")
 	else:
