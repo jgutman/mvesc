@@ -1,50 +1,32 @@
 #from mvesc_utility_functions import postgres_pgconnection_generator
 import psycopg2 as pg
 from contextlib import contextmanager
+from mvesc_utility_functions import *
 
 '''
-Zhe Overall Note:
-   I have not yet checked to ensure the utility functions work
-   While this code repeats duplicate rows, I have not yet error checked to
-   ensure we didn't lose students in the process (perhaps those
-   without a grade or withdrawal code?)
+Joint note from JG and ZZ:
+This python file generates a SQL query to build a table tracking
+students over time. Each column represents a year and the grade the 
+student was in that year.
 
-   This SQL code is not great and may not be the best way to do this.
-   This problem is tricky because students can have multiple observations
-   per year (multiple grades or multiple withdrawals).
-'''
+With work from JG, we ensure no students are lost in the process of this
+(except 34 pre-K students that leave in pre-K that JG removes).
+    These are all
+    students from Riverview district that seemed to enter and leave district in
+    same year, inc. errors, pre-k students, not useful.
+   
+This SQL code is not great and may not be the best way to do this.
+This problem is tricky because students can have multiple observations
+per year (multiple grades).
+    Left in duplicate records because of grade level errors, we will need to clean
+these later. 
 
-'''
-Zhe's note is somewhat obsolete now, have tried to deal with some of the issues
-he mentions above. We don't lose students in the process, except the 34 students
-I chose to remove because they never appear with a grade level. These are all
-students from Riverview district that seemed to enter and leave district in
-same year, inc. errors, pre-k students, not useful.
-
-Left in duplicate records because of grade level errors, we will need to clean
-these later. As for withdrawals, retained only the most recent withdrawal Date
+As for withdrawals, retained only the most recent withdrawal Date
 and reason. Each of 37,914 is in table at least once. (JG)
 '''
 
-# delete this function once Hanna has updated utility functions
-# use commented import statement above instead
-@contextmanager
-def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
-    """ Generate a psycopg2 connection (to use in a with statement)
-    Note: you can only run it on the mvesc server
-    :param str pass_file: file with the credential information
-    :yield pg.connection generator: connection to database
-    """
-    with open(pass_file, 'r') as f:
-        passinfo = f.read()
-    passinfo = passinfo.strip().split(':')
-    host_address = passinfo[0]
-    port = passinfo[1]
-    user_name = passinfo[2]
-    name_of_database = passinfo[3]
-    user_password = passinfo[4]
-    yield pg.connect(host=host_address, database=name_of_database,
-        user=user_name, password=user_password)
+# get postgres_pgconnection_generator() function from 
+
 
 def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
     """ Gets the range of school years covered by the data in the snapshots
@@ -88,6 +70,8 @@ def sql_gen_tracking_students(year_begin, year_end,
     :return: sql query string
     :rtype: str
     """
+
+    # remove previously created table if exists
     query_frame = """
     drop table if exists {}.{};
     create table {}.{} as
@@ -95,6 +79,8 @@ def sql_gen_tracking_students(year_begin, year_end,
 			(select * from (
     """.format(schema, table, schema, table)
 
+    # for each year, get the distinct student lookup and grade pairs
+    #   and add that as a column for that year (using full joins)
     for year in range(year_begin, year_end+1):
         subquery = """
         (select distinct student_lookup, grade as "{}" from {}.{}
@@ -107,6 +93,8 @@ def sql_gen_tracking_students(year_begin, year_end,
             full join {} using (student_lookup)
             """.format(subquery)
 
+    # after getting grades, get the unique and most recent withdrawal
+    #   reason for each student
     query_frame += """ )
     order by student_lookup) as students_grades_only
     left join
