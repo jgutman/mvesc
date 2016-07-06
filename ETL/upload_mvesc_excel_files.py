@@ -72,7 +72,7 @@ raw_irn_newoldcol_dict['Phone #'] = 'phone'
 
 new_irn_df = irn_df.rename(columns=raw_irn_newoldcol_dict)
 new_irn_csv_name = irn_file.split('.')[0]+'.csv'
-new_irn_df.to_csv(new_irn_csv_name)
+new_irn_df.to_csv(new_irn_csv_name, index=False)
 print('Excel file column names corrected and saved as ', new_irn_csv_name)
 print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
 /mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s public").read())
