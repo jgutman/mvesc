@@ -11,8 +11,7 @@ from csv2postgres_mvesc import postgresql_engine_generator_mvesc
 
 #++++++ Functions only for the Excel files ++++++#
 def combine_colnames(col1, col2):
-    """Combine the colnames from 2 rows: !! Only works in this specific case
-    
+    """combine the colnames from 2 rows: !! Only works in this specific case
     :param str col1: first column-name
     :param str col2: second column-name
     :return str new_col: combined new column name
@@ -33,9 +32,8 @@ def combine_colnames(col1, col2):
     return new_col
 
 
-
 def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
-    """ Dump dataframe object to postgres database
+    """ dump dataframe object to postgres database
     
     :param pandas.DataFrame df: dataframe
     :param int nrows: number of rows to write to table;
@@ -122,3 +120,15 @@ df_Mobility=df_Mobility.rename(columns=new_colnames_dict)
 df_Mobility=df_Mobility.drop('metrics', axis=1)
 table_name = df2postgres(df_Mobility, "Mobility_2010_2015", nrows=-1, if_exists='replace', schema=schema)
 print("table uploaded to mvesc: ", table_name)
+
+
+#++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
+# -1. read Excel file 
+# -2. upload the table
+jvsd_fn = '/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx'
+jvs_df = pd.read_excel(jvsd_fn, sheetname=0)
+newcol_dict = {col:col.lower() for col in jvs_df.columns}
+jvs_df = jvs_df.rename(columns=newcol_dict)
+table_name = 'JVSD_Contact'
+df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema='raw')
+df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema='public')
