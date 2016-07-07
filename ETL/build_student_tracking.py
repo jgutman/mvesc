@@ -1,6 +1,10 @@
-#from mvesc_utility_functions import postgres_pgconnection_generator
-import psycopg2 as pg
-from contextlib import contextmanager
+from mvesc_utility_functions import postgres_pgconnection_generator
+#import psycopg2 as pg
+#from contextlib import contextmanager
+
+'''
+These docstrings need to be updated.
+'''
 
 '''
 Zhe Overall Note:
@@ -26,27 +30,8 @@ these later. As for withdrawals, retained only the most recent withdrawal Date
 and reason. Each of 37,914 is in table at least once. (JG)
 '''
 
-# delete this function once Hanna has updated utility functions
-# use commented import statement above instead
-@contextmanager
-def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
-    """ Generate a psycopg2 connection (to use in a with statement)
-    Note: you can only run it on the mvesc server
-    :param str pass_file: file with the credential information
-    :yield pg.connection generator: connection to database
-    """
-    with open(pass_file, 'r') as f:
-        passinfo = f.read()
-    passinfo = passinfo.strip().split(':')
-    host_address = passinfo[0]
-    port = passinfo[1]
-    user_name = passinfo[2]
-    name_of_database = passinfo[3]
-    user_password = passinfo[4]
-    yield pg.connect(host=host_address, database=name_of_database,
-        user=user_name, password=user_password)
-
-def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
+def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
+    schema = 'clean', snapshots = 'all_snapshots'):
     """ Gets the range of school years covered by the data in the snapshots
     table, and generates the appropriate sql query to track all students in
     the snapshots table over that range of years. Executes query to build this
@@ -63,14 +48,16 @@ def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
     min_year, max_year = cursor.fetchone()
     min_year = int(min_year) # these should already be integers anyway
     max_year = int(max_year)
-    query = sql_gen_tracking_students(min_year, max_year,
+    query_build_wide_table = sql_gen_tracking_students(min_year, max_year,
             schema = schema, snapshots = snapshots)
-    query_survival = cohort_survival_analysis(min_year, max_year, '04',
-        schema = schema)
-    # cursor.execute(query)
+    query_survival = cohort_survival_analysis(max(min_year, year_begin),
+        min(max_year, year_end), grade_begin = grade_begin, schema = schema)
+    cursor.execute(query_build_wide_table)
     cursor.execute(query_survival)
+    col_names = [desc[0] for desc in cursor.description]
+    print(col_names)
     cohort_results = cursor.fetchall()
-    print(cohort_results)
+    return(cohort_results)
 
 def sql_gen_tracking_students(year_begin, year_end,
     schema = 'clean', snapshots = 'all_snapshots',
@@ -128,7 +115,7 @@ def sql_gen_tracking_students(year_begin, year_end,
 
     query_frame += """
         left join
-            (select distinct student_lookup, withdraw_reason,
+            (select distinct student_lookup, withdraw_reason, withdrawn_to_irn,
             district_withdraw_date from {}.{}) as latest_reason
         on latest_withdrawal.student_lookup = latest_reason.student_lookup and
         latest_withdrawal.last_date = latest_reason.district_withdraw_date)
@@ -146,21 +133,21 @@ def cohort_survival_analysis(year_begin, year_end, grade_begin,
     joined_query = ''
     next_grade = grade_begin
     for year in range(year_begin, year_end+1):
+        if (year != year_begin):
+            next_grade = '%02d' % (int(next_grade)+1)
+        if (next_grade == '13'):
+            break
         subquery_get_count = """
-        (select {year} as school_year, count(*) from
+        (select {next_grade} as grade, {year} as school_year, count(*) from
             (select distinct(student_lookup)
                 from {schema}.{table} where "{year_begin}" = '{grade_begin}')
                 as grade_{grade_begin}_in_{year_begin}
         """.format(schema=schema, table=table, year_begin=year_begin,
-                    grade_begin=grade_begin, year=year)
+                    grade_begin=grade_begin, year=year, next_grade=next_grade)
         if (year == year_begin):
             joined_query += """ %s )""" % (subquery_get_count)
 
         else:
-            next_grade = '%02d' % (int(next_grade)+1)
-            if (next_grade == '13'):
-                break
-
             subquery_next_year = """
             where student_lookup in (select distinct(student_lookup)
                 from {schema}.{table} where "{year}" = '{next_grade}'))
@@ -187,7 +174,7 @@ def main():
         with connection.cursor() as cursor:
             # print(sql_gen_tracking_students(2006, 2015))
             # print(cohort_survival_analysis(2006, 2015, '04'))
-            build_wide_format(cursor)
+            print(build_wide_format(cursor))
         connection.commit()
     print('done!')
 
