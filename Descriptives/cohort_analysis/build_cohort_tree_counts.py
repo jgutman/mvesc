@@ -38,11 +38,14 @@ def build_empty_tree():
     # tree.vs[cohort_index].attributes()
     # assert([v['count'] for v in cohort_vertex][0] == 0)
     # student_list = [1000, 2000, 3000, 4000]
-    # tree.vs[cohort_index]['students'] = student_list
     ### index first, then attribute name! reverse order doesn't change value
+    # tree.vs[cohort_index]['students'] = student_list
     # tree.vs[cohort_index]['count'] = len(student_list)
-    # assert([v['count'] for v in cohort_vertex][0] == 4)
+    # assert([v['count'] for v in cohort_vertex][0] == len(student_list))
+    # assert([v['students'] for v in cohort_vertex][0] == student_list)
     # tree.vs[cohort_index].attributes()
+    # tree_layout = tree.layout('rt')
+
 
     return tree
 
