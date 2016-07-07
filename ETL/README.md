@@ -1,6 +1,8 @@
 # ETL Documentation
 
-## Raw Data Types Received
+This is the order of operations used for preparing and transforming the tables.
+
+## 1. Raw Data Types Received
 
 There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except 1 that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
 
@@ -13,7 +15,7 @@ Below is a list of the style of the raw data that we received
 	* class grades
 	* absences reported on a daily basis
 
-## Importing Raw Data into Our PostgreSQL Database
+## 2. Importing Raw Data into Our PostgreSQL Database
 
 To address our two types of data, we used two styles to bring our data into our database.
 
@@ -26,5 +28,51 @@ The Python script takes in a directory or a file as an input. It checks the file
 
 #### Python Script Operation Details
 
-## Cleaning the Input Tables in Public & Output to 'clean' Schema
+Uses pd.read_csv with the appropriate options. How does it deal with headers?
 
+#### Utility Module Functions
+
+## 3. Consolidating the Raw Tables in Public & Into the 'clean' Schema
+
+### Consolidating Tables
+
+(consolidating_tables.py + snapshots_to_table.json)
+This is a Python script used to consolidate and clean all the yearly snapshots provided. It relies on the handmade JSON file, which maps various different spellings of raw column names to the preferred clean column names.
+Examples include ... *missing*
+
+Output = `clean.all_snapshots`
+
+(consolidating_tables.py)
+Inside this Python script, there is also a command to create and collapse the all_grades and all_absences table.
+
+## Cleaning & Standardizing the Consolidated Tables
+
+(consolidating_tables.py)
+This script from the consolidating tables section also performs cleaning of the columns.
+
+(clean_absences.sql)
+This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
+(all_absences_generate_mm_day_wkd.sql)
+This script adds useful columns processing the dates from absences
+
+(clean_grades.sql)
+This script details the choices made in cleaning the student individual class marks.
+
+(clean_oaaogt_0616.sql)
+test scores
+
+## 4. Creation of Helpful Additional Tables
+
+Finally, the last step of our ETL is creating some other tables to be of help going forward.
+
+(build_student_tracking.py)
+This builds a table tracking the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
+
+(`clean.all_graduates` table)
+This is a simple table keeping only students that have a graduation date from the all
+
+## 5. Future Work To Do
+
+- fill_in_missing_years.py is currently empty
+- make the utility functions into a module
+- 
