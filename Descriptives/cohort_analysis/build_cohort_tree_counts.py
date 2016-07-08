@@ -1,18 +1,152 @@
 import igraph
 from igraph import *
 import cairo
+
+import os, sys, imp
+parentdir = os.path.abspath('/home/jgutman/mvesc/ETL')
+sys.path.insert(0,parentdir)
+
 from mvesc_utility_functions import postgres_pgconnection_generator
 
 def get_bucket_counts(cursor, tree, grade_begin, year_begin,
-    schema = 'clean', table = 'wrk_tracking_students'):
+        schema = 'clean', tracking = 'wrk_tracking_students', grads = 'all_graduates',
+        dropout_recovery_irns="IRN_DORP_GRAD_RATE1415", jvsd_irns="JVSD_Contact"):
+    # This function assumes wrk_tracking_students and all_graduates have been built correctly
+    # Make sure they are up to date with latest builds!
+
+    # total students in cohort
     cohort_total_query = """select distinct student_lookup from
         {schema}.{table} where "{year_begin}" = '{grade_begin}'
-    """.format(schema=schema, table=table, year_begin=year_begin,
-        grade_begin=grade_begin)
-    cursor.execute(cohort_total_query)
-    cohort_total_students = cursor.fetchall()
+    """.format(schema=schema, table=tracking, year_begin=year_begin, grade_begin=grade_begin)
+    update_tree_with_query(cursor, tree, cohort_total_query, "cohort total")
+    #print(cohort_total_query)
 
+    # students without a graduation date in all_graduates table
+    not_graduated_total_query = """{parent_query} and student_lookup not in
+        (select student_lookup from {schema}.{grads})
+    """.format(parent_query=cohort_total_query, schema=schema, grads=grads)
+    update_tree_with_query(cursor, tree, not_graduated_total_query, "no graduation date")
+    #print(not_graduated_total_query)
 
+    # students with a graduation date in all_graduates table
+    graduated_total_query = """{parent_query} and student_lookup in
+        (select student_lookup from {schema}.{grads})
+    """.format(parent_query=cohort_total_query, schema=schema, grads=grads)
+    update_tree_with_query(cursor, tree, graduated_total_query, "graduation date")
+    #print(graduated_total_query)
+
+    # students without a withdrawal reason in tracking table
+    no_withdrawal_reason_query = """{parent_query} and withdraw_reason is null
+    """.format(parent_query=not_graduated_total_query)
+    update_tree_with_query(cursor, tree, no_withdrawal_reason_query, "no withdrawal reason")
+    #print(no_withdrawal_reason_query)
+
+    # students with withdrawal reason in tracking table
+    withdrawal_reason_query = """{parent_query} and withdraw_reason is not null
+    """.format(parent_query=not_graduated_total_query)
+    update_tree_with_query(cursor, tree, withdrawal_reason_query, "withdrawal reason")
+    #print(withdrawal_reason_query)
+
+    # get expected graduation date given current cohort grade level and year
+    try:
+        grade = int(grade_begin)
+    except ValueError:
+        print("Bad cohort grade level")
+    assert(grade > 0 and grade <= 12), "Bad cohort grade level"
+
+    years_to_graduate = 13-grade
+    expected_grad_year = year_begin + years_to_graduate
+    truncated_graduates_query = graduated_total_query.split(')')[0]
+
+    # students with graduation within 4 years
+    grad_in_4years_query = """{parent_query} where graduation_date <= '{year}-09-01')
+    """.format(parent_query=truncated_graduates_query, year=expected_grad_year)
+    update_tree_with_query(cursor, tree, grad_in_4years_query, "4 year graduation")
+    #print(grad_in_4years_query)
+
+    # students with graduation within 5 years
+    grad_in_5years_query = """{parent_query} where graduation_date <= '{year_late}-09-01'
+        and graduation_date > '{year_ontime}-09-01')
+    """.format(parent_query=truncated_graduates_query, year_ontime = expected_grad_year,
+               year_late=expected_grad_year+1)
+    update_tree_with_query(cursor, tree, grad_in_5years_query, "5 year graduation")
+    #print(grad_in_5years_query)
+
+    # students with graduation in more than 5 years
+    grad_in_gt5years_query = """{parent_query} where graduation_date > '{year_late}-09-01')
+    """.format(parent_query=truncated_graduates_query, year_late=expected_grad_year+1)
+    update_tree_with_query(cursor, tree, grad_in_gt5years_query, "more than 5 years")
+    #print(grad_in_gt5years_query)
+
+    # students without a withdrawal reason or withdrawal date in tracking table
+    no_withdrawal_date_query = """{parent_query} and district_withdraw_date is null
+    """.format(parent_query=no_withdrawal_reason_query)
+    update_tree_with_query(cursor, tree, no_withdrawal_date_query, "no withdrawal date")
+    #print(no_withdrawal_date_query)
+
+    # students without a withdrawal reason but have a withdrawal date in tracking table
+    has_withdrawal_date_query = """{parent_query} and district_withdraw_date is not null
+    """.format(parent_query=no_withdrawal_reason_query)
+    update_tree_with_query(cursor, tree, has_withdrawal_date_query, "district withdrawal date")
+    #print(has_withdrawal_date_query)
+
+    # students whose withdrawal reason is not dropout or transferred (starts with withdrew or expelled)
+    withdrawal_misc_reasons = """{parent_query} and withdraw_reason not like 'transfer%'
+        and withdraw_reason not like 'dropout%' and withdraw_reason not like 'graduate%'
+    """.format(parent_query=withdrawal_reason_query)
+    update_tree_with_query(cursor, tree, withdrawal_misc_reasons, "misc withdrawal")
+    #print(withdrawal_misc_reasons)
+
+    # students who transferred with or without IRN
+    transfer_any_query = """{parent_query} and withdraw_reason like 'transfer%'
+    """.format(parent_query=withdrawal_reason_query)
+    update_tree_with_query(cursor, tree, transfer_any_query, "transferred")
+    #print(transfer_any_query)
+
+    # students who dropped out
+    dropout_withdrawal_reason = """{parent_query} and withdraw_reason like 'dropout%'
+    """.format(parent_query=withdrawal_reason_query)
+    update_tree_with_query(cursor, tree, dropout_withdrawal_reason, "dropout")
+    #print(dropout_withdrawal_reason)
+
+    # students who transferred with withdrawn to IRN provided
+    transfer_hasIRN_query = """{parent_query} and withdrawn_to_irn is not null
+    """.format(parent_query=transfer_any_query)
+    update_tree_with_query(cursor, tree, transfer_hasIRN_query, "withdrawn to IRN")
+    #print(transfer_hasIRN_query)
+
+    # students who transferred with no withdrawn to IRN
+    # check that student doesn't have a withdrawn to IRN in any record of the tracking table
+    transfer_noIRN_query = """{parent_query} and student_lookup not in
+        ({alternate_query})
+    """.format(parent_query=transfer_any_query, alternate_query=transfer_hasIRN_query)
+    update_tree_with_query(cursor, tree, transfer_noIRN_query, "no withdraw to IRN")
+    #print(transfer_noIRN_query)
+
+    # students who transferred to a dropout recovery program
+    transfer_dropout_recovery = """{parent_query} and withdrawn_to_irn::int in
+        (select distinct(district_irn) from public."{dropout_recovery}")
+    """.format(parent_query=transfer_hasIRN_query, dropout_recovery=dropout_recovery_irns)
+    update_tree_with_query(cursor, tree, transfer_dropout_recovery, "dropout recovery program")
+    #print(transfer_dropout_recovery)
+
+    # students who transferred to a JVSD
+    transfer_JVSD_query = """{parent_query} and withdrawn_to_irn::int in
+        (select distinct(irn) from public."{jvsd}")
+    """.format(parent_query=transfer_hasIRN_query, jvsd=jvsd_irns)
+    update_tree_with_query(cursor, tree, transfer_JVSD_query, "JVSD/career tech")
+    #print(transfer_JVSD_query)
+
+    # students who transferred to any other IRN
+    transfer_hasIRN_other = """{parent_query} and student_lookup not in
+        ({jvsd_query}) and student_lookup not in ({dropout_recovery_query})
+    """.format(parent_query=transfer_hasIRN_query, jvsd_query=transfer_JVSD_query,
+               dropout_recovery_query=transfer_dropout_recovery)
+    update_tree_with_query(cursor, tree, transfer_hasIRN_other, "other Ohio IRN")
+    #print(transfer_hasIRN_other)
+
+    #print(tree.vs["description"])
+    #print(tree.vs["count"])
     return tree
 
 def draw_tree_to_file(tree, filename="test_tree_plot.png"):
@@ -88,39 +222,75 @@ def build_empty_tree():
         "other Ohio IRN"]
     outcome_buckets["late"] = ["5 year graduation", "more than 5 years"]
     outcome_buckets["on-time"] = ["4 year graduation"]
+
     # Reverse keys and values of outcome_buckets dict
     outcome_buckets_flipped = dict((outcome,
             [k for k,v in outcome_buckets.items() if outcome in v][0])
             for outcome in tree.vs["description"])
+
     # Set tree vertex attributes for broad categories defined above
     tree.vs["outcomes"] = [outcome_buckets_flipped[bucket]
             for bucket in tree.vs["description"]]
 
-    ### putting some basic useful commands here temporarily for reference
-    print(tree) # 18 vertices, 17 edges, 4 vertex attributes, 0 edge attributes
-
-    # cohort_vertex = tree.vs.select(description='cohort total')
-    # assert(len(cohort_vertex) == 1)
-    # cohort_index = [v.index for v in cohort_vertex][0]
-    # tree.vs[cohort_index].attributes()
-    # assert([v["count"] for v in cohort_vertex][0] == 0)
-    # student_list = [1000, 2000, 3000, 4000]
-    ### index first, then attribute name! reverse order doesn't change value
-    # tree.vs[cohort_index]["students"] = student_list
-    # tree.vs[cohort_index]["count"] = len(student_list)
-    # assert([v["count"] for v in cohort_vertex][0] == len(student_list))
-    # assert([v["students"] for v in cohort_vertex][0] == student_list)
-    # tree.vs[cohort_index].attributes()
-
+    #print(tree) # 18 vertices, 17 edges, 4 vertex attributes, 0 edge attributes
     return tree
+
+def write_outcomes_to_database(cursor, tree, schema='clean', table='wrk_tracking_students'):
+    """
+    """
+    for vertex_index in range(len(tree.vs)):
+        outcome = tree.vs[vertex_index]["outcomes"]
+        if (outcome != "non-terminal"):
+            student_list = tree.vs[vertex_index]["students"]
+
+            if (len(student_list) > 0):
+                student_list_formatted = ", ".join([str(student) for student in student_list])
+                bucket = tree.vs[vertex_index]["description"]
+
+                update_bucket_query = """update {schema}.{table}
+                    set outcome_bucket='{bucket}' where student_lookup in ({students});
+                """.format(schema=schema, table=table, bucket=bucket, students=student_list_formatted)
+
+                update_outcome_query = """update {schema}.{table}
+                    set outcome_category='{outcome}' where student_lookup in ({students});
+                """.format(schema=schema, table=table, outcome=outcome, students=student_list_formatted)
+
+                cursor.execute(update_bucket_query)
+                cursor.execute(update_outcome_query)
+
+def update_tree_with_query(cursor, tree, query, desc_label):
+    """
+    """
+    cursor.execute(query)
+    student_list_results = cursor.fetchall() # a list of tuples of ints
+    student_list = [student[0] for student in student_list_results] # a list of ints
+    vertex_list = tree.vs.select(description=desc_label) # returns a vertex sequence
+    assert(len(vertex_list) == 1) # descriptions should be unique, outcomes are not
+    vertex_index = [v.index for v in vertex_list][0] # returns an int index of the vertex
+    tree.vs[vertex_index]["students"] = student_list
+    tree.vs[vertex_index]["count"] = len(student_list)
+
+    # check that tree is updated, does not need to be returned (pass by reference)
+    assert([v["count"] for v in vertex_list][0] == len(student_list_results))
+    assert([v["students"] for v in vertex_list][0] == student_list)
+
+def run_outcomes_on_all_cohorts(cursor, grade_start, year_begin, year_end):
+    for school_year in range(year_begin, year_end+1):
+        cohort_tree = build_empty_tree()
+        cohort_tree = get_bucket_counts(cursor, cohort_tree,
+            grade_begin = grade_start, year_begin = school_year)
+        filename= "cohort_tree_grade_{grade}_in_{year}".format(
+            grade=grade_start, year=school_year)
+        draw_tree_to_file(cohort_tree, filename)
+        write_outcomes_to_database(cursor, cohort_tree)
 
 def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            cohort_tree = build_empty_tree()
-            cohort_tree = get_bucket_counts(
-                cursor, cohort_tree, grade_begin = '09', year_begin = 2010)
-            cursor.execute(query)
+            run_outcomes_on_all_cohorts(cursor, '09', 2006, 2012)
+            run_outcomes_on_all_cohorts(cursor, '10', 2006, 2006)
+            run_outcomes_on_all_cohorts(cursor, '11', 2006, 2006)
+            run_outcomes_on_all_cohorts(cursor, '12', 2006, 2006)
         connection.commit()
     print('done!')
 
