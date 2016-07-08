@@ -2,7 +2,7 @@
 
 This is the order of operations used for preparing and transforming the tables. The orderd exact steps are summarized at the end.
 
-The ETL for Excel files are currently not documented.
+The ETL for Excel files are currently not documented. @Xiang, I need your help on this.
 
 
 ## 1. Raw Data Types Received
@@ -31,9 +31,11 @@ The Python script takes in a directory or a file as an input. It checks the file
 
 #### Python Script Operation Details
 
-Uses pd.read_csv with the appropriate options. How does it deal with headers?
+Uses pd.read_csv with the appropriate options. 
 
 #### Utility Module Functions
+
+missing description about individual function names & brief summary of operations
 
 ## 3. Consolidating the Raw Tables in Public & Into the 'clean' Schema
 
@@ -51,7 +53,7 @@ Inside this Python script, there is also a command to create and collapse the al
 ## Cleaning & Standardizing the Consolidated Tables
 
 (consolidating_tables.py)
-This script from the consolidating tables section also performs cleaning of the columns.
+This script from the consolidating tables section also performs cleaning of the column values.
 
 (clean_absences.sql)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
@@ -71,14 +73,14 @@ Finally, the last step of our ETL is creating some other tables to be of help go
 (build_student_tracking.py)
 This builds a table tracking the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
 
-(`clean.all_graduates` table)
+(`clean.all_graduates` table script)
+[script missing]
 This is a simple table keeping only students that have a graduation date from the all
 
 ## 5. Future Work To Do
 
 - fill_in_missing_years.py is currently empty
 - make the utility functions into a module
-- 
 
 ## Summarized Order of Operations
 
@@ -88,6 +90,8 @@ This is a simple table keeping only students that have a graduation date from th
 	- those files without headers need to be imported separately (instead of using the directory command)
 	- [check] Is this true for the Excel files too?
 	- this automatically creates `file_to_table_name.json`
+2b. Run Excel file import process
+	- [MISSING]
 3. Run `consolidating_tables.py` to consolidate all the district yearly snapshot, grade, and absences tables together
 4. Run `clean_absences.sql`
 5. Run `clean_oaaogt_0616.sql`
