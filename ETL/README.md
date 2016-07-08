@@ -34,14 +34,14 @@ To address our two types of data, we used two styles to bring our data into our 
 For the SQL server backup, we opened the backup onto a separate, temporary SQL server we create. Then, we transfer that SQL server to our PostgreSQL database.
 
 For the CSV/Excel files, we use a Python script and a JSON file. The general procedure is
-	1. load data into Python data frames;
-	2. create mappings from file names to table names and update JSON file automatically;
-	3. check postgres database whether there is an existing table with the same table name;
-	4. upload data frames to postgres server using the table names in JSON file based on function options;
+	* 1. load data into Python data frames;
+	* 2. create mappings from file names to table names and update JSON file automatically;
+	* 3. check postgres database whether there is an existing table with the same table name;
+	* 4. upload data frames to postgres server using the table names in JSON file based on function options;
 
-For the CSV files which are well-structured, the corresponding Python script `csv2postgres_mvesc.py` can takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'replace' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'raw' schema or the specified one in our database.
+* For the CSV files which are well-structured, the corresponding Python script `csv2postgres_mvesc.py` can takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'replace' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'raw' schema or the specified one in our database.
 
-For the Excel files which has various structures and irregular headers, we have to handle each Excel file and its sheets one by one. A separate Python script `upload_mvesc_excel_files.py` is written to upload all the relevant Excel files one by one. We only need to run the script to upload all the excel files. Since all the excel data is very small, the default option is to replace the original tables in the database. The table names are eithe the Excel file name or the sheet name in the file. 
+* For the Excel files which has various structures and irregular headers, we have to handle each Excel file and its sheets one by one. A separate Python script `upload_mvesc_excel_files.py` is written to upload all the relevant Excel files one by one. We only need to run the script to upload all the excel files. Since all the excel data is very small, the default option is to replace the original tables in the database. The table names are eithe the Excel file name or the sheet name in the file. 
 
 #### Python Script Operation Details
 
