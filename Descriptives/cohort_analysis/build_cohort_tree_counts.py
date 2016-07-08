@@ -11,6 +11,19 @@ from mvesc_utility_functions import postgres_pgconnection_generator
 def get_bucket_counts(cursor, tree, grade_begin, year_begin,
         schema = 'clean', tracking = 'wrk_tracking_students', grads = 'all_graduates',
         dropout_recovery_irns="IRN_DORP_GRAD_RATE1415", jvsd_irns="JVSD_Contact"):
+    """
+    Runs a sql query for each of the 18 buckets in the initialized tree graph.
+    Gets the counts and lists of student lookup numbers for each bucket.
+    Updates the tree attributes with sql query results.
+    :param psycopg2.cursor cursor: a cursor to execute sql queries in postgres
+    :param igraph.Graph tree: an empty tree Graph, returned by build_empty_tree
+        (stores the results of queries in tree representation)
+    :param str grade_begin: the grade level of the entering cohort in string format
+    :param int year_begin: the school year of the entering cohort
+    :param str schema: name of schema containing tracking table
+    :param str tracking: name of wide student tracking table 
+    """
+
     # This function assumes wrk_tracking_students and all_graduates have been built correctly
     # Make sure they are up to date with latest builds!
 
@@ -156,7 +169,8 @@ def draw_tree_to_file(tree, filename="test_tree_plot.png"):
     Tree attributes should be fully defined before calling this function.
     """
 
-    tree_layout = tree.layout("tree")
+    # set root of the tree at vertex 0
+    tree_layout = tree.layout_reingold_tilford(root=[0])
     # set color mappings for each node in visualized tree graph
     color_dict = {"non-terminal":"black", "exclude":"yellow", "dropout":"red",
         "uncertain":"green", "late":"blue", "on-time":"magenta"}
