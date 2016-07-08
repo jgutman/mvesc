@@ -21,7 +21,7 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
     :param str grade_begin: the grade level of the entering cohort in string format
     :param int year_begin: the school year of the entering cohort
     :param str schema: name of schema containing tracking table
-    :param str tracking: name of wide student tracking table 
+    :param str tracking: name of wide student tracking table
     """
 
     # This function assumes wrk_tracking_students and all_graduates have been built correctly
@@ -293,7 +293,7 @@ def run_outcomes_on_all_cohorts(cursor, grade_start, year_begin, year_end):
         cohort_tree = build_empty_tree()
         cohort_tree = get_bucket_counts(cursor, cohort_tree,
             grade_begin = grade_start, year_begin = school_year)
-        filename= "cohort_tree_grade_{grade}_in_{year}".format(
+        filename= "cohort_tree_grade_{grade}_in_{year}.png".format(
             grade=grade_start, year=school_year)
         draw_tree_to_file(cohort_tree, filename)
         write_outcomes_to_database(cursor, cohort_tree)
