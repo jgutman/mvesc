@@ -1,6 +1,9 @@
 # ETL Documentation
 
-This is the order of operations used for preparing and transforming the tables.
+This is the order of operations used for preparing and transforming the tables. The orderd exact steps are summarized at the end.
+
+The ETL for Excel files are currently not documented.
+
 
 ## 1. Raw Data Types Received
 
@@ -76,3 +79,17 @@ This is a simple table keeping only students that have a graduation date from th
 - fill_in_missing_years.py is currently empty
 - make the utility functions into a module
 - 
+
+## Summarized Order of Operations
+
+1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
+	- [missing] Use SQL code to automatically back these up into 'raw' schema
+2. Run `csv2postgres_mvesc.py` on all the directories of received data (with replace = False)
+	- those files without headers need to be imported separately (instead of using the directory command)
+	- [check] Is this true for the Excel files too?
+	- this automatically creates `file_to_table_name.json`
+3. Run `consolidating_tables.py` to consolidate all the district yearly snapshot, grade, and absences tables together
+4. Run `clean_absences.sql`
+5. Run `clean_oaaogt_0616.sql`
+6. Run `all_absences_generate_mm_day_wkd.sql`
+7. Run `build_tracking_students.py`
