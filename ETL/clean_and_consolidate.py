@@ -1,12 +1,15 @@
 from  mvesc_utility_functions import *
+import consolidating_tables
+import build_student_tracking
 
 with postgres_pgconnection_generator() as connection:
     with connection.cursor() as cursor:
         #consolidating tables in clean schema
-        ### consolidating_tables.py
+        consolidating_tables.main()
 
         #absences
         execute_sql_script("clean_absences.sql")
+        execute_sql_script("all_absences_generate_mm_day_wkd.sql")
 
         #grades
         execute_sql_script("clean_grades.sql")
@@ -22,9 +25,9 @@ with postgres_pgconnection_generator() as connection:
                       new_column_name="status", replace=0) 
 
         #additional tables for analysis
-        ### build_student_tracking.py
-        ### 
-
+        build_student_tracking.main()
+        ## need script for all_graduates table?
+        ## additional script for adding labels to tracking table?
 
     connection.commit()
 

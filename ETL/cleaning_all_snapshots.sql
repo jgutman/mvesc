@@ -104,7 +104,54 @@ select gifted as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- grades
 select distinct grade from clean.all_snapshots order by grade;
-alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
+select count(student_lookup), school_year from clean.all_snapshots where grade = 'GR' group by school_year ;
+select count(*) from clean.wrk_tracking_students where "2015" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2014" = 'GR'; -- 153
+select count(*) from clean.wrk_tracking_students where "2013" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2012" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2011" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2010" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2009" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2008" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2007" = 'GR';
+select count(*) from clean.wrk_tracking_students where "2006" = 'GR'; -- 524
+
+-- dealing with graduate 'GR' codes from 2014
+create temporary table grade_temp as (select student_lookup, grade from clean.all_snapshots where school_year = 2013);
+create temporary table joined_grades as (
+	  select fourteen.student_lookup as student_lookup, MAX(thirteen.grade::int) as thirteen_grade
+	  from clean.all_snapshots as fourteen
+	  join grade_temp as thirteen on thirteen.student_lookup = fourteen.student_lookup
+	  where fourteen.grade like 'GR' and fourteen.school_year = 2014
+	  group by fourteen.student_lookup
+	);
+	
+update clean.all_snapshots set grade =	coalesce (
+	case
+	  when j.thirteen_grade = 11 then '12'
+	  when j.thirteen_grade > 11 then '23'
+	  else j.thirteen_grade::text
+	  end , s.grade
+	  )
+	from joined_grades as j right join clean.all_snapshots as s
+		on j.student_lookup = s.student_lookup 
+			and s.school_year = 2014;
+
+drop table grade_temp;
+drop table joined_grades;
+
+-- dealing with other codes
+update clean.all_snapshots set grade =  
+	case when grade like '**' then null
+		 when grade like '13' then '23'
+		 when grade like 'PS%' then '-1'
+		 when grade like 'KG' then '0'
+		 when grade like 'IN' or grade like 'DR' then null -- inactive students
+		 when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
+		 when grade like 'UG' then null -- means ungraded 
+		 else grade	
+	end;
+	 				
 
 -- graduation date
 select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
@@ -163,12 +210,12 @@ when withdraw_reason like '47' then 'withdrew - amish'
 when withdraw_reason like '48' then 'expelled'
 when withdraw_reason like '51' then 'withdrew - illness'
 when withdraw_reason like '52' then 'withdrew - death'
-when withdraw_reason like '71' then 'dropout - attendence'
+when withdraw_reason like '71' then 'dropout - attendance'
 when withdraw_reason like '72' then 'dropout - employment'
 when withdraw_reason like '73' then 'dropout - over 18'
 when withdraw_reason like '74' then 'dropout - moved'
 when withdraw_reason like '75' then 'dropout - did not finish tests'
-when withdraw_reason like '76' then 'dropout - attendence'
+when withdraw_reason like '76' then 'dropout - attendance'
 when withdraw_reason like '77' then 'dropout - online did not finish tests'
 when withdraw_reason like '79' then 'withdrew - district eligibility'
 when withdraw_reason like '81' then 'error'
