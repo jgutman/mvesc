@@ -126,7 +126,7 @@ for sheet_name in xl.sheet_names:
     table_name = excel_name + sheet_name[-4:]
     tab_name_json = add_file2table_jsonfile(excel_name+'->'+sheet_name, table_name)
     if tab_name_json==None:
-        print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(excel_name+'->'+sheet_name, table_name))
+        print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(excel_name+'->'+sheet_name, table_name))
         continue 
     df = xl.parse(sheet_name)
     names = list(df.columns)
@@ -153,7 +153,7 @@ schema2 = 'public'
 print('\n--- processing: ', filepath)
 tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
-    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
     df_Mobility = pd.read_excel(filepath, skiprows=1)
     df_Mobility2 = pd.read_excel(filepath)
@@ -183,7 +183,7 @@ newcol_dict = {col:col.lower() for col in jvs_df.columns}
 jvs_df = jvs_df.rename(columns=newcol_dict)
 tab_name_json = add_file2table_jsonfile(jvsd_fn.split('/')[-1], table_name)
 if tab_name_json==None:
-    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
