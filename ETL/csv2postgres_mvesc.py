@@ -118,7 +118,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     file_type = filepath.split('.')[-1]
     if file_type not in ['csv', 'txt']:
         print("""File "{}": not 'csv' or 'txt' file""".format(filepath))
-	return(None)
+        return(None)
 
     # read the data frame with or without header
     if header:
