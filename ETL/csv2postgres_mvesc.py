@@ -114,6 +114,12 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     :return str table_name: the table name uploaded to the database
     :rtype str
     """
+    # check file type, only continue with csv or txt file
+    file_type = filepath.split('.')[-1]
+    if file_type not in ['csv', 'txt']:
+        print("""File "{}": not 'csv' or 'txt' file""".format(filepath))
+	return(None)
+
     # read the data frame with or without header
     if header:
         df = pd.read_csv(filepath, low_memory=False)
