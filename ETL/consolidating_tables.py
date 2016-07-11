@@ -219,7 +219,7 @@ def main():
             'Districts%' and table_name not like '%dates%'""")
             snapshot_tables = cursor.fetchall()
             snapshot_tables = [a[0] for a in snapshot_tables]
-
+            print(snapshot_tables)
             cursor.execute("""select table_name from information_schema.tables 
             where table_schema='public' and lower(table_name) 
             like '%absence%'""")

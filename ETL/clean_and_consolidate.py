@@ -33,7 +33,7 @@ execute_sql_script("update_all_snapshots_with_missing_graduates.sql")
 print('all_snapshots cleaned')
 
 #additional tables for analysis
-build_student_tracking.main()
+#build_student_tracking.main() # this one is old, uncomment once merged into master
 execute_sql_script("build_graduates_table_from_snapshots.sql")
 #additional script for adding labels to tracking table?
 print('additional tables built')
