@@ -1,8 +1,8 @@
 {"column_names":{
-    "date":{"name":["Date"], "type":"text"},
-    "absence_length":{"name":["AbsenceLength"], "type":"text"},
-    "absence_code":{"name":["AbsenceCode"], "type":"text"},
-    "absence_desc":{"name":["AbsenceLength"], "type":"text"},
-    "school":{"name":["School"], "type":"text"}
+    "date":{"name":["Date", "AbsenceDate"], "type":"text"},
+    "absence_length":{"name":["AbsenceLength", "AbsenceCount"], "type":"text"},
+    "absence_code":{"name":["AbsenceCode","AbsenceType"], "type":"text"},
+    "absence_desc":{"name":["AbsenceDesc", "AbsenceReason", "Description", "AbsDescription"], "type":"text"},
+    "school":{"name":["School", "SchoolCode"], "type":"text"}
 }
 }

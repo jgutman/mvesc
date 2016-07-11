@@ -214,10 +214,11 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
 def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            snapshot_tables = ["Districts{0:02}{1:02}".format(x,x+1) \
-                               for x in range(6,16)]
-            snapshot_tables += ["Districts{0:02}{1:02}_CREM".format(x,x+1) \
-                                for x in range(10,16)]
+            cursor.execute("""select table_name from information_schema.tables
+            where table_schema='public' and table_name like
+            'Districts%' and table_name not like '%dates%'""")
+            snapshot_tables = cursor.fetchall()
+            snapshot_tables = [a[0] for a in snapshot_tables]
 
             cursor.execute("""select table_name from information_schema.tables 
             where table_schema='public' and lower(table_name) 
@@ -248,5 +249,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

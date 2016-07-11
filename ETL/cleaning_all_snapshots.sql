@@ -126,15 +126,14 @@ create temporary table joined_grades as (
 	  group by fourteen.student_lookup
 	);
 	
-update clean.all_snapshots set grade =	coalesce (
-	case
+update clean.all_snapshots as s 
+set grade = case
 	  when j.thirteen_grade = 11 then '12'
 	  when j.thirteen_grade > 11 then '23'
 	  else j.thirteen_grade::text
-	  end , s.grade
-	  )
-	from joined_grades as j right join clean.all_snapshots as s
-		on j.student_lookup = s.student_lookup 
+	  end
+	from joined_grades as j 
+	where j.student_lookup = s.student_lookup 
 			and s.school_year = 2014;
 
 drop table grade_temp;

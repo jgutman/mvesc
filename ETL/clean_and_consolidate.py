@@ -17,6 +17,7 @@ print('all_grades cleaned')
 
 #tests
 execute_sql_script("clean_oaaogt.sql")
+# add other test cleaning scripts here
 print('oaaogt cleaned')
 
 #snapshots
