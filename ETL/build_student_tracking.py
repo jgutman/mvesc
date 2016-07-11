@@ -25,8 +25,9 @@ As for conflicting withdrawals for a student,
     and reason. Each of 37,914 students is in table at least once. (JG)
 '''
 
-def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
-    schema = 'clean', snapshots = 'all_snapshots'):
+def build_wide_format(cursor, grade_begin='06', year_begin=0, year_end=3000,
+    schema = 'clean', snapshots = 'all_snapshots',
+    tracking = 'wrk_tracking_students'):
 
     """ Gets the range of school years covered by the data in the snapshots
     table, and generates the appropriate sql query to track all students in
@@ -48,14 +49,23 @@ def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
 
     # generate SQL query based on min/max_year
     query_build_wide_table = sql_gen_tracking_students(min_year, max_year,
-            schema = schema, snapshots = snapshots)
+            schema = schema, snapshots = snapshots, table = tracking)
+
     query_survival = cohort_survival_analysis(max(min_year, year_begin),
-        min(max_year, year_end), grade_begin = grade_begin, schema = schema)
+        min(max_year, year_end), grade_begin = grade_begin, schema = schema,
+        table = tracking)
     cursor.execute(query_build_wide_table)
     cursor.execute(query_survival)
     col_names = [desc[0] for desc in cursor.description]
     print(col_names)
     cohort_results = cursor.fetchall()
+
+    sql_query_add_columns = """
+    alter table {schema}.{tracking} add column outcome_bucket varchar(30);
+    alter table {schema}.{tracking} add column outcome_category varchar(30);
+    """.format(schema = schema, tracking = tracking)
+
+    cursor.execute(sql_query_add_columns)
     return(cohort_results)
 
 def sql_gen_tracking_students(year_begin, year_end,
