@@ -104,6 +104,7 @@ select gifted as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- grades
 select distinct grade from clean.all_snapshots order by grade;
+<<<<<<< HEAD
 select count(student_lookup), school_year from clean.all_snapshots where grade = 'GR' group by school_year ;
 select count(*) from clean.wrk_tracking_students where "2015" = 'GR';
 select count(*) from clean.wrk_tracking_students where "2014" = 'GR'; -- 153
@@ -153,6 +154,8 @@ update clean.all_snapshots set grade =
 	end;
 	 				
 
+alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
+
 -- graduation date
 select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
 
@@ -189,6 +192,7 @@ select state as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- status 
 select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
+
 select status as d, count(*) from clean.all_snapshots group by d order by d;
 -- cleaned using a json file in cleaning_student_status.py
 

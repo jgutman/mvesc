@@ -22,9 +22,5 @@ with postgres_pgconnection_generator() as connection:
                       new_column_name="status", replace=0) 
 
         #additional tables for analysis
-        ### build_student_tracking.py
-        ### 
-
-
     connection.commit()
 
