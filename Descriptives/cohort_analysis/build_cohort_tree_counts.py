@@ -3,7 +3,12 @@ from igraph import *
 import cairo
 
 import os, sys, imp
-parentdir = os.path.abspath('/home/jgutman/mvesc/ETL')
+
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 
 from mvesc_utility_functions import postgres_pgconnection_generator
@@ -288,23 +293,29 @@ def update_tree_with_query(cursor, tree, query, desc_label):
     assert([v["count"] for v in vertex_list][0] == len(student_list_results))
     assert([v["students"] for v in vertex_list][0] == student_list)
 
-def run_outcomes_on_all_cohorts(cursor, grade_start, year_begin, year_end):
+def run_outcomes_on_all_cohorts(cursor, grade_start, year_begin, year_end,
+    base_pathname):
     for school_year in range(year_begin, year_end+1):
         cohort_tree = build_empty_tree()
         cohort_tree = get_bucket_counts(cursor, cohort_tree,
             grade_begin = grade_start, year_begin = school_year)
-        filename= "cohort_tree_grade_{grade}_in_{year}.png".format(
+        directory = os.path.join(base_pathname, "Descriptives/cohort_figs")
+        filename = "cohort_tree_grade_{grade}_in_{year}.png".format(
             grade=grade_start, year=school_year)
-        draw_tree_to_file(cohort_tree, filename)
+        draw_tree_to_file(cohort_tree, os.path.join(directory, filename))
         write_outcomes_to_database(cursor, cohort_tree)
 
 def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            run_outcomes_on_all_cohorts(cursor, '09', 2006, 2012)
-            run_outcomes_on_all_cohorts(cursor, '10', 2006, 2006)
-            run_outcomes_on_all_cohorts(cursor, '11', 2006, 2006)
-            run_outcomes_on_all_cohorts(cursor, '12', 2006, 2006)
+            run_outcomes_on_all_cohorts(cursor, '09', 2006, 2012,
+            base_pathname)
+            run_outcomes_on_all_cohorts(cursor, '10', 2006, 2006,
+            base_pathname)
+            run_outcomes_on_all_cohorts(cursor, '11', 2006, 2006,
+            base_pathname)
+            run_outcomes_on_all_cohorts(cursor, '12', 2006, 2006,
+            base_pathname)
         connection.commit()
     print('done!')
 
