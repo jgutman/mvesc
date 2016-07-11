@@ -1,12 +1,12 @@
-#from mvesc_utility_functions import postgres_pgconnection_generator
-import psycopg2 as pg
-from contextlib import contextmanager
-from mvesc_utility_functions import *
+from mvesc_utility_functions import postgres_pgconnection_generator
+#import psycopg2 as pg
+#from contextlib import contextmanager
+#from mvesc_utility_functions import *
 
 '''
 Joint note from JG and ZZ:
 This python file generates a SQL query to build a table tracking
-students over time. Each column represents a year and the grade the 
+students over time. Each column represents a year and the grade the
 student was in that year.
 
 No students are lost in the process
@@ -14,11 +14,11 @@ No students are lost in the process
     These pre-K students are all
     students from Riverview district that seemed to enter and leave district in
     same year and are not useful for our analysis.
-   
+
 This problem is tricky because students can have multiple observations
 per year (multiple grades).
     Left in duplicate records because of grade level errors, we will need to clean
-these later. 
+these later.
 
 As for conflicting withdrawals for a student,
     we retained only the most recent withdrawal Date
@@ -113,7 +113,7 @@ def sql_gen_tracking_students(year_begin, year_end,
     #   reason for each student
     # Adds this via left-join of a large subquery
     #   which creates the 'latest_withdrawal' and 'latest_reason' subtables
-    #   The latest_withdrawal subtable is created by a subquery getting unique 
+    #   The latest_withdrawal subtable is created by a subquery getting unique
     #       distinct student / withdraw reason / withdraw date
     #       where withdraw_reason is not null (empty withdrawal code)
     #       and not 'did not withdraw'
