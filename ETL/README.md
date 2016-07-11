@@ -56,19 +56,12 @@ missing description about individual function names & brief summary of operation
 
 ### Consolidating Tables
 
-(consolidating_tables.py + snapshots_to_table.json)
-This is a Python script used to consolidate and clean all the yearly snapshots provided. It relies on the handmade JSON file, which maps various different spellings of raw column names to the preferred clean column names.
-Examples include ... *missing*
+(consolidating_tables.py + snapshot_column_names.json, grade_column_names.json, and absence_column_names)
+This is a Python script used to consolidate the yearly snapshots into clean.all_snapshots, all provided grades into clean.all_grades, and all fine-grained absence data into clean.all_absences. It relies on the handmade JSON files, which maps various different spellings of raw column names to the preferred clean column names.
 
-Output = `clean.all_snapshots`
-
-(consolidating_tables.py)
-Inside this Python script, there is also a command to create and collapse the all_grades and all_absences table.
+Output = `clean.all_snapshots`, `clean.all_grades`, `clean.all_absences`
 
 ## Cleaning & Standardizing the Consolidated Tables
-
-(consolidating_tables.py)
-This script from the consolidating tables section also performs cleaning of the column values.
 
 (clean_absences.sql)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
@@ -79,7 +72,10 @@ This script adds useful columns processing the dates from absences
 This script details the choices made in cleaning the student individual class marks.
 
 (clean_oaaogt_0616.sql)
-test scores
+This script cleans the test score data
+
+(cleaning_all_snapshots.sql, student_status.json)
+This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
 
 ## 4. Creation of Helpful Additional Tables
 
@@ -90,11 +86,12 @@ This builds a table tracking the yearly (longitudinal) progress for each student
 
 (`clean.all_graduates` table script)
 [script missing]
-This is a simple table keeping only students that have a graduation date from the all
+This is a simple table keeping only students that have a graduation date from the all_snapshots table
 
 ## 5. Future Work To Do
 
 - fill_in_missing_years.py is currently empty
+
 - make the utility functions into a module
 
 ## Summarized Order of Operations
@@ -111,8 +108,5 @@ This is a simple table keeping only students that have a graduation date from th
 	- Run Python script `upload_mvesc_excel_files.py`
 	- defult option is replacing existing table
 
-4. Run `consolidating_tables.py` to consolidate all the district yearly snapshot, grade, and absences tables together
-5. Run `clean_absences.sql`
-6. Run `clean_oaaogt_0616.sql`
-7. Run `all_absences_generate_mm_day_wkd.sql`
-8. Run `build_tracking_students.py`
+4. Run clean_and_consolidate.py
+        - This script will execute all necessary scripts to take care of steps 3 and 4 above.

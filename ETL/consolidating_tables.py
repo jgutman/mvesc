@@ -107,8 +107,8 @@ def all_absences_query(cursor, absence_tables, absence_cols_json):
     new_cols = new_cols_file[u'column_names']
     
     absence_query = """
-    drop table if exists clean.all_absence;
-    create table clean.all_absence as
+    drop table if exists clean.all_absences;
+    create table clean.all_absences as
     select "StudentLookup" as student_lookup,
     """
     for t in absence_tables:

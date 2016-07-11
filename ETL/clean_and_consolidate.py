@@ -24,7 +24,7 @@ with postgres_pgconnection_generator() as connection:
                       old_column_name="status_code",
                       table_name="all_snapshots", 
                       new_column_name="status", replace=0) 
-        execute_sql_script("append_missing_graduates_to_all_graduates.sql")
+#        script to add missing graduates?
 
         #additional tables for analysis
         build_student_tracking.main()
