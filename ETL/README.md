@@ -1,6 +1,6 @@
 # ETL Documentation
 
-This is the order of operations used for preparing and transforming the tables from raw data provided by MVESC. The orderd exact steps are summarized at the end.
+This is the order of operations used for preparing and transforming the tables from raw data provided by MVESC. The ordered exact steps are summarized at the end.
 
 The ETL for Excel files are currently not documented. @Xiang, I need your help on this.
 
@@ -42,11 +42,11 @@ For the CSV/Excel files, we use a Python script and a JSON file. The general pro
 
 * For the CSV files which are well-structured, the corresponding Python script `csv2postgres_mvesc.py` can takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'replace' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'raw' schema or the specified one in our database.
 
-* For the Excel files which has various structures and irregular headers, we have to handle each Excel file and its sheets one by one. A separate Python script `upload_mvesc_excel_files.py` is written to upload all the relevant Excel files one by one. We only need to run the script to upload all the excel files. Since all the excel data is very small, the default option is to replace the original tables in the database. The table names are eithe the Excel file name or the sheet name in the file. 
+* For the Excel files which has various structures and irregular headers, we have to handle each Excel file and its sheets one by one. A separate Python script `upload_mvesc_excel_files.py` is written to upload all the relevant Excel files one by one. We only need to run the script to upload all the excel files. Since all the excel data is very small, the default option is to replace the original tables in the database. The table names are eithe the Excel file name or the sheet name in the file.
 
 #### Python Script Operation Details
 
-Uses pd.read_csv with the appropriate options. 
+Uses pd.read_csv with the appropriate options.
 
 #### Utility Module Functions
 
@@ -63,34 +63,36 @@ Output = `clean.all_snapshots`, `clean.all_grades`, `clean.all_absences`
 
 ## Cleaning & Standardizing the Consolidated Tables
 
-(clean_absences.sql)
+(`clean_absences.sql`)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
-(all_absences_generate_mm_day_wkd.sql)
+(`all_absences_generate_mm_day_wkd.sql`)
 This script adds useful columns processing the dates from absences
 
-(clean_grades.sql)
+(`clean_grades.sql`)
 This script details the choices made in cleaning the student individual class marks.
 
-(clean_oaaogt_0616.sql)
+(`clean_oaaogt_0616.sql`)
 This script cleans the test score data
 
-(cleaning_all_snapshots.sql, student_status.json)
+(`cleaning_all_snapshots.sql`, `student_status.json`)
 This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
 
 ## 4. Creation of Helpful Additional Tables
 
 Finally, the last step of our ETL is creating some other tables to be of help going forward.
 
-(build_student_tracking.py)
-This builds a table tracking the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
-
-(`clean.all_graduates` table script)
-[script missing]
+(`ETL\build_graduates_table_from_snapshots.sql`)
 This is a simple table keeping only students that have a graduation date from the all_snapshots table
 
-## 5. Future Work To Do
+(`ETL\build_student_tracking.py`)
+This builds a table tracking (`clean.wrk_tracking_students`) the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
 
-- fill_in_missing_years.py is currently empty
+(`Descriptives\cohort_analysis\build_cohort_tree_counts.py`)
+This adds to the table built in `build_student_tracking.py` (`clean.wrk_tracking_students`) in order to get
+coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes. (This may get moved into the `generate_features` part of the pipeline)
+
+
+## 5. Future Work To Do
 
 - make the utility functions into a module
 
@@ -108,5 +110,10 @@ This is a simple table keeping only students that have a graduation date from th
 	- Run Python script `upload_mvesc_excel_files.py`
 	- defult option is replacing existing table
 
-4. Run clean_and_consolidate.py
+4. Run `clean_and_consolidate.py`
         - This script will execute all necessary scripts to take care of steps 3 and 4 above.
+
+5. Run `build_student_tracking.py` (this can eventually just be called directly
+	from `clean_and_consolidate`)
+
+6. Run `build_cohort_tree_counts` (unless this is part of pipeline instead?)
