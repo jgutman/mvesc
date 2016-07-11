@@ -38,7 +38,7 @@ def build_wide_format(cursor, schema = 'clean', snapshots = 'all_snapshots'):
     :param str snapshots: name of table where snapshots table lives
     :return nothing (executes query in database)
     """
-    get_year_range = """select min(school_year), max(school_year) from"""\
+    get_year_range = """select min(school_year), max(school_year) from """\
                       """{}.{}""".format(schema, snapshots)
     cursor.execute(get_year_range)
     min_year, max_year = cursor.fetchone()

@@ -1,12 +1,12 @@
 -- birth dates
-select min(birth_date), max(birth_date) from clean.all_snapshots;
+--select min(birth_date), max(birth_date) from clean.all_snapshots;
 	-- older than 21 in 2006
-select student_lookup, birth_date, grade, school_name, school_year from clean.all_snapshots where birth_date < cast('1986-04-11' as date);
+--select student_lookup, birth_date, grade, school_name, school_year from clean.all_snapshots where birth_date < cast('1986-04-11' as date);
 	-- 17 questionable birth_dates	
 	-- 63878 is a 30 year old 1st grader at tri-valley high school?
 
 -- cities
-select city, count(city) from clean.all_snapshots group by city order by city;
+--select city, count(city) from clean.all_snapshots group by city order by city;
 alter table clean.all_snapshots alter column city type text using lower(city);
 alter table clean.all_snapshots alter column city type text using 
 case 
@@ -26,7 +26,7 @@ else city
 end;
 
 -- diplomas 
-select diploma_type, count(diploma_type) from clean.all_snapshots group by diploma_type;
+--select diploma_type, count(diploma_type) from clean.all_snapshots group by diploma_type;
 alter table clean.all_snapshots alter column diploma_type type text using 
 case 
 when diploma_type like '%Regular%' then 'regular'
@@ -35,9 +35,9 @@ when diploma_type like '%Honors%' then 'honors'
 end;
 
 -- disability 
-select disability_code, disability_desc from clean.all_snapshots group by disability_code, disability_desc order by disability_code, disability_desc;
-select disability_desc, count(disability_desc) from clean.all_snapshots group by disability_desc;
-select disability_code, count(disability_code) from clean.all_snapshots group by disability_code;
+--select disability_code, disability_desc from clean.all_snapshots group by disability_code, disability_desc order by disability_code, disability_desc;
+--select disability_desc, count(disability_desc) from clean.all_snapshots group by disability_desc;
+--select disability_code, count(disability_code) from clean.all_snapshots group by disability_code;
 alter table clean.all_snapshots alter column disability_desc type text using 
 case 
 when lower(disability_desc) like '%multiple%' or disability_code like '01' then 'multiple'
@@ -60,7 +60,7 @@ alter table clean.all_snapshots rename column disability_desc to disability;
 alter table clean.all_snapshots drop column disability_code;
 
 -- disadvantagement
-select disadvantagement_code, disadvantagement_desc, count(*) from clean.all_snapshots group by disadvantagement_code, disadvantagement_desc order by disadvantagement_code, disadvantagement_desc;
+--select disadvantagement_code, disadvantagement_desc, count(*) from clean.all_snapshots group by disadvantagement_code, disadvantagement_desc order by disadvantagement_code, disadvantagement_desc;
 alter table clean.all_snapshots alter column disadvantagement_desc type text using 
 case 
 when disadvantagement_code like '1' then 'economic'
@@ -71,22 +71,22 @@ else disadvantagement_code end;
 alter table clean.all_snapshots rename column disadvantagement_desc to disadvantagement;
 alter table clean.all_snapshots drop column disadvantagement_code;
 
-select grade, disadvantagement, count(*) from clean.all_snapshots where disadvantagement = 'academic' or disadvantagement = 'both' group by grade, disadvantagement order by count(*)
+--select grade, disadvantagement, count(*) from clean.all_snapshots where disadvantagement = 'academic' or disadvantagement = 'both' group by grade, disadvantagement order by count(*)
 
 -- discipline
-select discipline_incidents, count(discipline_incidents) from clean.all_snapshots group by discipline_incidents order by discipline_incidents;
+--select discipline_incidents, count(discipline_incidents) from clean.all_snapshots group by discipline_incidents order by discipline_incidents;
 
 -- district admission
-select date_part('year', district_admit_date) as d, count(*) from clean.all_snapshots group by d order by d;
+--select date_part('year', district_admit_date) as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- district withdrawal
-select date_part('year', district_withdraw_date) as d, count(*) from clean.all_snapshots group by d order by d;
+--select date_part('year', district_withdraw_date) as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- ethnicity
-select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
+--select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- flags
-select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
+--select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
 alter table clean.all_snapshots alter column flag1 type text using coalesce(flag1,flag2);
 alter table clean.all_snapshots rename column flag1 to lunch;
 alter table clean.all_snapshots drop column flag2;
@@ -97,25 +97,24 @@ when lower(lunch) like 'r' then 'reduced'
 else null end; -- tossing a few (~50) miscelanous values
 
 -- gender
-select gender as d, count(*) from clean.all_snapshots group by d order by d;
+--select gender as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- gifted
-select gifted as d, count(*) from clean.all_snapshots group by d order by d;
+--select gifted as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- grades
-select distinct grade from clean.all_snapshots order by grade;
-<<<<<<< HEAD
-select count(student_lookup), school_year from clean.all_snapshots where grade = 'GR' group by school_year ;
-select count(*) from clean.wrk_tracking_students where "2015" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2014" = 'GR'; -- 153
-select count(*) from clean.wrk_tracking_students where "2013" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2012" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2011" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2010" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2009" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2008" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2007" = 'GR';
-select count(*) from clean.wrk_tracking_students where "2006" = 'GR'; -- 524
+--select distinct grade from clean.all_snapshots order by grade;
+--select count(student_lookup), school_year from clean.all_snapshots where grade = 'GR' group by school_year ;
+--select count(*) from clean.wrk_tracking_students where "2015" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2014" = 'GR'; -- 153
+--select count(*) from clean.wrk_tracking_students where "2013" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2012" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2011" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2010" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2009" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2008" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2007" = 'GR';
+--select count(*) from clean.wrk_tracking_students where "2006" = 'GR'; -- 524
 
 -- dealing with graduate 'GR' codes from 2014
 create temporary table grade_temp as (select student_lookup, grade from clean.all_snapshots where school_year = 2013);
@@ -157,26 +156,26 @@ update clean.all_snapshots set grade =
 alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
 -- graduation date
-select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
+--select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
 
 -- iss
-select iss as d, count(*) from clean.all_snapshots group by d order by d;
+--select iss as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- limited english
-select limited_english as d, count(*) from clean.all_snapshots group by d order by d;
+--select limited_english as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- oss
-select oss as d, count(*) from clean.all_snapshots group by d order by d;
+--select oss as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- school 
-select school_code, lower(school_name), count(*) from clean.all_snapshots group by school_code, school_name order by school_code, school_name;
+--select school_code, lower(school_name), count(*) from clean.all_snapshots group by school_code, school_name order by school_code, school_name;
 	-- names not very consistent, just use code?
 	
 -- section 504
-select section_504_plan as d, count(*) from clean.all_snapshots group by d order by d;
+--select section_504_plan as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- IRNs
-select coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn) as d, count(*) from clean.all_snapshots group by d order by d;
+--select coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn) as d, count(*) from clean.all_snapshots group by d order by d;
 alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
 coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn);
 alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
@@ -185,20 +184,20 @@ alter table clean.all_snapshots drop column sent_to_1_irn;
 alter table clean.all_snapshots drop column sent_to_2_irn;
 
 -- special_ed
-select cast(special_ed as int) as d, count(*) from clean.all_snapshots group by d order by d;
+--select cast(special_ed as int) as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- state
-select state as d, count(*) from clean.all_snapshots group by d order by d;
+--select state as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- status 
-select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
+--select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
 
-select status as d, count(*) from clean.all_snapshots group by d order by d;
+--select status as d, count(*) from clean.all_snapshots group by d order by d;
 -- cleaned using a json file in cleaning_student_status.py
 
 
 -- withdrawal codes
-select distinct withdraw_reason from clean.all_snapshots;
+--select distinct withdraw_reason from clean.all_snapshots;
 alter table clean.all_snapshots alter column withdraw_reason type text using 
 case
 when withdraw_reason like '36' or withdraw_reason like '16' then 'withdrew - PS' -- the 16 is a typo correction for one student

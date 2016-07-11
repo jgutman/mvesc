@@ -25,4 +25,3 @@ update only clean.all_absences SET week = EXTRACT(WEEK FROM date);
 alter table clean.all_absences add column weekday int default null;
 update only clean.all_absences SET weekday = EXTRACT(dow FROM date);
 
-commit;

@@ -16,7 +16,7 @@ with postgres_pgconnection_generator() as connection:
 #        this script doesn't seem to be on github anywhere?
 
         #tests
-        execute_sql_script("clean_oaaogt_0616.sql")
+        execute_sql_script("clean_oaaogt.sql")
 
         #snapshots
         execute_sql_script("cleaning_all_snapshots.sql")
