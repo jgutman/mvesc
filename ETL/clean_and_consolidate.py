@@ -14,8 +14,7 @@ with postgres_pgconnection_generator() as connection:
         print('all_absences cleaned')
 
         #grades
-#        execute_sql_script("clean_grades.sql") 
-#        this script doesn't seem to be on github anywhere?
+        execute_sql_script("clean_grades.sql") 
         print('all_grades cleaned')
 
         #tests
