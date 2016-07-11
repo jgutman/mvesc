@@ -3,7 +3,7 @@
 --		problems: there are some empty fields that are hard to understand
 --			- '' empty string?
 --			- '0' field?
-alter table clean.all_grades add column clean_term varchar(20);
+alter table clean.all_grades add column clean_term text;
 update only clean.all_grades
 set
 	clean_term =
@@ -112,8 +112,8 @@ set
 -- YEAR field -- Jackie updated to make the years into a single integer value
 -- 		Convert years like 2007-08 to 2007
 alter table clean.all_grades
-	alter column year type int using cast(left(nullif(year, ''),
-				strpos(nullif(year, ''), '-') - 1) as integer) ;
+	alter column school_year type int using cast(left(nullif(school_year, ''),
+				strpos(nullif(school_year, ''), '-') - 1) as integer) ;
 				
 --		Missing? There are 99,455 records with a null year field, why?
 --			We need to see what information we can fill in from other sources
