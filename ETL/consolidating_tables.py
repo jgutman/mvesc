@@ -90,7 +90,7 @@ def all_grades_query(cursor, grades_tables, grades_cols_json):
     grades_query = grades_query[:-len(union_clause)]+";"
     return grades_query
 
-def all_absence_query(cursor, absence_tables, absence_cols_json):
+def all_absences_query(cursor, absence_tables, absence_cols_json):
     """
     Writes a SQL query to drop the current all_grades table 
     and create a new one
@@ -125,24 +125,26 @@ def all_absence_query(cursor, absence_tables, absence_cols_json):
                     #for text, must convert empty string to null before casting
                     if get_column_type(cursor, t, c) == "character varying":
                         absence_query += """
-                        cast(nullif("{old_name}", '') as {type}) as {new_name},
-                        """.format_map({'old_name':str(c), \
+                        cast(nullif("{old_name}", '') 
+                        as {type}) as {new_name}, """\
+                        .format_map({'old_name':str(c), \
                                         'type':str(item[u'type']), \
                                         'new_name':str(key)})
                     else:
                         absence_query += """
-                        cast("{old_name}" as {type}) as {new_name},
-                        """.format_map({'old_name':str(c), \
+                        cast("{old_name}" as {type}) as {new_name}, """\
+                        .format_map({'old_name':str(c), \
                                         'type':str(item[u'type']),\
                                         'new_name':str(key)})
                     found = 1
                     break
             if found == 0: #column does not exist in current table
                 absence_query += """
-                cast(null as {type}) as {new_name},
-                """.format_map({'new_name':str(key), \
+                cast(null as {type}) as {new_name}, """\
+                .format_map({'new_name':str(key), \
                                 'type':str(item[u'type'])})
-        grades_query += """ from "{table}" """.format_map({'table':t})
+        absence_query = absence_query[:-2] #removing last comma
+        absence_query += """ from "{table}" """.format_map({'table':t})
         union_clause = """ union select "StudentLookup" as student_lookup, """
         absence_query += union_clause
     absence_query = absence_query[:-len(union_clause)]+";"
@@ -242,3 +244,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

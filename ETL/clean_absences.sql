@@ -8,7 +8,7 @@
 -- StudentLookup Column -- Assume this is fine
 --		this is a quick visual check
 --		there are no empty student lookup numbers
-select count(*) from clean.all_absences where "StudentLookup" is null;
+select count(*) from clean.all_absences where student_lookup is null;
 
 -- Date Column -- This needs a simple date conversion function
 ALTER TABLE clean.all_absences
@@ -72,7 +72,7 @@ set
 			then 'not_counted_absent'
 		
 		-- 10k to rest --
-		
+				
 		-- partial absences
 		when Lower(absence_desc) = 'am absent' then 'am_absent'
 		when Lower(absence_desc) = 'pm absent' then 'pm_absent'

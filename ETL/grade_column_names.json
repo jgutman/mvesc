@@ -4,6 +4,6 @@
     "term":{"name":["term"],"type":"text"},
     "grade": {"name":["Grade"],"type":"text"},
     "mark": {"name":["Mark"],"type":"text"},
-    "school_year": {"name":["Schoolyear"],"type":"int"}
+    "school_year": {"name":["Schoolyear"],"type":"text"}
 }
 }
