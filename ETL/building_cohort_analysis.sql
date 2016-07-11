@@ -1,3 +1,9 @@
+-- Lots of these are practice SQL commands for help in understanding 
+-- the data and how to best build a tracking table
+
+-- RELIES ON clean.wrk_tracking_students being complete
+
+
 -- most common withdrawal reasons for all students in snapshots file
 select withdraw_reason, count(withdraw_reason) from clean.all_snapshots
 	group by withdraw_reason
@@ -49,17 +55,20 @@ union
 		where "2014" = '12'))
 order by school_year;
 
+-- Creates `clean.all_graduates` table
 drop table clean.all_graduates;
 -- get all students with a non-null graduation date
 -- if multiple conflicting non-null graduation dates, select date from most recent school year snapshot record
 create table clean.all_graduates as
 (select student_lookup, graduation_date from
+	-- first subquery only keeps the most recent school year observed if a student has graduation_date
 	(select student_lookup, max(school_year) as school_year from clean.all_snapshots
 		where student_lookup in
 			(select distinct student_lookup from clean.all_snapshots where graduation_date is not null)
 		and graduation_date is not null
 	group by student_lookup) as latest_grade_with_graduation
 left join
+	-- left join on the actual graduation date (based on most recent `school_year`)
 	(select student_lookup, school_year, graduation_date from clean.all_snapshots
 		where graduation_date is not null) as graduation_dates_valid
 using (student_lookup, school_year)) ;
@@ -69,7 +78,11 @@ select count(student_lookup) from clean.all_graduates;
 select count(distinct student_lookup) from clean.all_snapshots
 	where graduation_date is not null;
 
-----------------
+------------------
+-- UNUSED EXPLORATORY CODE? --
+-- ZZ: I stoppped adding comments here --
+-- ZZ: assuming that updated code is already merged --
+------------------
 
 	select count(distinct(student_lookup)) from clean.wrk_tracking_students where
 		"2010" = '09';

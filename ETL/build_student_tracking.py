@@ -1,33 +1,28 @@
-from mvesc_utility_functions import postgres_pgconnection_generator
-#import psycopg2 as pg
-#from contextlib import contextmanager
+#from mvesc_utility_functions import postgres_pgconnection_generator
+import psycopg2 as pg
+from contextlib import contextmanager
+from mvesc_utility_functions import *
 
 '''
-These docstrings need to be updated.
-'''
+Joint note from JG and ZZ:
+This python file generates a SQL query to build a table tracking
+students over time. Each column represents a year and the grade the 
+student was in that year.
 
-'''
-Zhe Overall Note:
-   I have not yet checked to ensure the utility functions work
-   While this code repeats duplicate rows, I have not yet error checked to
-   ensure we didn't lose students in the process (perhaps those
-   without a grade or withdrawal code?)
+No students are lost in the process
+(except 34 pre-K students that leave in pre-K that JG removes).
+    These pre-K students are all
+    students from Riverview district that seemed to enter and leave district in
+    same year and are not useful for our analysis.
+   
+This problem is tricky because students can have multiple observations
+per year (multiple grades).
+    Left in duplicate records because of grade level errors, we will need to clean
+these later. 
 
-   This SQL code is not great and may not be the best way to do this.
-   This problem is tricky because students can have multiple observations
-   per year (multiple grades or multiple withdrawals).
-'''
-
-'''
-Zhe's note is somewhat obsolete now, have tried to deal with some of the issues
-he mentions above. We don't lose students in the process, except the 34 students
-I chose to remove because they never appear with a grade level. These are all
-students from Riverview district that seemed to enter and leave district in
-same year, inc. errors, pre-k students, not useful.
-
-Left in duplicate records because of grade level errors, we will need to clean
-these later. As for withdrawals, retained only the most recent withdrawal Date
-and reason. Each of 37,914 is in table at least once. (JG)
+As for conflicting withdrawals for a student,
+    we retained only the most recent withdrawal Date
+    and reason. Each of 37,914 students is in table at least once. (JG)
 '''
 
 def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
@@ -36,6 +31,7 @@ def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
     table, and generates the appropriate sql query to track all students in
     the snapshots table over that range of years. Executes query to build this
     data table, by default in clean.wrk_tracking_students.
+
     :param psycopg2.cursor cursor: cursor to execute queries
     :param str schema: name of schema where snapshots table lives
     :param str snapshots: name of table where snapshots table lives
@@ -48,6 +44,8 @@ def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
     min_year, max_year = cursor.fetchone()
     min_year = int(min_year) # these should already be integers anyway
     max_year = int(max_year)
+
+    # generate SQL query based on min/max_year
     query_build_wide_table = sql_gen_tracking_students(min_year, max_year,
             schema = schema, snapshots = snapshots)
     query_survival = cohort_survival_analysis(max(min_year, year_begin),
@@ -80,6 +78,8 @@ def sql_gen_tracking_students(year_begin, year_end,
     :return: sql query string
     :rtype: str
     """
+
+    # remove previously created table if exists
     query_frame = """
     drop table if exists {}.{};
     create table {}.{} as
@@ -87,6 +87,13 @@ def sql_gen_tracking_students(year_begin, year_end,
             (select * from (
     """.format(schema, table, schema, table)
 
+    # perform a subquery for each year, getting the distinct
+    #   student lookup & grade pairs
+    #   and add that as a column for that year (using full joins)
+    #       if a student is recorded as two distinct grades that year,
+    #       they currently get duplicate rows
+    #       SUGGESTED FIX: choose the lowest or highest grade for each year
+    #       only keeping one distinct row per student ID & year
     for year in range(year_begin, year_end+1):
         subquery = """
         (select distinct student_lookup, grade as "{}" from {}.{}
@@ -95,10 +102,21 @@ def sql_gen_tracking_students(year_begin, year_end,
         if year == year_begin:
             query_frame += subquery
         else:
+            # perform string substitution of subquery
             query_frame += """
             full join {} using (student_lookup)
             """.format(subquery)
 
+    # after getting grades for each year, get the unique and most recent withdrawal
+    #   reason for each student
+    # Adds this via left-join of a large subquery
+    #   which creates the 'latest_withdrawal' and 'latest_reason' subtables
+    #   The latest_withdrawal subtable is created by a subquery getting unique 
+    #       distinct student / withdraw reason / withdraw date
+    #       where withdraw_reason is not null (empty withdrawal code)
+    #       and not 'did not withdraw'
+    #       but keeping only the latest date.
+    # NOTE: this keeps only one row for students with multiple unique withdrawal codes
     query_frame += """ )
     order by student_lookup) as students_grades_only
     left join
@@ -113,6 +131,12 @@ def sql_gen_tracking_students(year_begin, year_end,
             group by student_lookup) as latest_withdrawal
         """.format(schema, snapshots, 'did not withdraw')
 
+    # This is the second part of the large subquery above
+    # It gets a 'latest_reason' subtable
+    #   It gets all the unique student / reason / date / irn codes
+    #       and then left joins on student + latest_date column
+    # Finally, this large subquery is wrapped in the above code section by
+    #   only keeping those columns from the latest_reason subtable
     query_frame += """
         left join
             (select distinct student_lookup, withdraw_reason, withdrawn_to_irn,
@@ -125,6 +149,8 @@ def sql_gen_tracking_students(year_begin, year_end,
     # call query as cursor.execute(sql_gen_tracking_students())
     return query_frame
 
+# This function is not documented because it's not used
+#   It was used to see how the numbers of students change across years.
 def cohort_survival_analysis(year_begin, year_end, grade_begin,
     schema = 'clean', table = 'wrk_tracking_students'):
     """
