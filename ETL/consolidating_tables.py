@@ -234,12 +234,16 @@ def main():
             table_names = get_specific_table_names(cursor, "StudentLookup")
 
             cursor.execute(student_lookup_query(table_names))
+            print('student lookup table built')
             cursor.execute(all_grades_query(cursor, grades_tables,
                                             "grade_column_names.json"))
+            print('all_grades table built')
             cursor.execute(all_absences_query(cursor, absence_tables,
                                               "absence_column_names.json"))
+            print('all_absences table built')
             cursor.execute(all_snapshots_query(cursor, snapshot_tables,
                                                "snapshot_column_names.json"))
+            print('all_snapshots table built')
         connection.commit()
 
 if __name__ == '__main__':
