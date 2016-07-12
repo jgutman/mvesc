@@ -30,7 +30,8 @@ insert into clean.all_graduates(student_lookup, graduation_date)
 -- and their district_withdraw_date is basically a graduation date
 insert into clean.all_graduates(student_lookup, graduation_date)
 	select student_lookup,
-		to_date(district_withdraw_date, 'MM/DD/YYYY') graduation_date
+		district_withdraw_date graduation_date
+		--to_date(district_withdraw_date, 'MM/DD/YYYY') graduation_date
 		from clean.all_snapshots where student_lookup not in
 		(select student_lookup from clean.all_graduates)
 		and withdraw_reason = 'graduate'
