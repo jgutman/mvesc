@@ -5,20 +5,24 @@
 # Psuedocode Outline #
 ###
 
-# Create options file used to generate features
-# OR Read in an existing human-created options file
+# (1) Create options file used to generate features
+# 	OR Read in an existing human-created options file
+#		- get a user-entered text description of this specific run
 
-# Run generate_features.py and receive a dataframe in return
+# (2) Based on options, select the appropriate
+#	- labeled outcome column
+#	- subset of various feature columns from various tables
+# and combine into one DataFrame.
 
-# Use the resulting dataframe in a predictive technique function
+# (3) Use the gathered DataFrame in a predictive technique function
 # Steps:
 #	- manage held out datasets or cross-validation
 #	- record the inputs and parameters used
-#	- get a user-entered text description of this specific run
 #	- run the prediction technique
 #	- record the output model
 #	- record the model performance (various metrics) on train & test
 #		* precision, recall
 #		* AUROC, ROC graphic
 
-# Save the recorded inputs, model, performance
+# (4) Save the recorded inputs, model, performance, and text description
+#	into a results folder

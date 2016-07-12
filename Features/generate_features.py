@@ -1,18 +1,20 @@
 # Inital v0 of a script to take in options file and generate
-#	ths corresponding outcomes and features for prediction.
+#	the corresponding outcomes and features for prediction.
+# Generates all possible features we're considering
 
 
 ####
 # Pseudo-code Outline
 ####
 
-# read in options file
+# Check if `replace_feature_tables` option is T or F
+#	if T, then we re-calculate all features
+#	if F, then we only add new columns
 
-# gather the row of outcomes to predict
+# (1) create various vectors of labeled outcomes, based on 
+#	different possible definitions
+#	store this in a `clean.labeled_outcomes` table
 
-# gather features based on the provided options
-
-# place the outcomes + features into (1 or 2) dataframes
-#	pass this resulting dataframe back to the user to
-#	use for modeling
-#	ASSUME: size restrictions on passing data is okay
+# (2) for each category, execute sub-scripts to create
+#	columns for various features. Examples: absences, grades, demographics
+#		we can have one table in the DB for each category
