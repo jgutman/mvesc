@@ -117,7 +117,7 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
     after_grade_12_query = """{parent_query} and
     greatest({years}) >= 12;
     """.format(parent_query=no_withdrawal_date_query, years=year_columns_string)
-    update_tree_with_query(cursor, tree, before_grade_12_query, "after 12th grade")
+    update_tree_with_query(cursor, tree, after_grade_12_query, "after 12th grade")
     #print(after_grade_12_query)
 
     # students without a withdrawal reason but have a withdrawal date in tracking table
