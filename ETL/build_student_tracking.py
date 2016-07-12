@@ -25,7 +25,7 @@ As for conflicting withdrawals for a student,
     and reason. Each of 37,914 students is in table at least once. (JG)
 '''
 
-def build_wide_format(cursor, grade_begin='06', year_begin=0, year_end=3000,
+def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
     schema = 'clean', snapshots = 'all_snapshots',
     tracking = 'wrk_tracking_students'):
 
@@ -172,13 +172,14 @@ def cohort_survival_analysis(year_begin, year_end, grade_begin,
     next_grade = grade_begin
     for year in range(year_begin, year_end+1):
         if (year != year_begin):
-            next_grade = '%02d' % (int(next_grade)+1)
-        if (next_grade == '13'):
+            #next_grade = '%02d' % (int(next_grade)+1)
+            next_grade = next_grade +1
+        if (next_grade > 12):
             break
         subquery_get_count = """
         (select {next_grade} as grade, {year} as school_year, count(*) from
             (select distinct(student_lookup)
-                from {schema}.{table} where "{year_begin}" = '{grade_begin}')
+                from {schema}.{table} where "{year_begin}" = {grade_begin})
                 as grade_{grade_begin}_in_{year_begin}
         """.format(schema=schema, table=table, year_begin=year_begin,
                     grade_begin=grade_begin, year=year, next_grade=next_grade)
@@ -188,7 +189,7 @@ def cohort_survival_analysis(year_begin, year_end, grade_begin,
         else:
             subquery_next_year = """
             where student_lookup in (select distinct(student_lookup)
-                from {schema}.{table} where "{year}" = '{next_grade}'))
+                from {schema}.{table} where "{year}" = {next_grade}))
             """.format(schema=schema, table=table, year_begin=year_begin,
                 grade_begin=grade_begin, year=year, next_grade=next_grade)
 

@@ -23,7 +23,7 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
     :param psycopg2.cursor cursor: a cursor to execute sql queries in postgres
     :param igraph.Graph tree: an empty tree Graph, returned by build_empty_tree
         (stores the results of queries in tree representation)
-    :param str grade_begin: the grade level of the entering cohort in string format
+    :param int grade_begin: the grade level of the entering cohort
     :param int year_begin: the school year of the entering cohort
     :param str schema: name of schema containing tracking table
     :param str tracking: name of wide student tracking table
@@ -34,7 +34,7 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
 
     # total students in cohort
     cohort_total_query = """select distinct student_lookup from
-        {schema}.{table} where "{year_begin}" = '{grade_begin}'
+        {schema}.{table} where "{year_begin}" = {grade_begin}
     """.format(schema=schema, table=tracking, year_begin=year_begin, grade_begin=grade_begin)
     update_tree_with_query(cursor, tree, cohort_total_query, "cohort total")
     #print(cohort_total_query)
@@ -101,6 +101,24 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
     """.format(parent_query=no_withdrawal_reason_query)
     update_tree_with_query(cursor, tree, no_withdrawal_date_query, "no withdrawal date")
     #print(no_withdrawal_date_query)
+
+    # students without a withdrawal date who disappear before entering grade 12
+    all_years = range(year_begin, 2016)
+    all_years = ['"{year}"'.format(year=year) for year in all_years]
+    year_columns_string = ",".join(all_years)
+
+    before_grade_12_query = """{parent_query} and
+    greatest({years}) < 12;
+    """.format(parent_query=no_withdrawal_date_query, years=year_columns_string)
+    update_tree_with_query(cursor, tree, before_grade_12_query, "before 12th grade")
+    #print(before_grade_12_query)
+
+    # students without a withdrawal date who disappear after entering grade 12
+    after_grade_12_query = """{parent_query} and
+    greatest({years}) >= 12;
+    """.format(parent_query=no_withdrawal_date_query, years=year_columns_string)
+    update_tree_with_query(cursor, tree, after_grade_12_query, "after 12th grade")
+    #print(after_grade_12_query)
 
     # students without a withdrawal reason but have a withdrawal date in tracking table
     has_withdrawal_date_query = """{parent_query} and district_withdraw_date is not null
@@ -203,7 +221,7 @@ def build_empty_tree():
     counts for each vertex are initialized at zero. Pass tree along with cursor
     to get_bucket_counts method to fill in student counts at each vertex.
 
-    Tree contains 18 vertices and 17 edges
+    Tree contains 20 vertices and 19 edges
     4 vertex attributes: description, count, outcome, and students
     description: the fine-grained description of the bucket
     outcome: the rough category of the bucket
@@ -213,18 +231,19 @@ def build_empty_tree():
     """
 
     # Initialize tree structure
-    num_vertices = 18
+    num_vertices = 20
     tree = Graph()
     tree.add_vertices(num_vertices)
     tree.add_edges([(0,1), (0,2), (1,3), (1,4), (2,5), (2,6), (2,7),
         (3,8), (3,9), (4,10), (4,11), (4,12), (11,13), (11,14),
-        (14,15), (14,16), (14,17)])
+        (14,15), (14,16), (14,17), (8, 18), (8,19)])
     tree.vs["description"] = ["cohort total", "no graduation date",
         "graduation date", "no withdrawal reason", "withdrawal reason",
         "4 year graduation", "5 year graduation", "more than 5 years",
         "no withdrawal date", "district withdrawal date", "misc withdrawal",
         "transferred", "dropout", "no withdraw to IRN", "withdrawn to IRN",
-        "dropout recovery program", "JVSD/career tech", "other Ohio IRN"]
+        "dropout recovery program", "JVSD/career tech", "other Ohio IRN",
+        "before 12th grade", "after 12th grade"]
     assert(len(tree.vs["description"]) == num_vertices)
     tree.vs["count"] = [0] * num_vertices
     tree.vs["students"] = [None] * num_vertices
@@ -233,10 +252,11 @@ def build_empty_tree():
     outcome_buckets = {}
     outcome_buckets["non-terminal"] = ["cohort total", "no graduation date",
         "graduation date", "no withdrawal reason", "withdrawal reason",
-        "transferred", "withdrawn to IRN"]
+        "transferred", "withdrawn to IRN", "no withdrawal date"]
     outcome_buckets["exclude"] = ["misc withdrawal"]
-    outcome_buckets["dropout"] = ["dropout", "dropout recovery program"]
-    outcome_buckets["uncertain"] = ["no withdrawal date",
+    outcome_buckets["dropout"] = ["dropout", "dropout recovery program",
+        "after 12th grade"]
+    outcome_buckets["uncertain"] = ["before 12th grade",
         "district withdrawal date", "no withdraw to IRN", "JVSD/career tech",
         "other Ohio IRN"]
     outcome_buckets["late"] = ["5 year graduation", "more than 5 years"]
@@ -251,7 +271,7 @@ def build_empty_tree():
     tree.vs["outcomes"] = [outcome_buckets_flipped[bucket]
             for bucket in tree.vs["description"]]
 
-    #print(tree) # 18 vertices, 17 edges, 4 vertex attributes, 0 edge attributes
+    #print(tree) # 20 vertices, 19 edges, 4 vertex attributes, 0 edge attributes
     return tree
 
 def write_outcomes_to_database(cursor, tree, schema='clean', table='wrk_tracking_students'):
@@ -308,13 +328,13 @@ def run_outcomes_on_all_cohorts(cursor, grade_start, year_begin, year_end,
 def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            run_outcomes_on_all_cohorts(cursor, '09', 2006, 2012,
+            run_outcomes_on_all_cohorts(cursor, 9, 2006, 2012,
             base_pathname)
-            run_outcomes_on_all_cohorts(cursor, '10', 2006, 2006,
+            run_outcomes_on_all_cohorts(cursor, 10, 2006, 2006,
             base_pathname)
-            run_outcomes_on_all_cohorts(cursor, '11', 2006, 2006,
+            run_outcomes_on_all_cohorts(cursor, 11, 2006, 2006,
             base_pathname)
-            run_outcomes_on_all_cohorts(cursor, '12', 2006, 2006,
+            run_outcomes_on_all_cohorts(cursor, 12, 2006, 2006,
             base_pathname)
         connection.commit()
     print('done!')
