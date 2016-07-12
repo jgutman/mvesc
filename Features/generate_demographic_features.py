@@ -2,6 +2,7 @@
 Procedures:
 1. Read from outcome table to get student_lookups;
 2. Generate `model.demographics` from `clean.all_snapshots`
+
 """
 import os
 from os.path import isfile, join, abspath, basename
