@@ -32,14 +32,9 @@ def get_outcome_student_lookup(cursor, table='wrk_tracking_students', schema='cl
     lookups = [int(lp[0]) for lp in lookups]
     return lookups
 	
-def get_column_for_lookups(cursor, lookups, table, column):
-    """ Get a new column of values for certain lookups
-    To Be Completed later
-    """
-    return None
 
 def get_columns_table2df(conn, table, schema='clean', columns='all', nrows=-1):
-
+    """not useful not now"""
     if columns=='all':
         sqlcmd = """select * from {schema}.{table}""".format(schema=schema, table=table)
     elif len(columns)>0:
@@ -61,8 +56,6 @@ def get_columns_table2df(conn, table, schema='clean', columns='all', nrows=-1):
         return None
     print(sqlcmd)
     df = pd.read_sql(sqlcmd, conn)
-    print("Type: ", type(df))
-    print("DF:\n", df)
     return df
 
 
@@ -89,8 +82,6 @@ if __name__=='__main__':
         with connection.cursor() as cursor:
             student_lookups = get_outcome_student_lookup(cursor)
             columns = ['student_lookup', 'ethnicity', 'gender']
-#            demographics = get_columns_table2df(connection, table="all_snapshots", columns=columns,nrows=10)
-#            print("demo:\n", demographics)
             
             if replace_table:
                 cursor.execute(sql_drop_demo_table)
@@ -105,16 +96,44 @@ if __name__=='__main__':
             column = 'ethnicity'
             sql_add_column = """alter table {schema}.{table} 
 	    add column {column} varchar(64) default null;""".format(schema=schema, table=table_name, column=column)
-            cursor.execute(sql_add_column)
-            
-            sql_join_cmd = """"""
+            cursor.execute(sql_add_column); connection.commit();
+            sql_join_cmd = """
+		update model.demographics t1 
+		set ethnicity=
+		( 
+			select ethnicity from clean.all_snapshots t2
+  			where t2.student_lookup=t1.student_lookup 
+  			order by ethnicity desc limit 1
+  		)
+		where exists
+		( 
+			select ethnicity from clean.all_snapshots t2
+  			where t2.student_lookup=t1.student_lookup 
+		);
+	    """
+            cursor.execute(sql_join_cmd)
             connection.commit()
 
             # column gender
             column = 'gender'
             sql_add_column = """alter table {schema}.{table}
             add column {column} varchar(6) default null;""".format(schema=schema, table=table_name, column=column)
-            cursor.execute(sql_add_column)
+            cursor.execute(sql_add_column); connection.commit();
+            sql_join_cmd = """
+		update model.demographics t1 
+		set gender=
+		( 
+			select gender from clean.all_snapshots t2
+	  		where t2.student_lookup=t1.student_lookup 
+  			order by gender desc limit 1
+  		)
+		where exists
+		( 
+			select gender from clean.all_snapshots t2
+  			where t2.student_lookup=t1.student_lookup 
+		);
+            """
+            cursor.execute(sql_join_cmd)
             connection.commit()
 
             print("Demographics Done!")
