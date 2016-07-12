@@ -147,6 +147,8 @@ update clean.all_snapshots set grade =
 		 when grade like 'KG' then '0'
 		 when grade like 'IN' or grade like 'DR' then null -- inactive students
 		 when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
+		 when grade like 'GR' and school_year = 2014 then '12' -- two students who transferred in the year they graduated
+		 when grade like 'GR' and school_year = 2015 then '23' -- two students who were in 12th grade in 2014
 		 when grade like 'UG' then null -- means ungraded 
 		 else grade	
 	end;
