@@ -30,10 +30,16 @@ def clean_graduate_grade_level(current_year):
     """.format_map({'last': current_year-1, 'current':current_year})
     return grad_query
 
+def main():
+    with postgres_pgconnection_generator() as connection:
+        with connection.cursor() as cursor:
+            for year in range(2006,2017):
+                cursor.execute(clean_graduate_grade_level(year))
+                cursor.execute("""
+                alter table clean.all_snapshots alter column grade 
+                type int using grade::int
+                """)
+        connection.commit()
 
-with postgres_pgconnection_generator() as connection:
-    with connection.cursor() as cursor:
-        for year in range(2006,2017):
-            cursor.execute(clean_graduate_grade_level(year))
-    connection.commit()
-
+if __name__ == '__main__':
+    main()
