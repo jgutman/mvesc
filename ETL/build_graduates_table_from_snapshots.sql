@@ -24,3 +24,18 @@ insert into clean.all_graduates(student_lookup, graduation_date)
 		from public."AllGradsTotal"
 		where "StudentLookup" not in
 		(select student_lookup from clean.all_graduates);
+-- some students do not have graduation dates
+-- but their grade level in the snapshots is 12 or 23
+-- and their withdrawal reason is 'graduate'
+-- and their district_withdraw_date is basically a graduation date
+insert into clean.all_graduates(student_lookup, graduation_date)
+	select student_lookup,
+		to_date(district_withdraw_date, 'MM/DD/YYYY') graduation_date
+		from clean.all_snapshots where student_lookup not in
+		(select student_lookup from clean.all_graduates)
+		and withdraw_reason = 'graduate'
+		and (grade='12' or grade='23');
+-- get non-duplicated rows
+--	select student_lookup, max(graduation_date) as graduation_date
+--		from clean.all_graduates
+--		group by student_lookup);
