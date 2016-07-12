@@ -34,7 +34,7 @@ def get_bucket_counts(cursor, tree, grade_begin, year_begin,
 
     # total students in cohort
     cohort_total_query = """select distinct student_lookup from
-        {schema}.{table} where "{year_begin}" = '{grade_begin}'
+        {schema}.{table} where "{year_begin}" = {grade_begin}
     """.format(schema=schema, table=tracking, year_begin=year_begin, grade_begin=grade_begin)
     update_tree_with_query(cursor, tree, cohort_total_query, "cohort total")
     #print(cohort_total_query)
