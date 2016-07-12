@@ -81,6 +81,7 @@ alter table clean.all_snapshots drop column disadvantagement_code;
 
 -- district withdrawal
 --select date_part('year', district_withdraw_date) as d, count(*) from clean.all_snapshots group by d order by d;
+alter table clean.all_snapshots alter column district_withdraw_date type date using district_withdraw_date::date
 
 -- ethnicity
 --select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
@@ -116,39 +117,15 @@ else null end; -- tossing a few (~50) miscelanous values
 --select count(*) from clean.wrk_tracking_students where "2007" = 'GR';
 --select count(*) from clean.wrk_tracking_students where "2006" = 'GR'; -- 524
 
--- dealing with graduate 'GR' codes from 2014
-create temporary table grade_temp as (select student_lookup, grade from clean.all_snapshots where school_year = 2013);
-create temporary table joined_grades as (
-	  select fourteen.student_lookup as student_lookup, MAX(thirteen.grade::int) as thirteen_grade
-	  from clean.all_snapshots as fourteen
-	  join grade_temp as thirteen on thirteen.student_lookup = fourteen.student_lookup
-	  where fourteen.grade like 'GR' and fourteen.school_year = 2014
-	  group by fourteen.student_lookup
-	);
-	
-update clean.all_snapshots as s 
-set grade = case
-	  when j.thirteen_grade = 11 then '12'
-	  when j.thirteen_grade > 11 then '23'
-	  else j.thirteen_grade::text
-	  end
-	from joined_grades as j 
-	where j.student_lookup = s.student_lookup 
-			and s.school_year = 2014;
-
-drop table grade_temp;
-drop table joined_grades;
-
+-- dealing with graduate 'GR' codes using function in clean_and_consolidate
 -- dealing with other codes
 update clean.all_snapshots set grade =  
 	case when grade like '**' then null
-		 when grade like '13' then '23'
-		 when grade like 'PS%' then '-1'
+		 when grade like '13' or grade like '14' then '23'
+		 when grade like 'PS%' or grade like '-2' then '-1'
 		 when grade like 'KG' then '0'
 		 when grade like 'IN' or grade like 'DR' then null -- inactive students
 		 when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
-		 when grade like 'GR' and school_year = 2014 then '12' -- two students who transferred in the year they graduated
-		 when grade like 'GR' and school_year = 2015 then '23' -- two students who were in 12th grade in 2014
 		 when grade like 'UG' then null -- means ungraded 
 		 else grade	
 	end;
@@ -157,7 +134,7 @@ update clean.all_snapshots set grade =
 alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
 -- graduation date
---select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
+--select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;2
 
 -- iss
 --select iss as d, count(*) from clean.all_snapshots group by d order by d;

@@ -1,6 +1,7 @@
 from  mvesc_utility_functions import *
 import consolidating_tables
 import build_student_tracking
+import cleaning_grad_grades
 
 #consolidating tables in clean schema
 consolidating_tables.main()
@@ -29,6 +30,7 @@ with postgres_pgconnection_generator() as connection:
                       table_name="all_snapshots", 
                       new_column_name="status", replace=0) 
     connection.commit()
+cleaning_grad_grades.main()
 execute_sql_script("update_all_snapshots_with_missing_graduates.sql")
 print('all_snapshots cleaned')
 
