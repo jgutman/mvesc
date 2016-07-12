@@ -4,6 +4,7 @@ This folder contains the code to choose specific features to include, use those 
 
 ### Choosing Features to Include
 
+Using the options file, we get the appropriate columns from the feature and label tables in the database.
 
 ### Estimating the Prediction Model
 
