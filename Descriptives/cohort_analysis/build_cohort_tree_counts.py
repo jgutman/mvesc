@@ -329,13 +329,13 @@ def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             run_outcomes_on_all_cohorts(cursor, 9, 2006, 2012,
-            base_pathname)
-            run_outcomes_on_all_cohorts(cursor, 10, 2006, 2006,
-            base_pathname)
-            run_outcomes_on_all_cohorts(cursor, 11, 2006, 2006,
-            base_pathname)
-            run_outcomes_on_all_cohorts(cursor, 12, 2006, 2006,
-            base_pathname)
+                base_pathname)
+            #run_outcomes_on_all_cohorts(cursor, 10, 2006, 2006,
+            #    base_pathname)
+            #run_outcomes_on_all_cohorts(cursor, 11, 2006, 2006,
+            #    base_pathname)
+            #run_outcomes_on_all_cohorts(cursor, 12, 2006, 2006,
+            #    base_pathname)
         connection.commit()
     print('done!')
 
