@@ -102,4 +102,21 @@ if __name__=='__main__':
 
             # column ethnicity
             column = 'ethnicity'
-            sql_add_column = """alter table {table} add column {column} varchar(6) default null """ 
+            sql_add_column = """alter table {schema}.{table} 
+	    add column {column} varchar(64) default null;""".format(schema=schema, table=table_name, column=column)
+            cursor.execute(sql_add_column)
+            
+            sql_join_cmd = """"""
+            connection.commit()
+
+            # column gender
+            column = 'gender'
+            sql_add_column = """alter table {schema}.{table}
+            add column {column} varchar(6) default null;""".format(schema=schema, table=table_name, column=column)
+            cursor.execute(sql_add_column)
+            connection.commit()
+
+            print("Demographics Done!")
+
+
+ 
