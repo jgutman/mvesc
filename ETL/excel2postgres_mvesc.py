@@ -189,3 +189,25 @@ else:
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
+
+#++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
+# -1. read Excel file 
+# -2. upload the table
+schema1 = 'raw'
+schema2 = 'public'
+filepath = '/mnt/data/mvesc/PartnerData/2013-School-District-Typology.xlsx'
+table_name = 'School_District_Typology'
+print('\n--- processing: ', filepath)
+df = pd.read_excel(filepath, sheetname=0)
+newcol_dict = {col.strip():'_'.join(col.strip().lower().split(' ')).replace('.', '') for col in df.columns}
+newcol_dict['2013 Typology']='typology_2013'
+df = df.rename(columns=newcol_dict)
+tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
+if tab_name_json==None:
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+else:
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    print("table uploaded to mvesc: ", table_name)
+
+
