@@ -26,10 +26,11 @@ def get_outcome_student_lookup(cursor, table='wrk_tracking_students', schema='cl
     return list lookups: student lookups in a list
     rtype: list [int]
     """
-    sql_get_lookups = """select student_lookup from {schema}.{table};""".format(schema=schema, table=table)
+    sql_get_lookups = """select student_lookup from {schema}.{table} limit 1000;""".format(schema=schema, table=table)
     cursor.execute(sql_get_lookups)
     lookups = cursor.fetchall()
     lookups = [int(lp[0]) for lp in lookups]
+    lookups = list(set(lookups))
     return lookups
 
 def update_column_with_join(conn, source_schema, source_table, source_column, 
