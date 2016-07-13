@@ -3,3 +3,5 @@ credentials/*
 *.bak
 pgpass
 */.ipynb_checkpoints/*
+Descriptives/*/.ipynb_checkpoints/*
+Descriptives/*/.cache/*

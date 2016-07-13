@@ -1,22 +1,31 @@
 # ETL Documentation
 
-This is the order of operations used for preparing and transforming the tables. The orderd exact steps are summarized at the end.
+This is the order of operations used for preparing and transforming the tables from raw data provided by MVESC. The orderd exact steps are summarized at the end.
 
 The ETL for Excel files are currently not documented. @Xiang, I need your help on this.
 
-
 ## 1. Raw Data Types Received
 
-There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except 1 that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
+There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
 
-Below is a list of the style of the raw data that we received
+Below is a list of the style of the raw data that we received and the information contained in the raw data
 
-* Backup of SQL Server containing
-	* yearly snapshots for 7 districts of student status and demographics from school years starting in 2006 - 2015
+* Backup of SQL Server
+	* Yearly snapshots for 7 districts of student status and demographics from school years starting in 2006 - 2015
 
-* CSV and Excel files for District-specific information
-	* class grades
-	* absences reported on a daily basis
+* CSV text files
+	* Class grades
+	* Absences reported on a daily basis
+	* Individualized Education Program (IEP) Accomodations
+	* Test scores of standardized tests, such as Star, OAA, OGT, SAT
+	* Yearly snapshots of students
+
+* Excel files for District-specific information
+	* Withdrawal Codes
+	* IRN of Dropout Recovery Schools
+	* Districts Ratings
+	* Student Mobilities
+	* Joint Vocational Schools
 
 ## 2. Importing Raw Data into Our PostgreSQL Database
 
@@ -24,10 +33,16 @@ To address our two types of data, we used two styles to bring our data into our 
 
 For the SQL server backup, we opened the backup onto a separate, temporary SQL server we create. Then, we transfer that SQL server to our PostgreSQL database.
 
-For the CSV/Excel files, we use a Python script and a JSON file.
-The JSON file is automatically created. It looks at the files in a directory and automatically creates a mapping of those file names to table names, where the tables have spaces replaced with '_' (underscores) and the file extension removed.
+For the CSV/Excel files, we use a Python script and a JSON file. The general procedure is
 
-The Python script takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'overwrite' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'public' schema in our database.
+ 1. load data into Python data frames;
+ 2. create mappings from file names to table names and update JSON file automatically;
+ 3. check postgres database whether there is an existing table with the same table name;
+ 4. upload data frames to postgres server using the table names in JSON file based on function options;
+
+* For the CSV files which are well-structured, the corresponding Python script `csv2postgres_mvesc.py` can takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'replace' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'raw' schema or the specified one in our database.
+
+* For the Excel files which has various structures and irregular headers, we have to handle each Excel file and its sheets one by one. A separate Python script `upload_mvesc_excel_files.py` is written to upload all the relevant Excel files one by one. We only need to run the script to upload all the excel files. Since all the excel data is very small, the default option is to replace the original tables in the database. The table names are eithe the Excel file name or the sheet name in the file. 
 
 #### Python Script Operation Details
 
@@ -86,14 +101,18 @@ This is a simple table keeping only students that have a graduation date from th
 
 1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
 	- [missing] Use SQL code to automatically back these up into 'raw' schema
-2. Run `csv2postgres_mvesc.py` on all the directories of received data (with replace = False)
-	- those files without headers need to be imported separately (instead of using the directory command)
-	- [check] Is this true for the Excel files too?
-	- this automatically creates `file_to_table_name.json`
-2b. Run Excel file import process
-	- [MISSING]
-3. Run `consolidating_tables.py` to consolidate all the district yearly snapshot, grade, and absences tables together
-4. Run `clean_absences.sql`
-5. Run `clean_oaaogt_0616.sql`
-6. Run `all_absences_generate_mm_day_wkd.sql`
-7. Run `build_tracking_students.py`
+
+2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
+	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
+	- those files without headers are named with headers "col0", "col1", etc which will be changed later;
+	- this automatically updates `file_to_table_name.json`;
+
+3. Run Excel file import process
+	- Run Python script `upload_mvesc_excel_files.py`
+	- defult option is replacing existing table
+
+4. Run `consolidating_tables.py` to consolidate all the district yearly snapshot, grade, and absences tables together
+5. Run `clean_absences.sql`
+6. Run `clean_oaaogt_0616.sql`
+7. Run `all_absences_generate_mm_day_wkd.sql`
+8. Run `build_tracking_students.py`

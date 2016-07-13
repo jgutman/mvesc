@@ -114,6 +114,12 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     :return str table_name: the table name uploaded to the database
     :rtype str
     """
+    # check file type, only continue with csv or txt file
+    file_type = filepath.split('.')[-1]
+    if file_type not in ['csv', 'txt']:
+        print("""File "{}": not 'csv' or 'txt' file""".format(filepath))
+        return(None)
+
     # read the data frame with or without header
     if header:
         df = pd.read_csv(filepath, low_memory=False)
@@ -207,7 +213,7 @@ if __name__ == '__main__':
 		if_exists = options.if_exists
 
 	if options.filename_to_upload:
-		print("Preparing file %s to upload to postgresql" %
+		print("Preparing file %s to upload to psql" %
             options.filename_to_upload)
 		table_name = csv2postgres_file(options.filename_to_upload, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print("Table uploaded:", table_name)
@@ -215,7 +221,7 @@ if __name__ == '__main__':
 		directory = options.dir_to_upload
 		if directory[-1]!='/':
 			directory = directory+'/'
-		print("\nPreparing dir %s to upload to postgresql" % options.dir_to_upload)
+		print("\nPreparing dir %s to upload to psql" % options.dir_to_upload)
 		table_names = csv2postgres_dir(directory, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
 		print("\nTables uploaded:\n",table_names, "\n")
 	else:
