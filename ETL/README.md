@@ -2,8 +2,6 @@
 
 This is the order of operations used for preparing and transforming the tables from raw data provided by MVESC. The ordered exact steps are summarized at the end.
 
-The ETL for Excel files are currently not documented. @Xiang, I need your help on this.
-
 ## 1. Raw Data Types Received
 
 There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
@@ -19,6 +17,7 @@ Below is a list of the style of the raw data that we received and the informatio
 	* Individualized Education Program (IEP) Accomodations
 	* Test scores of standardized tests, such as Star, OAA, OGT, SAT
 	* Yearly snapshots of students
+	* Intervention Membership
 
 * Excel files for District-specific information
 	* Withdrawal Codes
@@ -26,6 +25,7 @@ Below is a list of the style of the raw data that we received and the informatio
 	* Districts Ratings
 	* Student Mobilities
 	* Joint Vocational Schools
+	* Districts Typology
 
 ## 2. Importing Raw Data into Our PostgreSQL Database
 
@@ -39,6 +39,8 @@ For the CSV/Excel files, we use a Python script and a JSON file. The general pro
  2. create mappings from file names to table names and update JSON file automatically;
  3. check postgres database whether there is an existing table with the same table name;
  4. upload data frames to postgres server using the table names in JSON file based on function options;
+
+The specific procedure differences of these 2 types of files are described below:
 
 * For the CSV files which are well-structured, the corresponding Python script `csv2postgres_mvesc.py` can takes in a directory or a file as an input. It checks the file(s) and corresponding table name (in the JSON file) to see if they already exist in our database. If it does, unless we specify the option to 'replace' existing tables, the script will not upload the file. If that table name does not exist, the script will upload the table to our 'raw' schema or the specified one in our database.
 
@@ -71,8 +73,8 @@ This script adds useful columns processing the dates from absences
 (`clean_grades.sql`)
 This script details the choices made in cleaning the student individual class marks.
 
-(`clean_oaaogt_0616.sql`)
-This script cleans the test score data
+(`clean_oaaogt.sql`)
+This script cleans the test score data of Ohio Achievement Assessment and Ohio Graduation Tests.
 
 (`cleaning_all_snapshots.sql`, `student_status.json`)
 This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
@@ -103,12 +105,12 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 
 2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
-	- those files without headers are named with headers "col0", "col1", etc which will be changed later;
+	- those files without headers are named with headers "col0", "col1", etc which need to be changed later;
 	- this automatically updates `file_to_table_name.json`;
 
 3. Run Excel file import process
-	- Run Python script `upload_mvesc_excel_files.py`
-	- defult option is replacing existing table
+	- Run Python script `excel2postres_mvesc.py`
+	- defult option is replacing existing table because all excel files are small and easy to upload
 
 4. Run `clean_and_consolidate.py`
         - This script will execute all necessary scripts to take care of steps 3 and 4 above.
