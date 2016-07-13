@@ -21,4 +21,5 @@
 
 import os
 #------ Generate table model.demographics ------#
+print("--- working on generating demographics table ... ")
 print(os.popen("/home/jgutman/env/bin/python generate_demographic_features.py -r True").read())

@@ -55,7 +55,7 @@ def update_column_with_join(conn, source_schema, source_table, source_column,
         """.format(schema=schema, table=table, column=column, 
 	source_schema=source_schema, source_table=source_table, source_column=source_column)
         cursor.execute(sql_join_cmd); conn.commit()
-        print("""- updated "{schema}"."{table}"."{col}" from "{s_schema}"."{s_table}"."{s_col}"; """.format(
+        print(""" - updated "{schema}"."{table}"."{col}" from "{s_schema}"."{s_table}"."{s_col}"; """.format(
         col=column, schema=schema, table=table, s_schema=source_schema, s_table=source_table, s_col=source_column))
     return None
 	
@@ -117,7 +117,7 @@ if __name__=='__main__':
                 #print("dataframe.head():\n", df.head())
                 engine = postgres_engine_generator()
                 df.to_sql(table, engine, schema=schema, index=False, if_exists='fail')    
-            print("- Demographics created!")
+                print(""" - Table "{schema}"."{table}" created!""".format(schema=schema, table=table))
 
             # Ethnicity
             source_schema, source_table, source_column = 'clean', 'all_snapshots', 'ethnicity'
@@ -130,32 +130,4 @@ if __name__=='__main__':
             update_column_with_join(connection, source_schema, source_table, source_column,
                         schema=schema, table=table, column=column, dtype=dtype)
 
-
-            print(""""- {schema}"."{table}" finished!\n""".format(schema=schema, table=table))
-
-''' backup code for review; will be deleted later
-            column = 'gender'
-            sql_add_column = """alter table {schema}.{table}
-            add column {column} varchar(6) default null;""".format(schema=schema, table=table_name, column=column)
-            cursor.execute(sql_add_column); connection.commit();
-            sql_join_cmd = """
-		update model.demographics t1 
-		set gender=
-		( 
-			select gender from clean.all_snapshots t2
-	  		where t2.student_lookup=t1.student_lookup 
-  			order by gender desc limit 1
-  		)
-		where exists
-		( 
-			select gender from clean.all_snapshots t2
-  			where t2.student_lookup=t1.student_lookup 
-		);
-            """
-            cursor.execute(sql_join_cmd)
-            connection.commit()
-
-            print("Demographics Done!")
-
-'''
- 
+            print(""" - "{schema}"."{table}" finished!\n""".format(schema=schema, table=table))
