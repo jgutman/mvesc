@@ -131,7 +131,7 @@ if __name__=='__main__':
                         schema=schema, table=table, column=column, dtype=dtype)
 
 
-            print(""""{schema}"."{table}" finished!\n""".format(schema=schema, table=table))
+            print(""""- {schema}"."{table}" finished!\n""".format(schema=schema, table=table))
 
 ''' backup code for review; will be deleted later
             column = 'gender'
