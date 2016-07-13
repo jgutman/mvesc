@@ -1,4 +1,5 @@
 {
+    "2013-School-District-Typology.xlsx": "school_district_typology",
     "ACTScores_712016.txt": "ACTScores_712016",
     "AIRScores_712016.txt": "AIRScores_712016",
     "CCFRRWRVabsence09_16.txt": "CCFRRWRVabsence09_16",
@@ -11,6 +12,7 @@
     "DistrictRating->MVESC1112": "DistrictRating1112",
     "DistrictRating->MVESC1213": "DistrictRating1213",
     "DistrictRating->MVESC1314": "DistrictRating1314",
+    "DistrictRating->MVESC1415": "DistrictRating1415",
     "Districts1011CREM.txt": "Districts1011_CREM",
     "Districts1112CREM.txt": "Districts1112_CREM",
     "Districts1112LoganHockingZanesville.txt": "Districts1112LoganHockingZanesville",
