@@ -1,9 +1,10 @@
 {"column_names": {
-    "course_code": {"name":["Course"],"type": "text"},
-    "course_name": {"name":["Cname"],"type":"text"},
-    "term":{"name":["term"],"type":"text"},
-    "grade": {"name":["Grade"],"type":"text"},
-    "mark": {"name":["Mark"],"type":"text"},
-    "school_year": {"name":["Schoolyear"],"type":"text"}
+    "course_code": {"name":["Course", "gradingcourseID"],"type": "text"},
+    "course_name": {"name":["Cname","gradingcourseName"],"type":"text"},
+    "term":{"name":["term","gradingtermName"],"type":"text"},
+    "term_type":{"name":["gradingtask"],"type":"text"},
+    "grade": {"name":["Grade", "studentgrade"],"type":"text"},
+    "mark": {"name":["Mark","gradingscore"],"type":"text"},
+    "school_year": {"name":["Schoolyear","SchoolYear"],"type":"text"}
 }
 }
