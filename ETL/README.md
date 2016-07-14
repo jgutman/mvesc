@@ -89,7 +89,7 @@ This is a simple table keeping only students that have a graduation date from th
 (`ETL\build_student_tracking.py`)
 This builds a table tracking (`clean.wrk_tracking_students`) the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
 
-(`Descriptives\cohort_analysis\build_cohort_tree_counts.py`)
+(`ETL\build_cohort_tree_counts.py`)
 This adds to the table built in `build_student_tracking.py` (`clean.wrk_tracking_students`) in order to get
 coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes. (This may get moved into the `generate_features` part of the pipeline)
 
@@ -115,7 +115,9 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 4. Run `clean_and_consolidate.py`
         - This script will execute all necessary scripts to take care of steps 3 and 4 above.
 
-5. Run `build_student_tracking.py` (this can eventually just be called directly
-	from `clean_and_consolidate`)
+5. * Run `build_student_tracking.py` (this can eventually just be called
+	directly from `clean_and_consolidate` -- currently commented out)
 
-6. Run `build_cohort_tree_counts` (unless this is part of pipeline instead?)
+6. * Run `build_cohort_tree_counts` (this can eventually just be called
+	directly from `clean_and_consolidate` -- currently commented out)
+	Unless we want to add this part of outcomes assignments into pipeline instead?
