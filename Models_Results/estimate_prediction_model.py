@@ -18,7 +18,8 @@ modelOptions = {'modelClassSelected' : 'logit',
 	'n_folds' : 10,
 	'file_save_name' : 'gender_ethnicity_logit.pkl',
 	'randomSeed' : 2187,
-	'user_description' : """initial skeleton pipeline test"""
+	'user_description' : """initial skeleton pipeline test""",
+	'cohort_chosen' : 'cohort_9th'
 	}
 
 # set seed for this program from modelOptions
@@ -117,8 +118,8 @@ def measure_performance(outcomes, predictions):
 #	- k-fold cross (using all cohorts and all years of features)
 #	- cohort-fold cross validation (leave one cohort out)
 
-train = joint_label_features.query['cohort_year != 2015']
-test = joint_label_features.query['cohort_year == 2015']
+train = joint_label_features[joint_label_features[modelOptions['cohort_chosen']] != 2015]
+test = joint_label_features[joint_label_features[modelOptions['cohort_chosen']] == 2015]
 # get subtables for each
 train_X = train.drop(['student_lookup', 'outcome'])
 test_X = test.drop(['student_lookup', 'outcome'])
