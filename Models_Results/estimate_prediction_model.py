@@ -18,7 +18,7 @@ modelOptions = {'modelClassSelected' : 'logit',
 	'randomSeed' : 2187,
 	'user_description' : """initial skeleton pipeline test""",
 	'cohort_chosen' : 'cohort_9th',
-	'years_held_out' : [2015]
+	'cohorts_held_out' : [2015]
 	}
 # 	set seed for this program from modelOptions
 np.random.seed(modelOptions['randomSeed'])
@@ -99,6 +99,16 @@ def define_clfs_params:
            }
 """
 
+def temporal_cohort_train_split(joint_df, cohort_chosen, cohorts_held_out):
+	""" Splits the given joint_df of features & outcomes and
+	returns a train/test dataset
+	:param DataFrame joint_df:
+	:param list cohorts_held_out:
+	"""
+	train = joint_df[~joint_df[cohort_chosen].isin(cohorts_held_out)]
+	test = joint_df[joint_df[cohort_chosen].isin(cohorts_held_out)]
+
+	return train, test
 
 def measure_performance(outcomes, predictions):
 	""" Returns a dict of model performance objects
@@ -135,10 +145,21 @@ def measure_performance(outcomes, predictions):
 if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
 	# if using temporal cohort model performance validation,
 	#	we choose the most recent cohort(s) for held out
-	train = joint_label_features[~joint_label_features[modelOptions['cohort_chosen']].isin(modelOptions['years_held_out'])]
-	test = joint_label_features[joint_label_features[modelOptions['cohort_chosen']].isin(modelOptions['years_held_out'])]
+	train, test = temporal_cohort_train_split(joint_label_features, 
+		modelOptions['cohort_chosen'],
+		modelOptions['years_held_out'])
+	# get subtables for each for easy reference
+	train_X = train.drop(['student_lookup', 'outcome'])
+	test_X = test.drop(['student_lookup', 'outcome'])
+	train_y = train['outcome']
+	test_y = test['outcome']
+	 
 else:
-	# if not using, we could use k-fold validation to estimate performance
+	# if not using, we could use built in k-fold validation to estimate performance_objects
+
+####
+# From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
+####
 
 ## (4B) Fit on Training ##
 # (to)
@@ -146,18 +167,17 @@ else:
 #	(a) hold out another cohort in our training data, or
 #	(b) fold all cohorts together for parameter estimation
 if modelOptions['parameter_cross_validation_scheme'] == 'none':
-	# get subtables for each
-	train_X = train.drop(['student_lookup', 'outcome'])
-	test_X = test.drop(['student_lookup', 'outcome'])
-	train_y = train['outcome']
-	test_y = test['outcome']
+	# no need to further manipulate train dataset
 
 	clf = clfs[modelOptions['modelClassSelected']]
 	# 	assume the following functions work for our clfs
+	#	this may need more abstraction for model choice and parameter selection
 	estimated_fit = clf.fit(X = train_X, y = train_y) 
-	test_prob_preds = estimated_fit.predict(X = test_X) 
+	test_prob_preds = estimated_fit.predict(X = test_X)
+
 elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
 	# choose another hold out set amongst the training set to estimate parameters
+	# manipulate 
 	print('leave_cohort_out')
 elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
 	# ignore cohorts and use random folds to estimate parameter
