@@ -46,11 +46,6 @@ def update_column_with_join(conn, source_schema, source_table, source_column,
             select {source_column} from {source_schema}.{source_table} t2
             where t2.student_lookup=t1.student_lookup
             order by {source_column} desc limit 1
-        )
-        where exists
-        ( 
-            select {source_column} from {source_schema}.{source_table} t2
-            where t2.student_lookup=t1.student_lookup 
         );
         """.format(schema=schema, table=table, column=column, 
 	source_schema=source_schema, source_table=source_table, source_column=source_column)
