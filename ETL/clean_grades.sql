@@ -43,31 +43,15 @@ set
 
 -- **** -- **** --
 -- GRADE field -- marking what grade the student is in
---		there are some oddities
---			- '' (empty). May need to be filled in based on snapshot data
---			- '**' asterisk.
---			- '22'. Guess a typo for grade 12?
---			- '23'. Guess a typo for grade 12?
---			- 'UG'. Only occurs for one StudentLookup 
---			- NULL. 
---		STATUS = wait on these odd cases 
---select distinct grade from clean.all_grades order by grade asc;
---select * from clean.all_grades where grade = '' limit 100;
---select * from clean.all_grades where grade = '**' limit 100;
---select * from clean.all_grades where grade = '22' limit 100;
---select * from clean.all_grades where grade = '23' limit 100;
---select * from clean.all_grades where grade = 'UG' limit 100;
---select * from clean.all_grades where grade is null limit 100;
 
--- 	Ignoring those oddities above for now.
---  Instead, we simply just remove the leading zeros from some values
-update only clean.all_grades
-set
-	grade =
-	case
-	when grade = 'KG' then '0'
-	else ltrim(grade, '0')
-	end;
+alter table clean.all_grades alter column grade type int using
+      case when grade like '**' then null
+      when grade like '13' or grade like '14' then 23
+      when grade like 'PS%' or grade like '-2%' then -1
+      when grade like 'KG' then 0
+      when grade like 'IN' or grade like 'DR' then null -- inactive students
+      else grade::int   
+      end;
 
 -- output distinct values to assess
 --select distinct grade, count(grade)
@@ -118,3 +102,16 @@ alter table clean.all_grades
 --		Missing? There are 99,455 records with a null year field, why?
 --			We need to see what information we can fill in from other sources
 --select year, count(*) from clean.all_grades group by year;
+
+alter table clean.all_grades alter column school_year type int using
+substring(school_year,1,4)::int;
+
+-- **** -- **** -- 
+-- DISTRICT field -- 
+select distinct district from clean.all_grades;
+alter table clean.all_grades alter column district type text using
+case when district like 'Maysville%' then 'Maysville'
+     when district like 'Ridgewood%' then 'Ridgewood'
+     when district like 'Franklin%' then 'Franklin'
+     else district
+     end;
