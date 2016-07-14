@@ -11,6 +11,9 @@ $$
   limit 1;
 $$ language SQL immutable;
 
+-- Whoops! Currently we throw away all students that only had one withdraw
+-- reason or one withdraw IRN to begin with! Also need to maintain the full
+-- column structure, currently gets rid of year by year columns
 create temporary table sorted_withdrawal_reasons as
   (select student_lookup, withdraw_reason, withdrawn_to_irn,
       district_withdraw_date
