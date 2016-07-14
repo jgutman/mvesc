@@ -1,7 +1,7 @@
 from  mvesc_utility_functions import *
 import consolidating_tables
-#import build_student_tracking ## we can probably uncomment these once merged
-#import build_cohort_tree_counts
+import build_student_tracking 
+import build_cohort_tree_counts
 import cleaning_grad_grades
 
 #consolidating tables in clean schema
@@ -37,8 +37,7 @@ print('all_snapshots cleaned')
 
 #additional tables for analysis
 execute_sql_script("build_graduates_table_from_snapshots.sql"
-### this one is old, uncomment once merged into master
-#build_student_tracking.main()
-### additional script for adding labels to tracking table
-#build_cohort_tree_counts.main()
+build_student_tracking.main()
+# additional script for adding labels to tracking table
+build_cohort_tree_counts.main()
 print('additional tables built')
