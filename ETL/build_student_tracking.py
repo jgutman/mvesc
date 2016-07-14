@@ -1,7 +1,4 @@
-from mvesc_utility_functions import postgres_pgconnection_generator
-#import psycopg2 as pg
-#from contextlib import contextmanager
-#from mvesc_utility_functions import *
+from mvesc_utility_functions import *
 
 '''
 Joint note from JG and ZZ:
@@ -66,6 +63,7 @@ def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
     """.format(schema = schema, tracking = tracking)
 
     cursor.execute(sql_query_add_columns)
+    execute_sql_script('ETL/remove_duplicate_withdrawals.sql')
     return(cohort_results)
 
 def sql_gen_tracking_students(year_begin, year_end,
