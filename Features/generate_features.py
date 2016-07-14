@@ -19,4 +19,7 @@
 #	columns for various features. Examples: absences, grades, demographics
 #		we can have one table in the DB for each category
 
-# call generate_demographic_features.py
+import os
+#------ Generate table model.demographics ------#
+print("--- working on generating demographics table ... ")
+print(os.popen("/home/jgutman/env/bin/python generate_demographic_features.py -r True").read())
