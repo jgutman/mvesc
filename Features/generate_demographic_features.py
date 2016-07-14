@@ -19,14 +19,14 @@ from mvesc_utility_functions import *
 
 
 ################ Functions ################
-def get_outcome_student_lookup(cursor, table='wrk_tracking_students', schema='clean'):
+def get_outcome_student_lookup(cursor, table='outcome_test_xc', schema='model'):
     """ Get the student lookups in the outcome table
     param: sql.cursor cursor: cursor of sql from pgconnection
     param: str table: table name to pull the lookups
     return list lookups: student lookups in a list
     rtype: list [int]
     """
-    sql_get_lookups = """select student_lookup from {schema}.{table} limit 1000;""".format(schema=schema, table=table)
+    sql_get_lookups = """select student_lookup from {schema}.{table};""".format(schema=schema, table=table)
     cursor.execute(sql_get_lookups)
     lookups = cursor.fetchall()
     lookups = [int(lp[0]) for lp in lookups]
@@ -102,7 +102,7 @@ if __name__=='__main__':
     # operations to create the table
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            student_lookups = get_outcome_student_lookup(cursor)
+            student_lookups = get_outcome_student_lookup(cursor, table='outcome_test_xc', schema='model')
             columns = ['student_lookup', 'ethnicity', 'gender']
             
             if replace_table:
