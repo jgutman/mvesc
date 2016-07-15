@@ -86,6 +86,7 @@ from sklearn.cross_validation import KFold
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix
 
 clfs = {'logit': LogisticRegression(),
 	'DT': DecisionTreeClassifier()
@@ -148,6 +149,7 @@ def measure_performance(outcomes, predictions):
 		probas_pred = predictions)
 	performance_objects['roc_curve'] = roc_curve(y_true = outcomes, 
 		y_score = test_prob_preds)
+        performance_objects['confusion_matrix'] = confusion_matrix(outcomes, test_prob_preds)
 
 	return performance_objects
 
@@ -226,6 +228,7 @@ saved_outputs = {
 	'test_prob_preds' : test_prob_preds,
 	'performance_objects' : measure_performance(test_y, test_prob_preds),
 }
+
 # save outputs
 joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOptions['file_save_name'])
 
@@ -233,3 +236,5 @@ joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOpti
 #	- (A) write to a database table to store summary
 #	- (B) write to and update an HTML/Markdown/Notebook file which processes
 #		to create visual tables and graphics for results
+
+
