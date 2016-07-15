@@ -2,7 +2,10 @@
 
 Usage: 
 - $ python kill_idle_queries.py
-- $ python kill_idle_queries.py -d mvesc
+  * kill idle queries in mvesc.dssg.io;
+
+- $ python kill_idle_queries.py -d db_box
+  * kill idle queries in database server `db_box`
 """
 
 import os, sys
