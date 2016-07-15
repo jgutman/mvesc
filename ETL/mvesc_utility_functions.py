@@ -105,7 +105,7 @@ def get_column_names(cursor, table, schema='public'):
     columns = cursor.fetchall()
     return [c[0] for c in columns]
 
-def read_table_to_df(connection, table_name, schema='public', nrows=20):
+def read_table_to_df(connection, table_name, columns=['*'], schema='public', nrows=20):
     """ Read the first n rows of a table
     
     :param pg connection object connection: connection to psql database
@@ -114,10 +114,11 @@ def read_table_to_df(connection, table_name, schema='public', nrows=20):
     :return: a pandas.dataframe object with n-rows
     :rtype: pandas.dataframe
     """
-    if nrows == -1:
-        sqlcmd = "SELECT * FROM %s.\"%s\";" % (schema, table_name)
+    sqlcmd = """SELECT {columns} FROM "{schema}"."{table}" """.format (columns=",".join(columns), schema=schema, table=table_name)
+    if nrows==-1:
+        sqlcmd = sqlcmd + ';'
     else:
-        sqlcmd = "SELECT * FROM %s.\"%s\" LIMIT %s;" % (schema, table_name, str(int(nrows)))
+        sqlcmd = sqlcmd + " limit {nrows};".format(nrows=str(nrows))
     df = pd.read_sql(sqlcmd, connection)
     return df
 
