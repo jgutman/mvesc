@@ -264,5 +264,17 @@ def main():
     #    - (B) write to and update an HTML/Markdown file
     #    to create visual tables and graphics for results
 
+    db_saved_outputs = {
+    'train_f1': f1_score(train_y, train_prob_preds),
+    'test_f1': f1_score(test_y, test_prob_preds)
+    }
+
+    #db_saved_outputs.update(model_options)
+
+    #with postgres_pgconnection_generator() as connection:
+    #    with connection.cursor() as cursor:
+    #        build_results_table(cursor)
+    #        add_row(db_saved_outputs)
+
 if __name__ == '__main__':
     main()
