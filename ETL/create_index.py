@@ -11,11 +11,15 @@ usage example:
 """ 
 
 
-import sys
-import os
-from optparse import OptionParser
-parentdir = os.path.abspath('/home/xcheng/mvesc/ETL')
+import sys, os
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
+
+from optparse import OptionParser
 from mvesc_utility_functions import *
 
 if __name__=='__main__':
@@ -24,7 +28,6 @@ if __name__=='__main__':
                       help="schema to create index; default 'clean' ")
     parser.add_option('-c','--column', dest='column',
                       help="column name to create index; default 'student_lookup' ")
-
     (options, args) = parser.parse_args()
 
     ### Parameters to entered from the options or use default####
@@ -36,29 +39,20 @@ if __name__=='__main__':
     if options.column:
         column = options.column
 
+    call_main(schema=schema, column=column)
+
+def call_main(schema='clean', column='student_lookup'):
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             sqlcmd_table_names = "SELECT table_name FROM information_schema.tables WHERE table_schema='{}'".format(schema)
             all_table_names = list(pd.read_sql(sqlcmd_table_names, connection).table_name)
             for tab in all_table_names:
-                sql_create_index = """create index {schema}_{table}_lookup_index on {schema}.{table} (student_lookup)""".format(schema=schema, table=tab)
+                print("""--- Trying to index {schema}.{table}... """.format(schema=schema, table=tab))
+                sql_create_index = """create index {schema}_{table}_lookup_index 
+                on {schema}.{table} ({column})""".format(schema=schema, table=tab, column=column)
                 try:
                     cursor.execute(sql_create_index); connection.commit()
                     print(""" - Index in {schema}.{table} created!""".format(schema=schema, table=tab) )
                 except:
+                    print(""" - Index in {schema}.{table} exists!""".format(schema=schema, table=tab) )
                     pass
-                
-                sql_create_index = """create index {schema}_{table}_lookup_index on {schema}.{table} (StudentLookup)""".format(schema=schema, table=tab)
-                try:
-                    cursor.execute(sql_create_index); connection.commit()
-                    print(""" - Index in {schema}.{table} created!""".format(schema=schema, table=tab) )
-                except:
-                    pass
-                
-                sql_create_index = """create index {schema}_{table}_lookup_index on {schema}.{table} ({column})""".format(schema=schema, table=tab, column=column)
-                try:
-                    cursor.execute(sql_create_index); connection.commit()
-                    print(""" - Index in {schema}.{table} created!""".format(schema=schema, table=tab) )
-                except:
-                    pass
-
