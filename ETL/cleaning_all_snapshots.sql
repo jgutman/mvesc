@@ -85,6 +85,37 @@ alter table clean.all_snapshots alter column district_withdraw_date type date us
 
 -- ethnicity
 --select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
+UPDATE ONLY clean.all_snapshots
+            SET ethnicity = 
+            case
+            when trim(ethnicity)='*' then 'M' --'Multiracial'
+            when trim(ethnicity)='1' then 'I' --'American Indian'
+            when trim(ethnicity)='2' then 'A' --'Asian/Pacific Islander'
+            when trim(ethnicity)='3' then 'B' --'Black'
+            when trim(ethnicity)='4' then 'H' --'Hispanic'
+            when trim(ethnicity)='5' then 'W' --'White'
+            when trim(ethnicity)='6' then 'M' -- 'Multiracial'
+            when trim(ethnicity)='7' then 'M' --'Other'
+            when lower(trim(ethnicity))='i' then 'I' --'American Indian'
+            when lower(trim(ethnicity))='a' then 'A' --'Asian/Pacific Islander'
+            when lower(trim(ethnicity))='b' then 'B' --'Black'
+            when lower(trim(ethnicity))='h' then 'H' --'Hispanic'
+            when lower(trim(ethnicity))='w' then 'W' --'White'
+            when lower(trim(ethnicity))='m' then 'M' --'Multiracial'
+            when lower(trim(ethnicity))='p' then 'A' --'Asian/Pacific Islander'
+            when lower(trim(ethnicity)) like '%american_ind%' then 'I' -- 'American Indian'
+            when lower(trim(ethnicity)) like '%am_indian%' then 'I' -- 'American Indian'
+            when lower(trim(ethnicity)) like '%hispanic%' then 'H' -- 'Hispanic'
+            when lower(trim(ethnicity)) like '%indian%' then 'I' -- 'Hispanic'
+            when lower(trim(ethnicity)) like '%alaskan%' then 'I' -- 'American Indian or Alaskan Native'
+            when lower(trim(ethnicity)) like '%asian%' then 'A' -- 'Asian/Pacific Islander'
+            when lower(trim(ethnicity)) like '%pacific%' then 'A' -- 'Asian/Pacific Islander'
+            when lower(trim(ethnicity)) like '%black%' then 'B' -- 'Black'
+            when lower(trim(ethnicity)) like '%african%' then 'B' -- 'Black'
+            when lower(trim(ethnicity)) like '%multi%' then 'M' -- 'Multiracial'
+            when lower(trim(ethnicity)) like '%white%' then 'W' -- 'White'
+            else trim(ethnicity)
+            end;
 
 -- flags
 --select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
@@ -103,6 +134,7 @@ alter table clean.all_snapshots drop column lunch;
 
 -- gender
 --select gender as d, count(*) from clean.all_snapshots group by d order by d;
+update clean.all_snapshots set gender=upper(left(trim(gender), 1))
 
 -- gifted
 --select gifted as d, count(*) from clean.all_snapshots group by d order by d;
