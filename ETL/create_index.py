@@ -11,10 +11,13 @@ usage example:
 """ 
 
 
-import sys
-import os
+import sys, os
 from optparse import OptionParser
-parentdir = os.path.abspath('/home/xcheng/mvesc/ETL')
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
