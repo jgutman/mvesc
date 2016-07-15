@@ -176,7 +176,7 @@ def main():
 
     outcome_plus_features = build_outcomes_plus_features(modelOptions)
 
-    # Use the gathered DataFrame(s) in a predictive technique function
+    # Use the gathered DataFrame in a predictive model
     # Steps:
     #   - (A) manage test and validation folds
     #   - (B) run the prediction technique across all validation folds
@@ -208,17 +208,29 @@ def main():
     # if not using, we could use built in k-fold validation to estimate performance_objects
         pass
 
-####
-# From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
-####
+    ####
+    # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
+    ####
 
-## (4B) Fit on Training ##
-# (to)
-# if we require cross-validation of parameters, we can either
-#    (a) hold out another cohort in our training data, or
-#    (b) fold all cohorts together for parameter estimation
-if modelOptions['parameter_cross_validation_scheme'] == 'none':
-    # no need to further manipulate train dataset
+    ## (4B) Fit on Training ##
+    # if we require cross-validation of parameters, we can either
+    #    (a) hold out another cohort in each fold for cross-validation
+    #    (b) fold all cohorts together for k-fold parameter estimation
+
+    if modelOptions['parameter_cross_validation_scheme'] == 'none':
+        # no need to further manipulate train dataset
+
+    elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
+        # choose another validation set amongst the training set to
+        # estimate parameters and model selection across cohort folds
+        print('leave_cohort_out')
+
+    elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
+        # ignore cohorts and use random folds to estimate parameter
+        print('k_fold_parameter_estimation')
+
+    else:
+        print('unknown cross-validation strategy')
 
     clf = clfs[modelOptions['modelClassSelected']]
     #     assume the following functions work for our clfs
@@ -226,37 +238,31 @@ if modelOptions['parameter_cross_validation_scheme'] == 'none':
     estimated_fit = clf.fit(X = train_X, y = train_y)
     test_prob_preds = estimated_fit.predict(X = test_X)
 
-elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
-    # choose another hold out set amongst the training set to estimate parameters
-    # manipulate
-    print('leave_cohort_out')
-elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
-    # ignore cohorts and use random folds to estimate parameter
-    print('k_fold_parameter_estimation')
+    ## (4C) Save Results ##
+    # Save the recorded inputs, model, performance, and text description
+    #    into a results folder
+    #        according to sklearn documentation, use joblib instead of pickle
+    #            save as a .pkl extension
+    #        store option inputs (randomSeed, train/test split rules, features)
+    #        store time to completion [missing]
 
+    saved_outputs = {
+        'estimated_fit' : estimated_fit,
+        'modelOptions' : modelOptions, # this also contains cohort_grade_level_begin for train/test split
+        'test_y' : test_y,
+        'test_prob_preds' : test_prob_preds,
+        'performance_objects' : measure_performance(test_y, test_prob_preds),
+    }
 
-## (4C) Save Results ##
-# Save the recorded inputs, model, performance, and text description
-#    into a results folder
-#        according to sklearn documentation, use joblib instead of pickle
-#            save as a .pkl extension
-#        store option inputs (randomSeed, train/test split rules, features)
-#        store time to completion [missing]
+    # save outputs
+    joblib.dump(saved_outputs, os.path.join(
+    '/mnt/data/mvesc/Model_Results/skeleton/',
+        modelOptions['file_save_name']))
 
-saved_outputs = {
-    'estimated_fit' : estimated_fit,
-    'modelOptions' : modelOptions, # this also contains cohort_grade_level_begin for train/test split
-    'test_y' : test_y,
-    'test_prob_preds' : test_prob_preds,
-    'performance_objects' : measure_performance(test_y, test_prob_preds),
-}
-# save outputs
-joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOptions['file_save_name'])
-
-# write output summary to a database
-#    - (A) write to a database table to store summary
-#    - (B) write to and update an HTML/Markdown/Notebook file which processes
-#        to create visual tables and graphics for results
+    # write output summary to a database
+    #    - (A) write to a database table to store summary
+    #    - (B) write to and update an HTML/Markdown file
+    #    to create visual tables and graphics for results
 
 if __name__ == '__main__':
     main()
