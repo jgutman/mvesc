@@ -36,7 +36,7 @@ build_cohort_tree_counts.main()
 print('additional tables built')
 
 # create index for all tables in clean schema for faster joining and searching
-create_index.main()
+create_index.call_main()
 print('indices created or checked for tables in schema `clean`')
 
 
