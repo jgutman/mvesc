@@ -2,7 +2,11 @@
 #	"model" = any predictive method, not necessarily "model-based"
 
 import os, sys
-parentdir = os.path.abspath('/home/zzhang/mvesc/ETL')
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
@@ -10,6 +14,9 @@ from mvesc_utility_functions import *
 # (1) Create options file used to generate features
 # 	OR Read in an existing human-created options file
 
+# The model options needs to read in what tables to draw features from
+# and what columns to draw from each of those tables
+# Also needs to read in an option to output all results to a database
 modelOptions = {'modelClassSelected' : 'logit',
 	'model_performance_estimate_scheme' : 'temporal_cohort',
 	'parameter_cross_validation_scheme' : 'none',
@@ -18,7 +25,7 @@ modelOptions = {'modelClassSelected' : 'logit',
 	'randomSeed' : 2187,
 	'user_description' : """initial skeleton pipeline test""",
 	'cohort_chosen' : 'cohort_9th',
-	'cohorts_held_out' : [2015]
+	'cohorts_held_out' : [2012]
 	}
 # 	set seed for this program from modelOptions
 np.random.seed(modelOptions['randomSeed'])
@@ -34,14 +41,14 @@ with postgres_pgconnection_generator() as connection:
 	#	labels table contains a column for each cohort base year we choose
 	#		e.g. 'cohort_9th' contains the years each student is seen in 9th grade
 	#	and contains a 'outcome' and 'student_lookup' columns
-	# Usage: 
+	# Usage:
 	#	we use the various 'cohort_Nth' columns to choose train and test groups
 	outcomes_with_student_lookup = read_table_to_df(connection, table_name = 'labels', \
 		schema = 'model', nrows = -1)
 
 	# get demographic features
 	# Assumes:
-	#	demographics table contains 'student_lookup' plus a column for each possible 
+	#	demographics table contains 'student_lookup' plus a column for each possible
 	#	feature
 	features_demographic = read_table_to_df(connection, table_name = 'demographics', \
 		schema = 'model', nrows = -1)
@@ -52,7 +59,7 @@ joint_label_features = pd.merge(outcomes_with_student_lookup, features_demograph
 
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
-    
+
     :param pd.dataframe rawdf: raw data frame
     :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
     :rtype: pd.dataframe
@@ -109,10 +116,10 @@ def define_clfs_params:
         'NB': GaussianNB(),
         'DT': DecisionTreeClassifier(),
         'SGD': SGDClassifier(loss="hinge", penalty="l2"),
-        'KNN': KNeighborsClassifier(n_neighbors=3) 
+        'KNN': KNeighborsClassifier(n_neighbors=3)
             }
 
-    grid = { 
+    grid = {
     'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
     'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
@@ -144,9 +151,9 @@ def measure_performance(outcomes, predictions):
 	:param array predictions:
 	"""
 	performance_objects = {}
-	performance_objects['pr_curve'] = precision_recall_curve(y = outcomes, 
+	performance_objects['pr_curve'] = precision_recall_curve(y = outcomes,
 		probas_pred = predictions)
-	performance_objects['roc_curve'] = roc_curve(y_true = outcomes, 
+	performance_objects['roc_curve'] = roc_curve(y_true = outcomes,
 		y_score = test_prob_preds)
 
 	return performance_objects
@@ -172,7 +179,7 @@ def measure_performance(outcomes, predictions):
 if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
 	# if using temporal cohort model performance validation,
 	#	we choose the most recent cohort(s) for held out
-	train, test = temporal_cohort_train_split(joint_label_features, 
+	train, test = temporal_cohort_train_split(joint_label_features,
 		modelOptions['cohort_chosen'],
 		modelOptions['years_held_out'])
 	# get subtables for each for easy reference
@@ -180,7 +187,7 @@ if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
 	test_X = test.drop(['student_lookup', 'outcome'])
 	train_y = train['outcome']
 	test_y = test['outcome']
-	 
+
 else:
 	# if not using, we could use built in k-fold validation to estimate performance_objects
 
@@ -199,12 +206,12 @@ if modelOptions['parameter_cross_validation_scheme'] == 'none':
 	clf = clfs[modelOptions['modelClassSelected']]
 	# 	assume the following functions work for our clfs
 	#	this may need more abstraction for model choice and parameter selection
-	estimated_fit = clf.fit(X = train_X, y = train_y) 
+	estimated_fit = clf.fit(X = train_X, y = train_y)
 	test_prob_preds = estimated_fit.predict(X = test_X)
 
 elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
 	# choose another hold out set amongst the training set to estimate parameters
-	# manipulate 
+	# manipulate
 	print('leave_cohort_out')
 elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
 	# ignore cohorts and use random folds to estimate parameter
