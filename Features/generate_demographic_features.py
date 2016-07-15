@@ -3,7 +3,7 @@ Procedures:
 1. Read from outcome table to get student_lookups;
 2. Generate `model.demographics` from `clean.all_snapshots`
 """
-import os
+import os, sys
 from os.path import isfile, join, abspath, basename
 from optparse import OptionParser
 import numpy as np
@@ -12,8 +12,11 @@ from sqlalchemy import create_engine
 import sqlalchemy
 import json
 
-import sys
-parentdir = os.path.abspath('/home/xcheng/mvesc/ETL')
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 def update_column_with_join(conn, source_schema, source_table, source_column, 
