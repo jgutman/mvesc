@@ -10,7 +10,7 @@ from mvesc_utility_functions import *
 # (1) Create options file used to generate features
 # 	OR Read in an existing human-created options file
 
-modelOptions = {'modelClassSelected' : 'logit',
+modelOptions = {'model_class_selected' : 'logit',
 	'model_performance_estimate_scheme' : 'temporal_cohort',
 	'parameter_cross_validation_scheme' : 'none',
 	'n_folds' : 10,
@@ -87,6 +87,8 @@ from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+import save_reports
 
 clfs = {'logit': LogisticRegression(),
 	'DT': DecisionTreeClassifier()
@@ -139,20 +141,18 @@ def temporal_cohort_train_split(joint_df, cohort_chosen, cohorts_held_out):
 	return train, test
 
 def measure_performance(outcomes, predictions):
-	""" Returns a dict of model performance objects
+        """ Returns a dict of model performance objects
 
-	:param array outcomes:
-	:param array predictions:
-	"""
-	performance_objects = {}
-	performance_objects['pr_curve'] = precision_recall_curve(y = outcomes, 
-		probas_pred = predictions)
-	performance_objects['roc_curve'] = roc_curve(y_true = outcomes, 
-		y_score = test_prob_preds)
+        :param array outcomes:
+        :param array predictions:
+        """
+        performance_objects = {}
+        performance_objects['pr_curve'] = precision_recall_curve(y = outcomes, 
+                                                        probas_pred = predictions)
+        performance_objects['roc_curve'] = roc_curve(y_true = outcomes, 
+                                                     y_score = test_prob_preds)
         performance_objects['confusion_matrix'] = confusion_matrix(outcomes, test_prob_preds)
-
-	return performance_objects
-
+        return performance_objects
 
 #### END FUNCTIONS ####
 
@@ -172,16 +172,16 @@ def measure_performance(outcomes, predictions):
 #	- cohort-fold cross validation (leave one cohort out)
 
 if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
-	# if using temporal cohort model performance validation,
-	#	we choose the most recent cohort(s) for held out
-	train, test = temporal_cohort_train_split(joint_label_features, 
-		modelOptions['cohort_chosen'],
-		modelOptions['years_held_out'])
-	# get subtables for each for easy reference
-	train_X = train.drop(['student_lookup', 'outcome'])
-	test_X = test.drop(['student_lookup', 'outcome'])
-	train_y = train['outcome']
-	test_y = test['outcome']
+    # if using temporal cohort model performance validation,
+    # e choose the most recent cohort(s) for held out
+    train, test = temporal_cohort_train_split(joint_label_features, 
+                                              modelOptions['cohort_chosen'],
+                                              modelOptions['years_held_out'])
+    # get subtables for each for easy reference
+    train_X = train.drop(['student_lookup', 'outcome'])
+    test_X = test.drop(['student_lookup', 'outcome'])
+    train_y = train['outcome']
+    test_y = test['outcome']
 	 
 else:
 	# if not using, we could use built in k-fold validation to estimate performance_objects
@@ -203,6 +203,7 @@ if modelOptions['parameter_cross_validation_scheme'] == 'none':
 	#	this may need more abstraction for model choice and parameter selection
 	estimated_fit = clf.fit(X = train_X, y = train_y) 
 	test_prob_preds = estimated_fit.predict(X = test_X)
+        train_prob_preds = estimated_fit.predict(X = train_X)
 
 elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
 	# choose another hold out set amongst the training set to estimate parameters
@@ -230,11 +231,24 @@ saved_outputs = {
 }
 
 # save outputs
-joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOptions['file_save_name'])
+joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOptions['file_save_name']) 
 
 # write output summary to a database
 #	- (A) write to a database table to store summary
 #	- (B) write to and update an HTML/Markdown/Notebook file which processes
 #		to create visual tables and graphics for results
+
+
+db_saved_outputs = {
+    'train_f1': f1_score(test_y,test_prob_preds),
+    'test_f1': f1_score(train_y,train_prob_preds)
+}
+db_saved_outputs.update(model_options)
+
+with postgres_pgconnection_generator() as connection:
+    with connection.cursor() as cursor:
+        build_results_table(cursor)
+        add_row(db_saved_outputs)
+
 
 
