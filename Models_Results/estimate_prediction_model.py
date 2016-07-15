@@ -10,65 +10,12 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
-def main():
-# (1) Create options file used to generate features
-#     OR Read in an existing human-created options file
-
-# The model options needs to read in what tables to draw features from
-# and what columns to draw from each of those tables
-# Also needs to read in an option to output all results to a database
-
-    # Replace this with reading in options from a yaml file
-    modelOptions = {'modelClassSelected' : 'logit',
-        'model_performance_estimate_scheme' : 'temporal_cohort',
-        'parameter_cross_validation_scheme' : 'leave_cohort_out',
-        'n_folds' : 10,
-        'file_save_name' : 'gender_ethnicity_logit.pkl',
-        'randomSeed' : 2187,
-        'user_description' : """initial skeleton pipeline test""",
-        'cohort_grade_level_begin' : 'cohort_9th',
-        'cohorts_held_out' : [2012],
-        # features_included is a dictionary where key is table name and
-        # value is a list of column names from that table
-        'features_included' : {'demographics': ['ethnicity', 'gender']},
-        'outcome_name' : 'is_dropout'
-        }
-    #     set seed for this program from modelOptions
-    np.random.seed(modelOptions['randomSeed'])
-
-    ######
-    # (2) Based on options, draw in data and select the appropriate
-    #    - labeled outcome column
-    #    - subset of various feature columns from various tables
-
-    with postgres_pgconnection_generator() as connection:
-        # get labeled outcomes
-        # Assumes:
-        #    labels table contains a column for each cohort base year we choose
-        #        e.g. 'cohort_9th' contains the years each student is seen in 9th grade
-        #    and contains a 'outcome' and 'student_lookup' columns
-        # Usage:
-        #    we use the various 'cohort_Nth' columns to choose train and test groups
-        outcomes_with_student_lookup = read_table_to_df(connection, table_name = 'outcome',
-            schema = 'model', nrows = -1, columns = ['student_lookup',
-                modelOptions['outcome_name'], modelOptions['cohort_grade_level_begin']])
-
-    # get all requested input features
-    # Assumes:
-    #    every features table contains 'student_lookup' plus a column for the
-    #    requested possible features
-
-    joint_label_features = outcomes_with_student_lookup.copy()
-
-    for table, column_names in modelOptions['features_included'].items():
-        features = read_table_to_df(connection, table_name = table,
-            schema = 'model', nrows = -1, columns=(['student_lookup'] + column_names))
-        # join to only keep features that have labeled outcomes
-        joint_label_features = pd.merge(joint_label_features, features,
-                how = 'left', on = ['student_lookup'])
-
-    joint_label_features = df2num(joint_label_features)
-
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cross_validation import KFold
+from sklearn.externals import joblib
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_curve
 
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
@@ -78,26 +25,12 @@ def df2num(rawdf):
     :rtype: pd.dataframe
     Rules:
     - 1. numeric columns unchanged;
-    - 2. strings converted to dummeis;
-    - 3. the most frequenct string is taken as reference
+    - 2. strings converted to dummies;
+    - 3. the most frequent string is taken as reference category and dropped
     - 4. new column name is: "ColumnName_Category"
     (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
-
     """
-    def df2num(rawdf):
-    """ Convert data frame with numeric variables and strings to numeric dataframe
 
-    :param pd.dataframe rawdf: raw data frame
-    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
-    :rtype: pd.dataframe
-    Rules:
-    - 1. numeric columns unchanged;
-    - 2. strings converted to dummeis;
-    - 3. the most frequent string is taken as reference
-    - 4. new column name is: "ColumnName_Category"
-    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
-
-    """
     numeric_df = rawdf.select_dtypes(include=[np.number])
     str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
     dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
@@ -109,21 +42,15 @@ def df2num(rawdf):
     return numeric_df
 
 ######
-# (3) Setup Modeling Options and Functions
+# Setup Modeling Options and Functions
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.cross_validation import KFold
-from sklearn.externals import joblib
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
-
-clfs = {'logit': LogisticRegression(),
+def define_clfs_params:
+    clfs = {'logit': LogisticRegression(),
     'DT': DecisionTreeClassifier()
     }
 
-grid = {'logit': {},
-    'DT': {}
+    grid = {'logit': {},
+        'DT': {}
     }
 
 # For reference, taken from Rayid's magic loops code
@@ -157,11 +84,12 @@ def define_clfs_params:
            }
 """
 
-def temporal_cohort_train_split(joint_df, cohort_grade_level_begin, cohorts_held_out):
+def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
+    cohorts_held_out):
     """ Splits the given joint_df of features & outcomes and
     returns a train/test dataset
-    :param DataFrame joint_df:
-    :param list cohorts_held_out:
+    :param pd.DataFrame joint_df:
+    :param list[int] cohorts_held_out:
     """
     train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
@@ -170,50 +98,115 @@ def temporal_cohort_train_split(joint_df, cohort_grade_level_begin, cohorts_held
 
 def measure_performance(outcomes, predictions):
     """ Returns a dict of model performance objects
-
-    :param array outcomes:
-    :param array predictions:
+    :param list[int] outcomes:
+    :param list[float] predictions:
     """
     performance_objects = {}
     performance_objects['pr_curve'] = precision_recall_curve(y = outcomes,
         probas_pred = predictions)
     performance_objects['roc_curve'] = roc_curve(y_true = outcomes,
         y_score = test_prob_preds)
-
     return performance_objects
 
+def build_outcomes_plus_features(modelOptions):
+    with postgres_pgconnection_generator() as connection:
+        # get labeled outcomes
+        # Assumes:
+        # model.outcome table contains a column (name given in cohort_grade_level_begin) for each cohort base year we choose
+        # e.g. 'cohort_9th' contains the year each student is seen in 9th grade
+        # and contains an outcome column (name given in outcome_name)
+        # and 'student_lookup' columns
+        # Usage:
+        # select train, validation, and test based on values in column
+        # 'cohort_grade_level_begin' according to value in 'cohorts_held_out'
+        outcomes_with_student_lookup = read_table_to_df(connection,
+            table_name = 'outcome', schema = 'model', nrows = -1,
+            columns = ['student_lookup', modelOptions['outcome_name'], modelOptions['cohort_grade_level_begin']])
 
-#### END FUNCTIONS ####
+        # get all requested input features
+        # Assumes:
+        # every features table contains 'student_lookup'
+        # plus a column for the requested possible features
 
+        # build dataframe containing student_lookup, outcome, cohort,
+        # and all features as numeric non-categorical values
+        joint_label_features = outcomes_with_student_lookup.copy()
 
-######
-# (4) Use the gathered DataFrame(s) in a predictive technique function
-# Steps:
-#    - (A) manage held out datasets or cross-validation
-#    - (B) run the prediction technique
-#    - (C) record the inputs and parameters used
+        for table, column_names in modelOptions['features_included'].items():
+            features = read_table_to_df(connection, table_name = table,
+                schema = 'model', nrows = -1,
+                columns=(['student_lookup'] + column_names))
+        # join to only keep features that have labeled outcomes
+            joint_label_features = pd.merge(joint_label_features, features,
+                how = 'left', on = ['student_lookup'])
 
-# (4A) Choose cohort for held out data
-# Validation Process #
-# we decide to start with temporal model validation
-#    - temporal (using recent cohorts as a validation set)
-#    - k-fold cross (using all cohorts and all years of features)
-#    - cohort-fold cross validation (leave one cohort out)
+    joint_label_features = df2num(joint_label_features)
+    return joint_label_features
 
-if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
+def main():
+# Create options file used to generate features
+# OR Read in an existing human-created options file
+
+# The model options needs to read in what tables to draw features from
+# and what columns to draw from each of those tables
+# Also needs to read in an option to output all results to a database
+
+    # Replace this with reading in options from a yaml file
+    modelOptions = {'model_classes_selected' : ['logit'],
+        'model_performance_estimate_scheme' : 'temporal_cohort',
+        'parameter_cross_validation_scheme' : 'leave_cohort_out',
+        'n_folds' : 10,
+        'file_save_name' : 'gender_ethnicity_logit.pkl',
+        'randomSeed' : 2187,
+        'user_description' : """initial skeleton pipeline test""",
+        'cohort_grade_level_begin' : 'cohort_9th',
+        'cohorts_held_out' : [2012],
+        # features_included is a dictionary where key is table name and
+        # value is a list of column names from that table
+        'features_included' : {'demographics': ['ethnicity', 'gender']},
+        'outcome_name' : 'is_dropout'
+        }
+    # set seed for this program from modelOptions
+    np.random.seed(modelOptions['randomSeed'])
+
+    # Based on options, draw in data and select the appropriate
+    # labeled outcome column (outcome_name)
+    # cohort identification column (cohort_grade_level_begin)
+    # subset of various feature columns from various tables (features_included)
+
+    outcome_plus_features = build_outcomes_plus_features(modelOptions)
+
+    # Use the gathered DataFrame(s) in a predictive technique function
+    # Steps:
+    #   - (A) manage test and validation folds
+    #   - (B) run the prediction technique across all validation folds
+    #   - (C) record the inputs and parameters used
+
+    # (4A) Choose cohort(s) for test and validation data
+    # Validation Process
+    # Use temporal split for creating the test set
+    # Use cohort-fold cross-validation for parameter search and model selection
+    #    - temporal (using recent cohorts as a validation set)
+    #    - k-fold cross (using all cohorts and all years of features)
+    #    - cohort-fold cross validation (leave one cohort out)
+
+    if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
     # if using temporal cohort model performance validation,
-    #    we choose the most recent cohort(s) for held out
-    train, test = temporal_cohort_train_split(joint_label_features,
-        modelOptions['cohort_grade_level_begin'],
-        modelOptions['cohorts_held_out'])
-    # get subtables for each for easy reference
-    train_X = train.drop(['student_lookup', 'outcome'])
-    test_X = test.drop(['student_lookup', 'outcome'])
-    train_y = train['outcome']
-    test_y = test['outcome']
+    # we choose the cohorts in cohorts_held_out for the test set
+        train, test = temporal_cohort_train_split(joint_label_features,
+            modelOptions['cohort_grade_level_begin'],
+            modelOptions['cohorts_held_out'])
+        # get subtables for each for easy reference
+        train_X = train.drop(['student_lookup', modelOptions['outcome_name'],
+            modelOptions['cohort_grade_level_begin']])
+        test_X = test.drop(['student_lookup', modelOptions['outcome_name'],
+            modelOptions['cohort_grade_level_begin']])
+        train_y = train[modelOptions['outcome_name']]
+        test_y = test[modelOptions['outcome_name']]
 
-else:
+    else:
     # if not using, we could use built in k-fold validation to estimate performance_objects
+        pass
 
 ####
 # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
