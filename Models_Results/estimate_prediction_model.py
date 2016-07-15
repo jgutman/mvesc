@@ -53,6 +53,7 @@ def define_clfs_params:
         'DT': {}
     }
 
+
 # For reference, taken from Rayid's magic loops code
 """
 def define_clfs_params:
@@ -108,7 +109,7 @@ def measure_performance(outcomes, predictions):
         y_score = test_prob_preds)
     return performance_objects
 
-def build_outcomes_plus_features(modelOptions):
+def build_outcomes_plus_features(model_options):
     with postgres_pgconnection_generator() as connection:
         # get labeled outcomes
         # Assumes:
@@ -121,7 +122,7 @@ def build_outcomes_plus_features(modelOptions):
         # 'cohort_grade_level_begin' according to value in 'cohorts_held_out'
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
-            columns = ['student_lookup', modelOptions['outcome_name'], modelOptions['cohort_grade_level_begin']])
+            columns = ['student_lookup', model_options['outcome_name'], model_options['cohort_grade_level_begin']])
 
         # get all requested input features
         # Assumes:
@@ -132,7 +133,7 @@ def build_outcomes_plus_features(modelOptions):
         # and all features as numeric non-categorical values
         joint_label_features = outcomes_with_student_lookup.copy()
 
-        for table, column_names in modelOptions['features_included'].items():
+        for table, column_names in model_options['features_included'].items():
             features = read_table_to_df(connection, table_name = table,
                 schema = 'model', nrows = -1,
                 columns=(['student_lookup'] + column_names))
@@ -152,12 +153,12 @@ def main():
 # Also needs to read in an option to output all results to a database
 
     # Replace this with reading in options from a yaml file
-    modelOptions = {'model_classes_selected' : ['logit'],
+    model_options = {'model_classes_selected' : ['logit'],
         'model_performance_estimate_scheme' : 'temporal_cohort',
         'parameter_cross_validation_scheme' : 'leave_cohort_out',
         'n_folds' : 10,
         'file_save_name' : 'gender_ethnicity_logit.pkl',
-        'randomSeed' : 2187,
+        'random_seed' : 2187,
         'user_description' : """initial skeleton pipeline test""",
         'cohort_grade_level_begin' : 'cohort_9th',
         'cohorts_held_out' : [2012],
@@ -166,15 +167,15 @@ def main():
         'features_included' : {'demographics': ['ethnicity', 'gender']},
         'outcome_name' : 'is_dropout'
         }
-    # set seed for this program from modelOptions
-    np.random.seed(modelOptions['randomSeed'])
+    # set seed for this program from model_options
+    np.random.seed(model_options['random_seed'])
 
     # Based on options, draw in data and select the appropriate
     # labeled outcome column (outcome_name)
     # cohort identification column (cohort_grade_level_begin)
     # subset of various feature columns from various tables (features_included)
 
-    outcome_plus_features = build_outcomes_plus_features(modelOptions)
+    outcome_plus_features = build_outcomes_plus_features(model_options)
 
     # Use the gathered DataFrame in a predictive model
     # Steps:
@@ -190,19 +191,19 @@ def main():
     #    - k-fold cross (using all cohorts and all years of features)
     #    - cohort-fold cross validation (leave one cohort out)
 
-    if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
+    if model_options['model_performance_estimate_scheme'] == 'temporal_cohort':
     # if using temporal cohort model performance validation,
     # we choose the cohorts in cohorts_held_out for the test set
         train, test = temporal_cohort_train_split(joint_label_features,
-            modelOptions['cohort_grade_level_begin'],
-            modelOptions['cohorts_held_out'])
+            model_options['cohort_grade_level_begin'],
+            model_options['cohorts_held_out'])
         # get subtables for each for easy reference
-        train_X = train.drop(['student_lookup', modelOptions['outcome_name'],
-            modelOptions['cohort_grade_level_begin']])
-        test_X = test.drop(['student_lookup', modelOptions['outcome_name'],
-            modelOptions['cohort_grade_level_begin']])
-        train_y = train[modelOptions['outcome_name']]
-        test_y = test[modelOptions['outcome_name']]
+        train_X = train.drop(['student_lookup', model_options['outcome_name'],
+            model_options['cohort_grade_level_begin']])
+        test_X = test.drop(['student_lookup', model_options['outcome_name'],
+            model_options['cohort_grade_level_begin']])
+        train_y = train[model_options['outcome_name']]
+        test_y = test[model_options['outcome_name']]
 
     else:
     # if not using, we could use built in k-fold validation to estimate performance_objects
@@ -217,22 +218,22 @@ def main():
     #    (a) hold out another cohort in each fold for cross-validation
     #    (b) fold all cohorts together for k-fold parameter estimation
 
-    if modelOptions['parameter_cross_validation_scheme'] == 'none':
+    if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
 
-    elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
+    elif model_options['parameter_cross_validation_scheme'] == 'leave_cohort_out':
         # choose another validation set amongst the training set to
         # estimate parameters and model selection across cohort folds
         print('leave_cohort_out')
 
-    elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
+    elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
 
     else:
         print('unknown cross-validation strategy')
 
-    clf = clfs[modelOptions['modelClassSelected']]
+    clf = clfs[model_options['model_classes_selected']]
     #     assume the following functions work for our clfs
     #    this may need more abstraction for model choice and parameter selection
     estimated_fit = clf.fit(X = train_X, y = train_y)
@@ -248,7 +249,7 @@ def main():
 
     saved_outputs = {
         'estimated_fit' : estimated_fit,
-        'modelOptions' : modelOptions, # this also contains cohort_grade_level_begin for train/test split
+        'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
         'test_y' : test_y,
         'test_prob_preds' : test_prob_preds,
         'performance_objects' : measure_performance(test_y, test_prob_preds),
@@ -257,7 +258,7 @@ def main():
     # save outputs
     joblib.dump(saved_outputs, os.path.join(
     '/mnt/data/mvesc/Model_Results/skeleton/',
-        modelOptions['file_save_name']))
+        model_options['file_save_name']))
 
     # write output summary to a database
     #    - (A) write to a database table to store summary
