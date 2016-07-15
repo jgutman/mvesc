@@ -67,11 +67,11 @@ when disadvantagement_code like '1' then 'economic'
 when disadvantagement_code like '2' then 'academic'
 when disadvantagement_code like '3' then 'both'
 when disadvantagement_code like '*' then 'none'
-else disadvantagement_code end;
+else null end; -- tossing one 6 value
 alter table clean.all_snapshots rename column disadvantagement_desc to disadvantagement;
 alter table clean.all_snapshots drop column disadvantagement_code;
 
---select grade, disadvantagement, count(*) from clean.all_snapshots where disadvantagement = 'academic' or disadvantagement = 'both' group by grade, disadvantagement order by count(*)
+--select disadvantagement, count(*) from clean.all_snapshots group by  disadvantagement order by count(*)
 
 -- discipline
 --select discipline_incidents, count(discipline_incidents) from clean.all_snapshots group by discipline_incidents order by discipline_incidents;
@@ -88,14 +88,18 @@ alter table clean.all_snapshots alter column district_withdraw_date type date us
 
 -- flags
 --select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
+
 alter table clean.all_snapshots alter column flag1 type text using coalesce(flag1,flag2);
 alter table clean.all_snapshots rename column flag1 to lunch;
 alter table clean.all_snapshots drop column flag2;
 alter table clean.all_snapshots alter column lunch type text using 
 case 
-when lower(lunch) like 'f' then 'free'
-when lower(lunch) like 'r' then 'reduced'
+when lower(lunch) like 'f' or lower(lunch) like 'r' then 'economic'
 else null end; -- tossing a few (~50) miscelanous values
+
+alter table clean.all_snapshots alter column disadvantagement type text using 
+coalesce(disadvantagement, lunch);
+alter table clean.all_snapshots drop column lunch;
 
 -- gender
 --select gender as d, count(*) from clean.all_snapshots group by d order by d;
@@ -134,7 +138,7 @@ update clean.all_snapshots set grade =
 alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
 -- graduation date
---select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;2
+--select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
 
 -- iss
 --select iss as d, count(*) from clean.all_snapshots group by d order by d;

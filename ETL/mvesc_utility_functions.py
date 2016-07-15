@@ -219,12 +219,12 @@ def clean_column(cursor, values, old_column_name, table_name,
 #    clean_col_query = clean_col_query[:-20]
     clean_col_query += "else {0} end; ".format(old_column_name)
 
-    if replace:
+    if replace and (old_column_name != new_column_name):
         clean_col_query += """
         alter table {schema}."{table}" rename column "{old}" to "{new}"
         """.format_map({'schema':schema_name,'table':table_name,
                         'old':old_column_name, 'new':new_column_name})
-    #print(clean_col_query)
+#    print(clean_col_query)
 #    print(params)
     cursor.execute(clean_col_query,params)
 
