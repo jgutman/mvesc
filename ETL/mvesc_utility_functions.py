@@ -207,6 +207,37 @@ def clean_column(cursor, values, old_column_name, table_name, \
                         'old':old_column_name, 'new':new_column_name})
     cursor.execute(clean_col_query,params)
 
+
+
+############ Functions to data frame processing ###################
+def df2num(rawdf):
+    """ Convert data frame with numeric variables and strings to numeric dataframe
+    
+    :param pd.dataframe rawdf: raw data frame
+    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
+    :rtype: pd.dataframe
+    Rules:
+    - 1. numeric columns unchanged;
+    - 2. strings converted to dummeis;
+    - 3. the most frequenct string is taken as reference
+    - 4. new column name is: "ColumnName_Category"
+    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
+
+    """
+    numeric_types = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    numeric_df = rawdf.select_dtypes(include=numeric_types)
+    str_columns = list(filter(lambda x: x not in numeric_df.columns, rawdf.columns))
+    for col in str_columns:
+        dummy_col_df = pd.get_dummies(rawdf[col])
+        col_names = dummy_col_df.columns
+        col_names = {cat:col+'_'+cat for cat in col_names }
+        dummy_col_df = dummy_col_df.rename(columns=col_names)
+        most_class_col = dummy_col_df.sum().idxmax()
+        dummy_col_df = dummy_col_df.drop([most_class_col], axis=1)
+        numeric_df = numeric_df.join(dummy_col_df)
+    return numeric_df
+
+
 ############ Upload file or directory to postgres (not useful in most cases)############### 
 def read_csv_noheader(filepath):
     """ Read a csv file with no header
