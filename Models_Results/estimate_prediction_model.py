@@ -1,5 +1,5 @@
 # Initial v0.0 for executing a model estimation procedure
-#	"model" = any predictive method, not necessarily "model-based"
+#   "model" = any predictive method, not necessarily "model-based"
 
 import os, sys
 parentdir = os.path.abspath('/home/zzhang/mvesc/ETL')
@@ -8,47 +8,47 @@ from mvesc_utility_functions import *
 
 ######
 # (1) Create options file used to generate features
-# 	OR Read in an existing human-created options file
+#   OR Read in an existing human-created options file
 
 modelOptions = {'model_class_selected' : 'logit',
-	'model_performance_estimate_scheme' : 'temporal_cohort',
-	'parameter_cross_validation_scheme' : 'none',
-	'n_folds' : 10,
-	'file_save_name' : 'gender_ethnicity_logit.pkl',
-	'randomSeed' : 2187,
-	'user_description' : """initial skeleton pipeline test""",
-	'cohort_chosen' : 'cohort_9th',
-	'cohorts_held_out' : [2015]
-	}
-# 	set seed for this program from modelOptions
+    'model_performance_estimate_scheme' : 'temporal_cohort',
+    'parameter_cross_validation_scheme' : 'none',
+    'n_folds' : 10,
+    'file_save_name' : 'gender_ethnicity_logit.pkl',
+    'randomSeed' : 2187,
+    'user_description' : """initial skeleton pipeline test""",
+    'cohort_chosen' : 'cohort_9th',
+    'cohorts_held_out' : [2015]
+    }
+#   set seed for this program from modelOptions
 np.random.seed(modelOptions['randomSeed'])
 
 ######
 # (2) Based on options, draw in data and select the appropriate
-#	- labeled outcome column
-#	- subset of various feature columns from various tables
+#   - labeled outcome column
+#   - subset of various feature columns from various tables
 
 with postgres_pgconnection_generator() as connection:
-	# get labeled outcomes
-	# Assumes:
-	#	labels table contains a column for each cohort base year we choose
-	#		e.g. 'cohort_9th' contains the years each student is seen in 9th grade
-	#	and contains a 'outcome' and 'student_lookup' columns
-	# Usage: 
-	#	we use the various 'cohort_Nth' columns to choose train and test groups
-	outcomes_with_student_lookup = read_table_to_df(connection, table_name = 'labels', \
-		schema = 'model', nrows = -1)
+    # get labeled outcomes
+    # Assumes:
+    #   labels table contains a column for each cohort base year we choose
+    #       e.g. 'cohort_9th' contains the years each student is seen in 9th grade
+    #   and contains a 'outcome' and 'student_lookup' columns
+    # Usage: 
+    #   we use the various 'cohort_Nth' columns to choose train and test groups
+    outcomes_with_student_lookup = read_table_to_df(connection, table_name = 'labels', \
+        schema = 'model', nrows = -1)
 
-	# get demographic features
-	# Assumes:
-	#	demographics table contains 'student_lookup' plus a column for each possible 
-	#	feature
-	features_demographic = read_table_to_df(connection, table_name = 'demographics', \
-		schema = 'model', nrows = -1)
+    # get demographic features
+    # Assumes:
+    #   demographics table contains 'student_lookup' plus a column for each possible 
+    #   feature
+    features_demographic = read_table_to_df(connection, table_name = 'demographics', \
+        schema = 'model', nrows = -1)
 
-# 	join to only keep features that have labeled outcomes
+#   join to only keep features that have labeled outcomes
 joint_label_features = pd.merge(outcomes_with_student_lookup, features_demographic,\
-		how = 'left', on = ['student_lookup'])
+        how = 'left', on = ['student_lookup'])
 
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
@@ -91,12 +91,12 @@ from sklearn.metrics import f1_score
 import save_reports
 
 clfs = {'logit': LogisticRegression(),
-	'DT': DecisionTreeClassifier()
-	}
+    'DT': DecisionTreeClassifier()
+    }
 
 grid = {'logit': {},
-	'DT': {}
-	}
+    'DT': {}
+    }
 
 # For reference, taken from Rayid's magic loops code
 """
@@ -130,15 +130,15 @@ def define_clfs_params:
 """
 
 def temporal_cohort_train_split(joint_df, cohort_chosen, cohorts_held_out):
-	""" Splits the given joint_df of features & outcomes and
-	returns a train/test dataset
-	:param DataFrame joint_df:
-	:param list cohorts_held_out:
-	"""
-	train = joint_df[~joint_df[cohort_chosen].isin(cohorts_held_out)]
-	test = joint_df[joint_df[cohort_chosen].isin(cohorts_held_out)]
+    """ Splits the given joint_df of features & outcomes and
+    returns a train/test dataset
+    :param DataFrame joint_df:
+    :param list cohorts_held_out:
+    """
+    train = joint_df[~joint_df[cohort_chosen].isin(cohorts_held_out)]
+    test = joint_df[joint_df[cohort_chosen].isin(cohorts_held_out)]
 
-	return train, test
+    return train, test
 
 def measure_performance(outcomes, predictions):
         """ Returns a dict of model performance objects
@@ -160,16 +160,16 @@ def measure_performance(outcomes, predictions):
 ######
 # (4) Use the gathered DataFrame(s) in a predictive technique function
 # Steps:
-#	- (A) manage held out datasets or cross-validation
-#	- (B) run the prediction technique
-#	- (C) record the inputs and parameters used
+#   - (A) manage held out datasets or cross-validation
+#   - (B) run the prediction technique
+#   - (C) record the inputs and parameters used
 
 # (4A) Choose cohort for held out data
 # Validation Process #
 # we decide to start with temporal model validation
-#	- temporal (using recent cohorts as a validation set)
-#	- k-fold cross (using all cohorts and all years of features)
-#	- cohort-fold cross validation (leave one cohort out)
+#   - temporal (using recent cohorts as a validation set)
+#   - k-fold cross (using all cohorts and all years of features)
+#   - cohort-fold cross validation (leave one cohort out)
 
 if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
     # if using temporal cohort model performance validation,
@@ -182,9 +182,9 @@ if modelOptions['model_performance_estimate_scheme'] == 'temporal_cohort':
     test_X = test.drop(['student_lookup', 'outcome'])
     train_y = train['outcome']
     test_y = test['outcome']
-	 
+     
 else:
-	# if not using, we could use built in k-fold validation to estimate performance_objects
+    # if not using, we could use built in k-fold validation to estimate performance_objects
 
 ####
 # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
@@ -193,50 +193,50 @@ else:
 ## (4B) Fit on Training ##
 # (to)
 # if we require cross-validation of parameters, we can either
-#	(a) hold out another cohort in our training data, or
-#	(b) fold all cohorts together for parameter estimation
+#   (a) hold out another cohort in our training data, or
+#   (b) fold all cohorts together for parameter estimation
 if modelOptions['parameter_cross_validation_scheme'] == 'none':
-	# no need to further manipulate train dataset
+    # no need to further manipulate train dataset
 
-	clf = clfs[modelOptions['modelClassSelected']]
-	# 	assume the following functions work for our clfs
-	#	this may need more abstraction for model choice and parameter selection
-	estimated_fit = clf.fit(X = train_X, y = train_y) 
-	test_prob_preds = estimated_fit.predict(X = test_X)
+    clf = clfs[modelOptions['modelClassSelected']]
+    #   assume the following functions work for our clfs
+    #   this may need more abstraction for model choice and parameter selection
+    estimated_fit = clf.fit(X = train_X, y = train_y) 
+    test_prob_preds = estimated_fit.predict(X = test_X)
         train_prob_preds = estimated_fit.predict(X = train_X)
 
 elif modelOptions['parameter_cross_validation_scheme'] == 'leave_cohort_out':
-	# choose another hold out set amongst the training set to estimate parameters
-	# manipulate 
-	print('leave_cohort_out')
+    # choose another hold out set amongst the training set to estimate parameters
+    # manipulate 
+    print('leave_cohort_out')
 elif modelOptions['parameter_cross_validation_scheme'] == 'k_fold':
-	# ignore cohorts and use random folds to estimate parameter
-	print('k_fold_parameter_estimation')
+    # ignore cohorts and use random folds to estimate parameter
+    print('k_fold_parameter_estimation')
 
 
 ## (4C) Save Results ##
 # Save the recorded inputs, model, performance, and text description
-#	into a results folder
-#		according to sklearn documentation, use joblib instead of pickle
-#			save as a .pkl extension
-#		store option inputs (randomSeed, train/test split rules, features)
-#		store time to completion [missing]
+#   into a results folder
+#       according to sklearn documentation, use joblib instead of pickle
+#           save as a .pkl extension
+#       store option inputs (randomSeed, train/test split rules, features)
+#       store time to completion [missing]
 
 saved_outputs = {
-	'estimated_fit' : estimated_fit,
-	'modelOptions' : modelOptions, # this also contains cohort_chosen for train/test split
-	'test_y' : test_y,
-	'test_prob_preds' : test_prob_preds,
-	'performance_objects' : measure_performance(test_y, test_prob_preds),
+    'estimated_fit' : estimated_fit,
+    'modelOptions' : modelOptions, # this also contains cohort_chosen for train/test split
+    'test_y' : test_y,
+    'test_prob_preds' : test_prob_preds,
+    'performance_objects' : measure_performance(test_y, test_prob_preds),
 }
 
 # save outputs
 joblib.dump(saved_outputs, '/mnt/data/mvesc/Model_Results/skeleton/' + modelOptions['file_save_name']) 
 
 # write output summary to a database
-#	- (A) write to a database table to store summary
-#	- (B) write to and update an HTML/Markdown/Notebook file which processes
-#		to create visual tables and graphics for results
+#   - (A) write to a database table to store summary
+#   - (B) write to and update an HTML/Markdown/Notebook file which processes
+#       to create visual tables and graphics for results
 
 
 db_saved_outputs = {
