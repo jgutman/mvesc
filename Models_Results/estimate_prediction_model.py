@@ -17,6 +17,8 @@ from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 
+import yaml
+
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
 
@@ -154,21 +156,10 @@ def main():
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
 
-    # Replace this with reading in options from a yaml file
-    model_options = {'model_classes_selected' : ['logit'],
-        'model_test_holdout' : 'temporal_cohort',
-        'parameter_cross_validation_scheme' : 'leave_cohort_out',
-        'n_folds' : 10,
-        'file_save_name' : 'gender_ethnicity_logit.pkl',
-        'random_seed' : 2187,
-        'user_description' : """initial skeleton pipeline test""",
-        'cohort_grade_level_begin' : 'cohort_9th',
-        'cohorts_held_out' : [2012],
-        # features_included is a dictionary where key is table name and
-        # value is a list of column names from that table
-        'features_included' : {'demographics': ['ethnicity', 'gender']},
-        'outcome_name' : 'not_on_time' #'is_dropout'
-        }
+    with open('model_options.yaml', 'r') as f:
+        model_options = yaml.load(f)
+    assert(type(model_options)==dict)
+
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
 
