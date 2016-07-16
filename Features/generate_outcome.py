@@ -13,14 +13,17 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 def main():
-    schema, table = "model" ,"outcome"
+    schema, table = "model", "outcome"
     source_schema, source_table = "clean", "wrk_tracking_students"
+    snapshots = "all_snapshots"
+
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            sql_drop_table = 'drop table if exists {schema}.{table};'.format(schema=schema, table=table)
-            cursor.execute(sql_drop_table); connection.commit()
+            sql_drop_table = """drop table if exists {schema}.{table};""".format(schema=schema, table=table)
+            cursor.execute(sql_drop_table)
+
             sql_create_table = """
-            create table model.outcome as
+            create table {schema}.{table} as
             select * from
             (   select distinct student_lookup,
                 case
@@ -31,27 +34,31 @@ def main():
                     when outcome_category='dropout' then 1
                     else 0
                 end as is_dropout
-                from clean.wrk_tracking_students
+                from {source_schema}.{source_table}
                 where outcome_category is not null
             ) as all_outcomes
             left join
             (   select student_lookup, min(school_year) as cohort_9th
-                from clean.all_snapshots
+                from {source_schema}.{snapshots}
                 where grade = 9
                 group by student_lookup
             ) as cohorts_ninth
             using(student_lookup)
             left join
             (   select student_lookup, min(school_year) as cohort_6th
-                from clean.all_snapshots
+                from {source_schema}.{snapshots}
                 where grade = 6
                 group by student_lookup
             ) as cohorts_sixth
             using(student_lookup)
             order by cohort_9th;
-            """
-            cursor.execute(sql_create_table); connection.commit()
-    print("""- Table "{schema}"."{table}" created! """.format(schema=schema, table=table))
+            """.format(schema=schema, table=table,
+            source_schema=source_schema, source_table=source_table,
+            snapshots=snapshots)
+            cursor.execute(sql_create_table)
+        connection.commit()
+    print("""- Table "{schema}"."{table}" created! """.format(
+        schema=schema, table=table))
 
 if __name__=='__main__':
     main()
