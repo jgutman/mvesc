@@ -12,8 +12,7 @@ from mvesc_utility_functions import *
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cross_validation import KFold
-from sklearn.cross_validation import LeaveOneLabelOut
+from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
@@ -124,15 +123,15 @@ def build_outcomes_plus_features(model_options):
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
             columns = ['student_lookup', model_options['outcome_name'], model_options['cohort_grade_level_begin']])
+        # drop students without student_lookup, outcome, or cohort identifier
+        # can use subset = [colnames] to drop based on NAs in certain columns only
+        outcomes_with_student_lookup.dropna(inplace=True)
+        joint_label_features = outcomes_with_student_lookup.copy()
 
         # get all requested input features
         # Assumes:
         # every features table contains 'student_lookup'
         # plus a column for the requested possible features
-
-        # build dataframe containing student_lookup, outcome, cohort,
-        # and all features as numeric non-categorical values
-        joint_label_features = outcomes_with_student_lookup.copy()
 
         for table, column_names in model_options['features_included'].items():
             features = read_table_to_df(connection, table_name = table,
@@ -140,16 +139,12 @@ def build_outcomes_plus_features(model_options):
                 columns=(['student_lookup'] + column_names))
         # join to only keep features that have labeled outcomes
             joint_label_features = pd.merge(joint_label_features, features,
-                how = 'left', on = ['student_lookup'])
+                how = 'left', on = 'student_lookup')
 
+    # build dataframe containing student_lookup, outcome, cohort,
+    # and all features as numeric non-categorical values
     joint_label_features = df2num(joint_label_features)
     return joint_label_features
-
-def cohort_kfolds(student_lookups_by_cohort, cohort_grade_level_begin):
-    # Leave One Label Out cross-validation is exactly what we are looking for
-    # Here the label is the cohort value stored in the cohort_grade_level column
-    
-
 
 def main():
 # Create options file used to generate features
@@ -161,7 +156,7 @@ def main():
 
     # Replace this with reading in options from a yaml file
     model_options = {'model_classes_selected' : ['logit'],
-        'model_performance_estimate_scheme' : 'temporal_cohort',
+        'model_test_holdout' : 'temporal_cohort',
         'parameter_cross_validation_scheme' : 'leave_cohort_out',
         'n_folds' : 10,
         'file_save_name' : 'gender_ethnicity_logit.pkl',
@@ -172,7 +167,7 @@ def main():
         # features_included is a dictionary where key is table name and
         # value is a list of column names from that table
         'features_included' : {'demographics': ['ethnicity', 'gender']},
-        'outcome_name' : 'is_dropout'
+        'outcome_name' : 'not_on_time' #'is_dropout'
         }
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
@@ -198,23 +193,25 @@ def main():
     #    - k-fold cross (using all cohorts and all years of features)
     #    - cohort-fold cross validation (leave one cohort out)
 
-    if model_options['model_performance_estimate_scheme'] == 'temporal_cohort':
-    # if using temporal cohort model performance validation,
-    # we choose the cohorts in cohorts_held_out for the test set
+    if model_options['model_test_holdout'] == 'temporal_cohort':
+        # if using temporal cohort model performance validation,
+        # we choose the cohorts in cohorts_held_out for the test set
         train, test = temporal_cohort_train_split(joint_label_features,
             model_options['cohort_grade_level_begin'],
             model_options['cohorts_held_out'])
-        # get subtables for each for easy reference
-        train_X = train.drop(['student_lookup', model_options['outcome_name'],
-            model_options['cohort_grade_level_begin']])
-        test_X = test.drop(['student_lookup', model_options['outcome_name'],
-            model_options['cohort_grade_level_begin']])
-        train_y = train[model_options['outcome_name']]
-        test_y = test[model_options['outcome_name']]
 
     else:
-    # if not using, we could use built in k-fold validation to estimate performance_objects
-        pass
+        # if not using temporal test set, split randomly
+        train, test = train_test_split(outcome_plus_features, test_size=0.20,
+            random_state=model_options['random_seed']))
+
+    # get subtables for each for easy reference
+    train_X = train.drop(['student_lookup', model_options['outcome_name'],
+        model_options['cohort_grade_level_begin']])
+    test_X = test.drop(['student_lookup', model_options['outcome_name'],
+        model_options['cohort_grade_level_begin']])
+    train_y = train[model_options['outcome_name']]
+    test_y = test[model_options['outcome_name']]
 
     ####
     # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
@@ -232,6 +229,8 @@ def main():
         # choose another validation set amongst the training set to
         # estimate parameters and model selection across cohort folds
         print('leave_cohort_out')
+        cohort_kfolds = LeaveOneLabelOut(train[
+                model_options['cohort_grade_level_begin']])
 
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
