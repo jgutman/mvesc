@@ -13,6 +13,7 @@ from mvesc_utility_functions import *
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import KFold
+from sklearn.cross_validation import LeaveOneLabelOut
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
@@ -143,6 +144,12 @@ def build_outcomes_plus_features(model_options):
 
     joint_label_features = df2num(joint_label_features)
     return joint_label_features
+
+def cohort_kfolds(student_lookups_by_cohort, cohort_grade_level_begin):
+    # Leave One Label Out cross-validation is exactly what we are looking for
+    # Here the label is the cohort value stored in the cohort_grade_level column
+    
+
 
 def main():
 # Create options file used to generate features
