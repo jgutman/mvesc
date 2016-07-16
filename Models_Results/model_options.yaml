@@ -1,0 +1,35 @@
+### yaml demo file for mvesc
+# Simple Rules
+# - very similiar to json / dict
+# - allow inline comment with #; no block comment options
+# - use space; no TAB
+# - number of spaces does NOT matter; keep keys hierarchically aligned
+# - at least 1 space after ':', '-'
+# - load it in Python: 
+#   ```
+#   import yaml
+#   with open('model_options.yaml', 'r') as f:
+#       modelOptions = yaml.load(f)
+#   ```
+##  Then you can use it as a dictionary
+##  Loaded dict is in alphabetical order; but no content is changed
+model_classes_selected: logit # word is parsed as string
+user_description: initialskeletonpipelinetest
+file_save_name: gender_ethnicity_logit.pkl
+
+model_performance_estimate_scheme: temporal_cohort
+cohort_grade_level_begin: cohort_9th
+n_folds:  10
+cohorts_held_out: [2012]
+randomSeed: 2187 # number is parsed as number
+
+features_included: 
+  - demographics: [ethnicity, gender] # list in brackets
+  - grades: [gpa_8th]
+# another way to have a sub-dictionary
+another_subdict:
+  mvesc1: g1
+  mvesc2: g2
+ 
+outcome_name: is_dropout
+
