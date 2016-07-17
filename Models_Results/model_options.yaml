@@ -22,13 +22,9 @@ cohort_grade_level_begin: cohort_9th
 n_folds:  10
 cohorts_held_out: [2012]
 randomSeed: 2187 # number is parsed as number
+validation_criterion: 'f1'
 
-features_included:
-  - demographics: [ethnicity, gender] # list in brackets
-  - grades: [gpa_8th]
-# another way to have a sub-dictionary
-another_subdict:
-  mvesc1: g1
-  mvesc2: g2
+features_included: # model_options['features_included'] must be a dictionary
+  demographics: [ethnicity, gender] # list of columns in brackets
 
 outcome_name: not_on_time

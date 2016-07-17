@@ -12,12 +12,16 @@ from mvesc_utility_functions import *
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.grid_search import ParameterGrid
+from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 
 import yaml
+import numpy as np
+import pandas as pd
 
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
@@ -46,7 +50,7 @@ def df2num(rawdf):
 ######
 # Setup Modeling Options and Functions
 
-def define_clfs_params:
+def define_clfs_params():
     clfs = {'logit': LogisticRegression(),
     'DT': DecisionTreeClassifier()
     }
@@ -54,11 +58,12 @@ def define_clfs_params:
     grid = {'logit': {},
         'DT': {}
     }
+    return clfs, grid
 
 
 # For reference, taken from Rayid's magic loops code
 """
-def define_clfs_params:
+def define_clfs_params():
 
     clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
@@ -85,7 +90,20 @@ def define_clfs_params:
     'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
     'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
            }
+    return clfs, grid
 """
+
+def clf_loop(clfs, params, criterion, models_to_run, cv_folds, X_train, X_test, y_train, y_test):
+    best_validated_models = dict()
+    for index,clf in enumerate([clfs[x] for x in models_to_run]):
+        model_name=models_to_run[index]
+        print(model_name)
+        parameter_values = params[models_to_run[index]]
+        param_grid = ParameterGrid(parameter_values)
+        best_validated_models[model_name] = GridSearchCV(clf, param_grid, scoring=criterion, cv=cv_folds)
+        model_cv_score = best_validated_models[model_name].best_score_
+        print("model: {model} score: {score}".format(model=model_name), score=model_cv_score)
+    return best_validated_models
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out):
@@ -96,7 +114,6 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     """
     train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
-
     return train, test
 
 def measure_performance(outcomes, predictions):
@@ -159,6 +176,7 @@ def main():
     with open('model_options.yaml', 'r') as f:
         model_options = yaml.load(f)
     assert(type(model_options)==dict)
+    assert(type(model_options['features_included']==dict))
 
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
@@ -187,7 +205,7 @@ def main():
     if model_options['model_test_holdout'] == 'temporal_cohort':
         # if using temporal cohort model performance validation,
         # we choose the cohorts in cohorts_held_out for the test set
-        train, test = temporal_cohort_train_split(joint_label_features,
+        train, test = temporal_cohort_test_split(outcome_plus_features,
             model_options['cohort_grade_level_begin'],
             model_options['cohorts_held_out'])
 
@@ -226,11 +244,14 @@ def main():
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
+        random_kfolds = LabelKFold(train.student_lookup,
+            n_folds=model_options[n_folds],
+            random_state=model_options['random_seed'])
 
     else:
         print('unknown cross-validation strategy')
 
-    clf = clfs[model_options['model_classes_selected']]
+    clfs, params = define_clfs_params()
     #     assume the following functions work for our clfs
     #    this may need more abstraction for model choice and parameter selection
     estimated_fit = clf.fit(X = train_X, y = train_y)
