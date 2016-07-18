@@ -250,9 +250,8 @@ def main():
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
-        random_kfolds = LabelKFold(train.student_lookup,
-            n_folds=model_options[n_folds],
-            random_state=model_options['random_seed'])
+        random_kfolds = LabelKFold(train.index,
+            n_folds=model_options[n_folds])
 
     else:
         print('unknown cross-validation strategy')
