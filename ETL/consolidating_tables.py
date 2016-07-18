@@ -150,6 +150,64 @@ def all_absences_query(cursor, absence_tables, absence_cols_json):
     absence_query = absence_query[:-len(union_clause)]+";"
     return absence_query
 
+def all_teachers_query(cursor, list_of_tables_to_include, col_names_mapping_json):
+    """
+    Writes a SQL query to drop the current all_teachers table 
+    and create a new one
+
+    :param pg object cursor:
+    :param list list_of_tables_to_include: list of tables to include
+    :param str col_names_mapping_json: name of a json file with mapping between
+    old and new column names 
+    :rtype: string
+    """
+    # json file with column name and type matchings
+    with open(col_names_mapping_json, 'r') as f:
+        new_cols_file = json.load(f)
+    new_cols = new_cols_file[u'column_names']
+    
+    consolidate_query = """
+    drop table if exists clean.all_teachers;
+    create table clean.all_teachers as
+    select "studentLookup" as student_lookup,
+    """
+    for t in list_of_tables_to_include:
+        old_cols = get_column_names(cursor,t)
+        #for each new column name
+        for key in sorted(new_cols.keys()):
+            #item contains column type and list of matching old column names
+            item = new_cols[key] 
+            found = 0 
+            #loop through old column names that match the current new one
+            for c in item[u'name']:
+                #check if each matching column name exists in the current table
+                if c in old_cols:
+                    #for text, must convert empty string to null before casting
+                    if get_column_type(cursor, t, c) == "character varying":
+                        consolidate_query += """
+                        cast(nullif("{old_name}", '') as {type}) as {new_name},
+                        """.format_map({'old_name':str(c), \
+                                        'type':str(item[u'type']), \
+                                        'new_name':str(key)})
+                    else:
+                        consolidate_query += """
+                        cast("{old_name}" as {type}) as {new_name},
+                        """.format_map({'old_name':str(c), \
+                                        'type':str(item[u'type']),\
+                                        'new_name':str(key)})
+                    found = 1
+                    break
+            if found == 0: #column does not exist in current table
+                consolidate_query += """
+                cast(null as {type}) as {new_name},
+                """.format_map({'new_name':str(key), \
+                                'type':str(item[u'type'])})
+        
+        # add the union clause for the next column iteration
+        union_clause = """ union select "StudentLookup" as student_lookup, """
+        consolidate_query += union_clause
+    consolidate_query = consolidate_query[:-len(union_clause)]+";"
+    return consolidate_query
 
 def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
     """
@@ -231,6 +289,12 @@ def main():
             grades_tables = cursor.fetchall()
             grades_tables = [a[0] for a in grades_tables]
             
+            cursor.execute("""select table_name from information_schema.tables 
+            where table_schema='public' and lower(table_name) like 
+            '%teacher%'""")
+            teachers_tables = cursor.fetchall()
+            teachers_tables = [a[0] for a in teachers_tables]
+
             table_names = get_specific_table_names(cursor, "StudentLookup")
 
             cursor.execute(student_lookup_query(table_names))
@@ -244,6 +308,9 @@ def main():
             cursor.execute(all_snapshots_query(cursor, snapshot_tables,
                                                "snapshot_column_names.json"))
             print('all_snapshots table built')
+            cursor.execute(all_teachers_query(cursor, teachers_tables,
+                                            "teachers_column_names.json"))
+            print('all_teachers table built')
         connection.commit()
 
 if __name__ == '__main__':
