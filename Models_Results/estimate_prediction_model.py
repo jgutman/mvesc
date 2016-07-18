@@ -10,15 +10,19 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 
-from sklearn.linear_model import LogisticRegression
+# all model import statements
+from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.grid_search import ParameterGrid
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
+
+#from sklearn.grid_search import ParameterGrid
 from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
 
 import yaml
 import numpy as np
@@ -73,7 +77,7 @@ def define_clfs_params():
     grid = {
         'logit': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
         'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]}
+            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
         'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100],
             'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
         'SGD': {'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
