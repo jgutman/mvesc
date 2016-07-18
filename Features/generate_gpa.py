@@ -1,52 +1,29 @@
 """ Generate GPA
 Procedures:
-1. Read from outcome table to get student_lookups;
-2. Generate `model.demographics` from `clean.all_snapshots`
+1. Read from tracking table to get student_lookups;
+2. Generate `model.grades` from `clean.all_grades`
 """
-import os, sys
-from os.path import isfile, join, abspath, basename
-
-pathname = os.path.dirname(sys.argv[0])
-full_pathname = os.path.abspath(pathname)
-split_pathname = full_pathname.split(sep="mvesc")
-base_pathname = os.path.join(split_pathname[0], "mvesc")
-parentdir = os.path.join(base_pathname, "ETL")
-sys.path.insert(0,parentdir)
-from mvesc_utility_functions import *
+from feature_utilities import *
 
 def main():
-    # schema, table = "model", "grades"
-    # source_schema, source_table = "clean", "all_grades"
-    # with postgres_pgconnection_generator() as connection:
-    #     with connection.cursor() as cursor:
-    #         # drop and create table
-    #         sql_drop = "drop table if exists {schema}.{table};"\
-    #             .format(schema=schema, table=table)
-    #         sql_create = """
-    #         create table {schema}.{table} as 
-    #         ( select distinct student_lookup
-    #           from clean.wrk_tracking_students
-    #           where outcome_category is not null
-    #         );""".format(schema=schema, table=table)           
-    #         cursor.execute(sql_drop);
-    #         cursor.execute(sql_create); 
-    #         sql_create_index = """
-    #         create index lookup_index on {schema}.{table}(student_lookup)
-    #         """.format(schema=schema, table=table)
-    #         cursor.execute(sql_create_index)
-    #         connection.commit()
-    #         print(""" - Table "{schema}"."{table}" created!"""\
-    #               .format(schema=schema, table=table))
-    
-    ##### GPA #####
+    schema, table = "model", "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-
+            # creating base table
+            cursor.execute("""
+            select count(*) from information_schema.tables 
+            where table_schema = '{schema}' and table_name = '{table}'
+            """.format_map({'schema':schema,'table':table}))
+            table_exists = cursor.fetchall()[0][0]
+            if not table_exists:
+                create_feature_table(cursor, table)
+            
             # grabbing high school grades
             cursor.execute("""
             create temp table high_school as select * from 
             clean.all_grades where grade >= 9;
             """)
+            
             # selecting numeric grades
             cursor.execute("""
              create temp table numeric_grades as
@@ -60,6 +37,7 @@ def main():
              alter table numeric_grades alter column mark type float using
              case when  mark != 1 and mark != 0 and mark != 200 then mark end;
             """)
+            
             # selecting letter grades
             cursor.execute("""
             create temp table letter_grades as
@@ -73,6 +51,7 @@ def main():
                 mark like 'ap' or mark like 'fw' or mark like 'dw' or 
                 mark like 'fa' or mark like 'blk';
             """)
+            
             # standardizing numeric grades
             cursor.execute("""
             create temp table numeric_standard_grades as
@@ -91,6 +70,7 @@ def main():
                 when mark < 100 then 4
             end as "mark" from numeric_grades;
             """)
+            
             # standardizing letter grades
             cursor.execute("""
             create temp table letter_standard_grades as
@@ -109,6 +89,7 @@ def main():
                 when mark like 'f' then 0
             end as "mark" from letter_grades;
             """)
+            
             # unioning standardized grades
             cursor.execute("""
             create temp table standard_grades as 
@@ -116,14 +97,18 @@ def main():
             union all 
             select * from  letter_standard_grades;
             """)
-            # computing gpa and saving feature table
+            
+            # computing gpa
             cursor.execute("""
-            drop table if exists model.grades;
-            create table model.grades as 
+            create temp table gpa as 
             select student_lookup, 
             avg(mark) as "high_school_gpa"
             from standard_grades group by student_lookup;
             """)
+            
+            # computing gpa and saving feature table
+            sql_add_column(cursor, table, 'gpa', ['high_school_gpa'])
+
         connection.commit()
 
 if __name__=='__main__':
