@@ -9,14 +9,8 @@ def main():
     schema, table = "model", "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            # creating base table
-            cursor.execute("""
-            select count(*) from information_schema.tables 
-            where table_schema = '{schema}' and table_name = '{table}'
-            """.format_map({'schema':schema,'table':table}))
-            table_exists = cursor.fetchall()[0][0]
-            if not table_exists:
-                create_feature_table(cursor, table)
+            # creating base table (if not existing)
+            create_feature_table(cursor, table)
             
             # grabbing high school grades
             cursor.execute("""
@@ -68,7 +62,8 @@ def main():
                 when mark < 90 then 3.3
                 when mark < 94 then 3.7
                 when mark < 100 then 4
-            end as "mark" from numeric_grades;
+            end as "mark", grade
+            from numeric_grades;
             """)
             
             # standardizing letter grades
@@ -87,7 +82,8 @@ def main():
                 when mark like 'd' then 1
                 when mark like 'd-' then 0.7
                 when mark like 'f' then 0
-            end as "mark" from letter_grades;
+            end as "mark", grade
+            from letter_grades;
             """)
             
             # unioning standardized grades
@@ -106,8 +102,24 @@ def main():
             from standard_grades group by student_lookup;
             """)
             
+            # freshman gpa
+            cursor.execute("""
+            create temp table gpa_9th as
+            select student_lookup,
+            avg(mark) as "gpa_9th"
+            from standard_grades 
+            where grade = 9
+            group by student_lookup
+            """)
+            
+            sql_create_index = """                                                   
+            create index lookup_index on {schema}.{table}(student_lookup)            
+            """.format(schema=schema, table=table)
+            cursor.execute(sql_create_index)
+            
             # computing gpa and saving feature table
-            sql_add_column(cursor, table, 'gpa', ['high_school_gpa'])
+            update_column_with_join(cursor, table, 'high_school_gpa', 'gpa')
+            update_column_with_join(cursor, table, 'gpa_9th', 'gpa_9th')
 
         connection.commit()
 
