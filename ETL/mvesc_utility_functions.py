@@ -21,6 +21,7 @@ import sys
 import os
 import json
 from contextlib import contextmanager
+import os
 
 ############ ETL Functions ############
 def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -41,6 +42,24 @@ def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
     sql_eng_str = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
     engine = create_engine(sql_eng_str)
     return engine
+
+def execute_sql_script(sql_script, pass_file="/mnt/data/mvesc/pgpass"):
+    """ Executes the given sql script
+    Note: you can only run it on the mvesc server
+    :param str sql_script: filename of an sql script
+    :param str pass_file: file with the credential information
+    """
+    with open(pass_file, 'r') as f:
+        passinfo = f.read()
+    passinfo = passinfo.strip().split(':')
+    host_address = passinfo[0]
+    port = passinfo[1]
+    user_name = passinfo[2]
+    name_of_database = passinfo[3]
+    user_password = passinfo[4]
+    conn_info = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
+    os.system("psql -d {0} -f {1}".format(conn_info,sql_script))
+
 
 @contextmanager
 def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -135,7 +154,7 @@ def get_column_type(cursor, table_name, column_name):
         column_type = column_type[0][0]
     return column_type
 
-def clean_column(cursor, values, old_column_name, table_name, \
+def clean_column(cursor, values, old_column_name, table_name, 
                  new_column_name=None, schema_name='clean', replace = 1):
     """
     Cleans the given column by replacing values according to the given 
@@ -175,11 +194,10 @@ def clean_column(cursor, values, old_column_name, table_name, \
         add column "{new_name}" {type};
         alter table {schema}."{table}"
         alter column {new_name} type {type} using case 
-        """.format_map({'new_name':new_column_name, 'type': col_type, \
+        """.format_map({'new_name':new_column_name, 'type': col_type, 
                     'schema': schema_name, 'table':table_name})
 
     params = {} # dictionary to hold parameters for cursor.execute()
-
     with open(values, 'r') as f:
         json_dict = json.load(f)
 
@@ -198,14 +216,18 @@ def clean_column(cursor, values, old_column_name, table_name, \
         clean_col_query += "then  %(item{0})s \n".format(count)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
-    clean_col_query = clean_col_query[:-20]
+#    clean_col_query = clean_col_query[:-20]
     clean_col_query += "else {0} end; ".format(old_column_name)
-    if replace:
+
+    if replace and (old_column_name != new_column_name):
         clean_col_query += """
         alter table {schema}."{table}" rename column "{old}" to "{new}"
-        """.format_map({'schema':schema_name,'table':table_name,\
+        """.format_map({'schema':schema_name,'table':table_name,
                         'old':old_column_name, 'new':new_column_name})
+#    print(clean_col_query)
+#    print(params)
     cursor.execute(clean_col_query,params)
+
 
 ############ Upload file or directory to postgres (not useful in most cases)############### 
 def read_csv_noheader(filepath):

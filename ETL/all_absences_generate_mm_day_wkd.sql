@@ -7,9 +7,6 @@
 --	FROM information_schema.columns
 --	WHERE table_schema='clean' and table_name='all_absences';
 
---0. convert text 'date' to `date` 'date'
-ALTER TABLE clean.all_absences ALTER COLUMN date TYPE DATE using to_date(date, 'YYYY-MM-DD');
-
 --1. create month of the year: test, add col, update col
 --select date, EXTRACT(MONTH FROM "date") from clean.all_absences limit 20;
 alter table clean.all_absences add column month int default null;
@@ -25,4 +22,3 @@ update only clean.all_absences SET week = EXTRACT(WEEK FROM date);
 alter table clean.all_absences add column weekday int default null;
 update only clean.all_absences SET weekday = EXTRACT(dow FROM date);
 
-commit;
