@@ -36,7 +36,7 @@ if __name__=='__main__':
             sql_get_activity = """SELECT usename, state, pid, query FROM pg_stat_activity 
             WHERE datname = '{database}';""".format(database=database)
             activity = pd.read_sql(sql_get_activity, conn)
-            idle_pids = activity.pid[activity.state=='idle']
+            idle_pids = activity.pid[['idle' in st for st in activity.state]]
             for pid in idle_pids:
                 sql_kill_idle = "select pg_terminate_backend({pid});".format(pid=pid)
                 cursor.execute(sql_kill_idle)
