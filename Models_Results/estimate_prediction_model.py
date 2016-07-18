@@ -221,10 +221,10 @@ def main():
             random_state=model_options['random_seed']))
 
     # get subtables for each for easy reference
-    train_X = train.drop(['student_lookup', model_options['outcome_name'],
-        model_options['cohort_grade_level_begin']])
-    test_X = test.drop(['student_lookup', model_options['outcome_name'],
-        model_options['cohort_grade_level_begin']])
+    train_X = train.drop([model_options['outcome_name'],
+        model_options['cohort_grade_level_begin']],axis=1)
+    test_X = test.drop([model_options['outcome_name'],
+        model_options['cohort_grade_level_begin']],axis=1)
     train_y = train[model_options['outcome_name']]
     test_y = test[model_options['outcome_name']]
 
@@ -236,6 +236,7 @@ def main():
     # if we require cross-validation of parameters, we can either
     #    (a) hold out another cohort in each fold for cross-validation
     #    (b) fold all cohorts together for k-fold parameter estimation
+    clfs, params = define_clfs_params()
 
     if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
@@ -256,11 +257,11 @@ def main():
     else:
         print('unknown cross-validation strategy')
 
-    clfs, params = define_clfs_params()
+
     #     assume the following functions work for our clfs
     #    this may need more abstraction for model choice and parameter selection
-    estimated_fit = clf.fit(X = train_X, y = train_y)
-    test_prob_preds = estimated_fit.predict(X = test_X)
+    #estimated_fit = clf.fit(X = train_X, y = train_y)
+    #test_prob_preds = estimated_fit.predict(X = test_X)
 
     ## (4C) Save Results ##
     # Save the recorded inputs, model, performance, and text description
