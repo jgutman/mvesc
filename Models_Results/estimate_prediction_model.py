@@ -53,6 +53,9 @@ def df2num(rawdf):
 
 # maybe this should be moved to a yaml or json file as well
 def define_clfs_params():
+    # model_options[model_classes_selected] determines which of these models
+    # are actually run, all parameter options in grid run for each selected model
+
     clfs = {
         'logit': LogisticRegression(),
         'DT': DecisionTreeClassifier(),
@@ -90,6 +93,26 @@ def define_clfs_params():
 
 def clf_loop(clfs, params, train_X, train_y,
         criterion, models_to_run, cv_folds):
+    """
+    Returns a dictionary where the keys are model nicknames (strings)
+    and the values are GridSearchCV objects containing attributes like
+    model.best_score_ and model.best_estimator_
+
+    :param dict(str:estimator) clfs: clfs as returned by define_clfs_params
+    :param dict(str:dict) params: grid of classifier hyperparameter options
+        to grid search over as returned by define_clfs_params
+    :param pandas.DataFrame train_X: index is student_lookup, columns are all
+        features to train over in the model
+    :param pandas.Series(int) train_y: index is student_lookup, value is 0 or 1
+        for outcome label
+    :param string criterion: evaluation criterion for model selection on the
+        validation set, to be read in from model_options (e.g. 'f1')
+    :param list[string] models_to_run: which models to actually run as read in
+        from model_options (e.g. ['logit', 'DT'])
+    :param sklearn.KFolds cv_folds: a KFolds generator object over the index
+        given in train_X and train_y (a list of lists of student_lookups)
+    :rtype dict(string: GridSearchCV)
+    """
     best_validated_models = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
