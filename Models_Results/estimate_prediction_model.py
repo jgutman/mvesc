@@ -18,6 +18,7 @@ from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix
 
 import yaml
 import numpy as np
@@ -130,7 +131,8 @@ def measure_performance(outcomes, predictions):
     performance_objects['pr_curve'] = precision_recall_curve(y = outcomes,
         probas_pred = predictions)
     performance_objects['roc_curve'] = roc_curve(y_true = outcomes,
-        y_score = test_prob_preds)
+        y_score = predictions)
+    performance_objects['confusion_matrix'] = confusion_matrix(outcomes,predictions)
     return performance_objects
 
 def build_outcomes_plus_features(model_options):
@@ -176,8 +178,9 @@ def read_in_yaml(filename='model_options.yaml'):
         model_options = yaml.load(f)
     assert(type(model_options)==dict)
     assert(type(model_options['features_included']==dict))
+    assert(type(model_options['model_classes_selected']==list))
+    assert(type(model_options['cohorts_held_out']==list))
     return model_options
-
 
 def main():
 # Create options file used to generate features
@@ -271,7 +274,6 @@ def main():
         models_to_run=model_options['model_classes_selected'],
         cv_folds=cohort_kfolds, train_X, train_y)
 
-    test_set_metrics = dict()
     for model_name, model in best_validated_models.items():
         print(model_name)
         clf = model.best_estimator_
@@ -279,38 +281,36 @@ def main():
             test_set_scores = clf.decision_function(test_X)
         else:
             test_set_scores = clf.predict_proba(test_X)
-        test_set_metrics[model_name] = test_set_scores
 
-    ## (4C) Save Results ##
-    # Save the recorded inputs, model, performance, and text description
-    #    into a results folder
-    #        according to sklearn documentation, use joblib instead of pickle
-    #            save as a .pkl extension
-    #        store option inputs (randomSeed, train/test split rules, features)
-    #        store time to completion [missing]
+        ## (4C) Save Results ##
+        # Save the recorded inputs, model, performance, and text description
+        #    into a results folder
+        #        according to sklearn documentation, use joblib instead of pickle
+        #            save as a .pkl extension
+        #        store option inputs (randomSeed, train/test split rules, features)
+        #        store time to completion [missing]
 
-    saved_outputs = {
-        'estimated_fit' : estimated_fit,
-        'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
-        'test_y' : test_y,
-        'test_prob_preds' : test_prob_preds,
-        'performance_objects' : measure_performance(test_y, test_prob_preds),
-    }
+        saved_outputs = {
+            'estimator' : model,
+            'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
+            'test_y' : test_y,
+            'test_set_soft_preds' : test_set_scores,
+            'performance_objects' : measure_performance(test_y, test_set_scores)
+        }
+        # save outputs
+        file_name = ('/mnt/data/mvesc/Model_Results/skeleton/'
+             + model_options['file_save_name'] +'_' + model_name + '.pkl')
+        joblib.dump(saved_outputs, file_name )
 
-    # save outputs
-    joblib.dump(saved_outputs, os.path.join(
-    '/mnt/data/mvesc/Model_Results/skeleton/',
-        model_options['file_save_name']))
+        # write output summary to a database
+        #    - (A) write to a database table to store summary
+        #    - (B) write to and update an HTML/Markdown file
+        #    to create visual tables and graphics for results
 
-    # write output summary to a database
-    #    - (A) write to a database table to store summary
-    #    - (B) write to and update an HTML/Markdown file
-    #    to create visual tables and graphics for results
-
-    db_saved_outputs = {
-    'train_f1': f1_score(train_y, train_prob_preds),
-    'test_f1': f1_score(test_y, test_prob_preds)
-    }
+    # db_saved_outputs = {
+    # 'train_f1': f1_score(train_y, train_prob_preds),
+    # 'test_f1': f1_score(test_y, test_prob_preds)
+    # }
 
     #db_saved_outputs.update(model_options)
 
