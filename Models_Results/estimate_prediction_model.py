@@ -95,29 +95,32 @@ def define_clfs_params():
 """
 
 def clf_loop(clfs, params, train_X, train_y,
-    criterion, models_to_run, cv_folds):
+        criterion, models_to_run, cv_folds):
     best_validated_models = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
         print(model_name)
-        parameter_values = params[models_to_run[index]]
-        param_grid = ParameterGrid(parameter_values)
-        best_validated_models[model_name] = GridSearchCV(clf, param_grid, scoring=criterion, cv=cv_folds)
+        parameter_values = params[model_name]
+        #param_grid = ParameterGrid(parameter_values)
+        best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
         best_validated_models[model_name].fit(train_X, train_y)
 
         model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model} score: {score}".format(
+        print("model: {model} cv_score: {score}".format(
             model=model_name, score=model_cv_score))
     return best_validated_models
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
-    cohorts_held_out):
+    cohorts_held_out, cohorts_training):
     """ Splits the given joint_df of features & outcomes and
     returns a train/test dataset
     :param pd.DataFrame joint_df:
     :param list[int] cohorts_held_out:
     """
-    train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
+    if (cohorts_training=='all'):
+        train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
+    else:
+        train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     return train, test
 
@@ -219,7 +222,8 @@ def main():
         # we choose the cohorts in cohorts_held_out for the test set
         train, test = temporal_cohort_test_split(outcome_plus_features,
             model_options['cohort_grade_level_begin'],
-            model_options['cohorts_held_out'])
+            model_options['cohorts_held_out'],
+            model_options['cohorts_training'])
 
     else:
         # if not using temporal test set, split randomly
@@ -259,7 +263,7 @@ def main():
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
         cohort_kfolds = LabelKFold(train.index,
-            n_folds=model_options[n_folds])
+            n_folds=model_options['n_folds'])
 
     else:
         print('unknown cross-validation strategy')
@@ -273,12 +277,11 @@ def main():
         cv_folds=cohort_kfolds)
 
     for model_name, model in best_validated_models.items():
-        print(model_name)
         clf = model.best_estimator_
         if hasattr(clf, "decision_function"):
             test_set_scores = clf.decision_function(test_X)
         else:
-            test_set_scores = clf.predict_proba(test_X)
+            test_set_scores = clf.predict_proba(test_X)[:,1]
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
