@@ -162,8 +162,17 @@ def build_outcomes_plus_features(model_options):
 
     # build dataframe containing student_lookup, outcome, cohort,
     # and all features as numeric non-categorical values
+    joint_label_features.set_index('student_lookup', inplace=True)
     joint_label_features = df2num(joint_label_features)
     return joint_label_features
+
+def read_in_yaml(filename='model_options.yaml'):
+    with open(filename, 'r') as f:
+        model_options = yaml.load(f)
+    assert(type(model_options)==dict)
+    assert(type(model_options['features_included']==dict))
+    return model_options
+
 
 def main():
 # Create options file used to generate features
@@ -173,10 +182,7 @@ def main():
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
 
-    with open('model_options.yaml', 'r') as f:
-        model_options = yaml.load(f)
-    assert(type(model_options)==dict)
-    assert(type(model_options['features_included']==dict))
+    model_options = read_in_yaml()
 
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
