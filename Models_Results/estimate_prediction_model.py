@@ -66,7 +66,7 @@ def define_clfs_params():
         'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
         'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
-        'SVM': svm.SVC(kernel='linear', probability=True),
+        'SVM': svm.SVC(kernel='linear', probability=False),
         'GB': GradientBoostingClassifier(
             learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
         'NB': GaussianNB(),
