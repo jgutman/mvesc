@@ -18,6 +18,7 @@ from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix
 
 import yaml
 import numpy as np
@@ -71,7 +72,8 @@ def define_clfs_params():
         'LR': LogisticRegression(penalty='l1', C=1e5),
         'logit': LogisticRegression(),
         'SVM': svm.SVC(kernel='linear', probability=True, random_state=0),
-        'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
+        'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5,
+        max_depth=6, n_estimators=10),
         'NB': GaussianNB(),
         'DT': DecisionTreeClassifier(),
         'SGD': SGDClassifier(loss="hinge", penalty="l2"),
@@ -93,7 +95,8 @@ def define_clfs_params():
     return clfs, grid
 """
 
-def clf_loop(clfs, params, criterion, models_to_run, cv_folds, X_train, X_test, y_train, y_test):
+def clf_loop(clfs, params, criterion, models_to_run, cv_folds,
+    X_train, y_train):
     best_validated_models = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
@@ -101,8 +104,11 @@ def clf_loop(clfs, params, criterion, models_to_run, cv_folds, X_train, X_test, 
         parameter_values = params[models_to_run[index]]
         param_grid = ParameterGrid(parameter_values)
         best_validated_models[model_name] = GridSearchCV(clf, param_grid, scoring=criterion, cv=cv_folds)
+        best_validated_models[model_name].fit(X_train, y_train)
+
         model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model} score: {score}".format(model=model_name), score=model_cv_score)
+        print("model: {model} score: {score}".format(
+            model=model_name, score=model_cv_score)
     return best_validated_models
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
@@ -125,7 +131,8 @@ def measure_performance(outcomes, predictions):
     performance_objects['pr_curve'] = precision_recall_curve(y = outcomes,
         probas_pred = predictions)
     performance_objects['roc_curve'] = roc_curve(y_true = outcomes,
-        y_score = test_prob_preds)
+        y_score = predictions)
+    performance_objects['confusion_matrix'] = confusion_matrix(outcomes,predictions)
     return performance_objects
 
 def build_outcomes_plus_features(model_options):
@@ -171,8 +178,9 @@ def read_in_yaml(filename='model_options.yaml'):
         model_options = yaml.load(f)
     assert(type(model_options)==dict)
     assert(type(model_options['features_included']==dict))
+    assert(type(model_options['model_classes_selected']==list))
+    assert(type(model_options['cohorts_held_out']==list))
     return model_options
-
 
 def main():
 # Create options file used to generate features
@@ -240,6 +248,7 @@ def main():
 
     if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
+        cohort_kfolds = 2 # hacky way to have GridSearchCV fit to 2 k-folds
 
     elif model_options['parameter_cross_validation_scheme'] == 'leave_cohort_out':
         # choose another validation set amongst the training set to
@@ -251,48 +260,57 @@ def main():
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
-        random_kfolds = LabelKFold(train.index,
+        cohort_kfolds = LabelKFold(train.index,
             n_folds=model_options[n_folds])
 
     else:
         print('unknown cross-validation strategy')
 
+    # best_validated_models is a dictionary whose keys are the model
+    # nicknames in model_classes_selected and values are objects
+    # returned by GridSearchCV
+    best_validated_models = clf_loop(clfs, params,
+        criterion=model_options['validation_criterion'],
+        models_to_run=model_options['model_classes_selected'],
+        cv_folds=cohort_kfolds, train_X, train_y)
 
-    #     assume the following functions work for our clfs
-    #    this may need more abstraction for model choice and parameter selection
-    #estimated_fit = clf.fit(X = train_X, y = train_y)
-    #test_prob_preds = estimated_fit.predict(X = test_X)
+    for model_name, model in best_validated_models.items():
+        print(model_name)
+        clf = model.best_estimator_
+        if hasattr(clf, "decision_function"):
+            test_set_scores = clf.decision_function(test_X)
+        else:
+            test_set_scores = clf.predict_proba(test_X)
 
-    ## (4C) Save Results ##
-    # Save the recorded inputs, model, performance, and text description
-    #    into a results folder
-    #        according to sklearn documentation, use joblib instead of pickle
-    #            save as a .pkl extension
-    #        store option inputs (randomSeed, train/test split rules, features)
-    #        store time to completion [missing]
+        ## (4C) Save Results ##
+        # Save the recorded inputs, model, performance, and text description
+        #    into a results folder
+        #        according to sklearn documentation, use joblib instead of pickle
+        #            save as a .pkl extension
+        #        store option inputs (randomSeed, train/test split rules, features)
+        #        store time to completion [missing]
 
-    saved_outputs = {
-        'estimated_fit' : estimated_fit,
-        'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
-        'test_y' : test_y,
-        'test_prob_preds' : test_prob_preds,
-        'performance_objects' : measure_performance(test_y, test_prob_preds),
-    }
+        saved_outputs = {
+            'estimator' : model,
+            'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
+            'test_y' : test_y,
+            'test_set_soft_preds' : test_set_scores,
+            'performance_objects' : measure_performance(test_y, test_set_scores)
+        }
+        # save outputs
+        file_name = ('/mnt/data/mvesc/Model_Results/skeleton/'
+             + model_options['file_save_name'] +'_' + model_name + '.pkl')
+        joblib.dump(saved_outputs, file_name )
 
-    # save outputs
-    joblib.dump(saved_outputs, os.path.join(
-    '/mnt/data/mvesc/Model_Results/skeleton/',
-        model_options['file_save_name']))
+        # write output summary to a database
+        #    - (A) write to a database table to store summary
+        #    - (B) write to and update an HTML/Markdown file
+        #    to create visual tables and graphics for results
 
-    # write output summary to a database
-    #    - (A) write to a database table to store summary
-    #    - (B) write to and update an HTML/Markdown file
-    #    to create visual tables and graphics for results
-
-    db_saved_outputs = {
-    'train_f1': f1_score(train_y, train_prob_preds),
-    'test_f1': f1_score(test_y, test_prob_preds)
-    }
+    # db_saved_outputs = {
+    # 'train_f1': f1_score(train_y, train_prob_preds),
+    # 'test_f1': f1_score(test_y, test_prob_preds)
+    # }
 
     #db_saved_outputs.update(model_options)
 
