@@ -71,7 +71,8 @@ def define_clfs_params():
         'LR': LogisticRegression(penalty='l1', C=1e5),
         'logit': LogisticRegression(),
         'SVM': svm.SVC(kernel='linear', probability=True, random_state=0),
-        'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
+        'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5,
+        max_depth=6, n_estimators=10),
         'NB': GaussianNB(),
         'DT': DecisionTreeClassifier(),
         'SGD': SGDClassifier(loss="hinge", penalty="l2"),
@@ -93,7 +94,8 @@ def define_clfs_params():
     return clfs, grid
 """
 
-def clf_loop(clfs, params, criterion, models_to_run, cv_folds, X_train, X_test, y_train, y_test):
+def clf_loop(clfs, params, criterion, models_to_run, cv_folds,
+    X_train, y_train):
     best_validated_models = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
@@ -101,8 +103,11 @@ def clf_loop(clfs, params, criterion, models_to_run, cv_folds, X_train, X_test, 
         parameter_values = params[models_to_run[index]]
         param_grid = ParameterGrid(parameter_values)
         best_validated_models[model_name] = GridSearchCV(clf, param_grid, scoring=criterion, cv=cv_folds)
+        best_validated_models[model_name].fit(X_train, y_train)
+
         model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model} score: {score}".format(model=model_name), score=model_cv_score)
+        print("model: {model} score: {score}".format(
+            model=model_name, score=model_cv_score)
     return best_validated_models
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
@@ -240,6 +245,7 @@ def main():
 
     if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
+        cohort_kfolds = 2 # hacky way to have GridSearchCV fit to 2 k-folds
 
     elif model_options['parameter_cross_validation_scheme'] == 'leave_cohort_out':
         # choose another validation set amongst the training set to
@@ -251,17 +257,29 @@ def main():
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
-        random_kfolds = LabelKFold(train.index,
+        cohort_kfolds = LabelKFold(train.index,
             n_folds=model_options[n_folds])
 
     else:
         print('unknown cross-validation strategy')
 
+    # best_validated_models is a dictionary whose keys are the model
+    # nicknames in model_classes_selected and values are objects
+    # returned by GridSearchCV
+    best_validated_models = clf_loop(clfs, params,
+        criterion=model_options['validation_criterion'],
+        models_to_run=model_options['model_classes_selected'],
+        cv_folds=cohort_kfolds, train_X, train_y)
 
-    #     assume the following functions work for our clfs
-    #    this may need more abstraction for model choice and parameter selection
-    #estimated_fit = clf.fit(X = train_X, y = train_y)
-    #test_prob_preds = estimated_fit.predict(X = test_X)
+    test_set_metrics = dict()
+    for model_name, model in best_validated_models.items():
+        print(model_name)
+        clf = model.best_estimator_
+        if hasattr(clf, "decision_function"):
+            test_set_scores = clf.decision_function(test_X)
+        else:
+            test_set_scores = clf.predict_proba(test_X)
+        test_set_metrics[model_name] = test_set_scores
 
     ## (4C) Save Results ##
     # Save the recorded inputs, model, performance, and text description
