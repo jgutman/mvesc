@@ -1,0 +1,12 @@
+{"column_names" : {
+	"student_lookup" : {"name" : ["StudentLookup"], "type" : "text"},
+	"school_name" : {"name" : ["School_Name"], "type" : "text"},
+	"review_complete_date" : {"name" : ["Task_Completed_Date"], "type" : "text"},		
+	"iep_task_type" : {"name" : ["Task Type", "Task_Name"], "type" : "text"},
+	"test_grade_level" : {"name" : ["Test Level to be Administered", "Test_Grade_Level"], "type" : "text"},
+	"test_area" : {"name" : ["Area of Assessment", "Area_of_Assessment"], "type" : "text"},
+	"ind_accommodation" : {"name" : ["Accommodations"], "type" : "text"},
+	"field7" : {"name" : ["Field7"], "type" : "text"},
+	"accommodation_desc" : {"name" : ["Detail of Accommodations", "Detail_of_Accommodation"], "type" : "text"},
+}
+}
