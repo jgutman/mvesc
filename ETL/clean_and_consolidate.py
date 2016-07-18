@@ -2,7 +2,8 @@ from  mvesc_utility_functions import *
 import consolidating_tables
 import build_student_tracking 
 import build_cohort_tree_counts
-import cleaning_grad_grades
+import cleaning_all_snapshots
+import create_index
 
 #consolidating tables in clean schema
 consolidating_tables.main()
@@ -23,21 +24,20 @@ execute_sql_script("clean_oaaogt.sql")
 print('oaaogt cleaned')
 
 #snapshots
-execute_sql_script("cleaning_all_snapshots.sql")
-with postgres_pgconnection_generator() as connection:
-    with connection.cursor() as cursor:
-        clean_column(cursor, values="student_status.json",
-                      old_column_name="status_code",
-                      table_name="all_snapshots",
-                      new_column_name="status", replace=0)
-    connection.commit()
-cleaning_grad_grades.main()
-execute_sql_script("update_all_snapshots_with_missing_graduates.sql")
+cleaning_all_snapshots.main()
 print('all_snapshots cleaned')
 
 #additional tables for analysis
 execute_sql_script("build_graduates_table_from_snapshots.sql"
 build_student_tracking.main()
+
 # additional script for adding labels to tracking table
 build_cohort_tree_counts.main()
 print('additional tables built')
+
+# create index for all tables in clean schema for faster joining and searching
+create_index.call_main()
+print('indices created or checked for tables in schema `clean`')
+
+
+

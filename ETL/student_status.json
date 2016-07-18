@@ -1,9 +1,9 @@
 {
-    "active": ["a", "active","t","preschool","flsd preschool","aps2", "valueations","v", "afoe","dys", "nf3"],
+    "active": ["a", "active","t","preschool","flsd preschool","aps2", "valueations","v", "afoe","dys", "nf3", "ea", "(n) preschool other funding", "superintendent agreement for students", "(e) preschool ece early childhood education grant"],
     "inactive": ["i","inactive"],
     "three_way": ["3", "3-way student"],
-    "resident":["r","res a/res r out","resident","q","resident out special","spec","reas a/res u","u"],
-    "open_enrollment":["o", "open enrollment","n","other, non-resident","non","noe","nroe","non-resident open enrollment"],
+    "resident":["r","res a/res r out","resident","q","resident out special","spec","reas a/res u","u", "active resident"],
+    "open_enrollment":["o", "open enrollment","n","other, non-resident","non","noe","nroe","non-resident open enrollment", "(a) non-resident student-parent is a district employee", "(b) non-resident student attending a special educa","(b) non-resident student attending a special education program", "(a) non-resident student residing with grandparent", "(a) non-resident student-parent is a district emp", "(t) students placed in institutions, non-court ordered", "non-resident, open enrollment student: inter-district","non-resident, open enrollment student: inter-d"],
     "jvs":["j","jvs"],
     "part_jvs":["ptjv","part time jvs"],
     "full_college":["p", "full time post secondary", "post secondary","psec","ps","psev","pa"], 
@@ -14,13 +14,14 @@
     "open_enrollment, jvs":["nj","non_resident open enrolled jvs", "joe"],
     "open_enrollment, foster, jvs":["nfj","non-resident foster jvs"],
     "open_enrollment, court_placed":["ncp","non-resident court placed"],
-    "open_enrollment, foster":["non-resident foster","nf"],
-    "foster":["f","foster/court placed"],
-    "deleted":["d","deleted"],
+    "open_enrollment, foster":["non-resident foster","nf", "open_enrollment, foster"],
+    "foster":["f","foster/court placed","c) foster placed student or court placed student with relative", "(c) foster placed student or court placed student","(c) foster placed student or court placed student with relative"],
+    "court_placed":["(p) court-placed students, excluding foster care"],
+    "deleted":["d","deleted", "(v) pre-school, evaluated_only found ineligible"],
     "graduate":["g","graduate"],
     "excel":["e","excel"],
     "eagle_wings":["w","eagle wings", "eg"],
     "nova_net_home":["nn","nova_net home"],
-    "non_puplic_services":["np","non public receiving services"]
+    "non_puplic_services":["np","non public receiving services", "(6) in-state student attending nonpublic school"]
 }
     
