@@ -7,7 +7,7 @@ full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
-sys.path.insert(0,parentdir)
+sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 
 from sklearn.linear_model import LogisticRegression
@@ -56,11 +56,10 @@ def define_clfs_params():
     'DT': DecisionTreeClassifier()
     }
 
-    grid = {'logit': {},
-        'DT': {}
+    grid = {'logit': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
+        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]}
     }
     return clfs, grid
-
 
 # For reference, taken from Rayid's magic loops code
 """
@@ -95,8 +94,8 @@ def define_clfs_params():
     return clfs, grid
 """
 
-def clf_loop(clfs, params, criterion, models_to_run, cv_folds,
-    X_train, y_train):
+def clf_loop(clfs, params, train_X, train_y,
+    criterion, models_to_run, cv_folds):
     best_validated_models = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
@@ -104,11 +103,11 @@ def clf_loop(clfs, params, criterion, models_to_run, cv_folds,
         parameter_values = params[models_to_run[index]]
         param_grid = ParameterGrid(parameter_values)
         best_validated_models[model_name] = GridSearchCV(clf, param_grid, scoring=criterion, cv=cv_folds)
-        best_validated_models[model_name].fit(X_train, y_train)
+        best_validated_models[model_name].fit(train_X, train_y)
 
         model_cv_score = best_validated_models[model_name].best_score_
         print("model: {model} score: {score}".format(
-            model=model_name, score=model_cv_score)
+            model=model_name, score=model_cv_score))
     return best_validated_models
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
@@ -128,11 +127,9 @@ def measure_performance(outcomes, predictions):
     :param list[float] predictions:
     """
     performance_objects = {}
-    performance_objects['pr_curve'] = precision_recall_curve(y = outcomes,
-        probas_pred = predictions)
-    performance_objects['roc_curve'] = roc_curve(y_true = outcomes,
-        y_score = predictions)
-    performance_objects['confusion_matrix'] = confusion_matrix(outcomes,predictions)
+    performance_objects['pr_curve'] = precision_recall_curve(outcomes, predictions)
+    performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
+    #performance_objects['confusion_matrix'] = confusion_matrix(outcomes,predictions)
     return performance_objects
 
 def build_outcomes_plus_features(model_options):
@@ -173,7 +170,8 @@ def build_outcomes_plus_features(model_options):
     joint_label_features = df2num(joint_label_features)
     return joint_label_features
 
-def read_in_yaml(filename='model_options.yaml'):
+def read_in_yaml(filename=os.path.join(base_pathname,
+    'Models_Results', 'model_options.yaml')):
     with open(filename, 'r') as f:
         model_options = yaml.load(f)
     assert(type(model_options)==dict)
@@ -226,7 +224,7 @@ def main():
     else:
         # if not using temporal test set, split randomly
         train, test = train_test_split(outcome_plus_features, test_size=0.20,
-            random_state=model_options['random_seed']))
+            random_state=model_options['random_seed'])
 
     # get subtables for each for easy reference
     train_X = train.drop([model_options['outcome_name'],
@@ -269,10 +267,10 @@ def main():
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
-    best_validated_models = clf_loop(clfs, params,
+    best_validated_models = clf_loop(clfs, params, train_X, train_y,
         criterion=model_options['validation_criterion'],
         models_to_run=model_options['model_classes_selected'],
-        cv_folds=cohort_kfolds, train_X, train_y)
+        cv_folds=cohort_kfolds)
 
     for model_name, model in best_validated_models.items():
         print(model_name)
@@ -298,7 +296,7 @@ def main():
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
         # save outputs
-        file_name = ('/mnt/data/mvesc/Model_Results/skeleton/'
+        file_name = ('/mnt/data/mvesc/Models_Results/'
              + model_options['file_save_name'] +'_' + model_name + '.pkl')
         joblib.dump(saved_outputs, file_name )
 

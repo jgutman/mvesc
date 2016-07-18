@@ -18,11 +18,12 @@ user_description: initial_skeleton_pipeline_test
 file_save_name: gender_ethnicity # model name and extension appended automatically
 
 model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: leave_cohort_out
 cohort_grade_level_begin: cohort_9th
 n_folds:  10
 cohorts_held_out: [2012]
-randomSeed: 2187 # number is parsed as number
-validation_criterion: 'f1'
+random_seed: 2187 # number is parsed as number
+validation_criterion: average_precision #f1
 
 features_included: # model_options['features_included'] must be a dictionary
   demographics: [ethnicity, gender] # list of columns in brackets
