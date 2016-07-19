@@ -63,6 +63,7 @@ def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
     col_names = [desc[0] for desc in cursor.description]
     print(col_names)
     cohort_results = cursor.fetchall()
+    cohort_results = None
 
     sql_query_add_columns = """
     alter table {schema}.{tracking} add column outcome_bucket varchar(30);
@@ -170,7 +171,9 @@ def sql_gen_tracking_students(year_begin, year_end,
 def cohort_survival_analysis(year_begin, year_end, grade_begin,
     schema = 'clean', table = 'wrk_tracking_students'):
     """
-    no docstring yet
+    Returns a sql query to count the number of students in a particular cohort that advance to the next grade level and stay in the system each year,
+    returning for each year the grade level, school year, and number of students
+    remaining on-track with the cohort.
     """
     joined_query = ''
     next_grade = grade_begin
@@ -215,12 +218,12 @@ def main():
     """
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            # print(sql_gen_tracking_students(2006, 2015))
-            # print(cohort_survival_analysis(2006, 2015, '04'))
+            #print(sql_gen_tracking_students(2006, 2015))
+            #print(cohort_survival_analysis(2006, 2015, 6))
             print(build_wide_format(cursor))
         connection.commit()
-    #execute_sql_script(os.path.join(parentdir,
-    #    'remove_duplicate_withdrawals_from_tracking.sql'))
+    execute_sql_script(os.path.join(parentdir,
+        'remove_duplicate_withdrawals_from_tracking.sql'))
     print('done!')
 
 if __name__ == "__main__":
