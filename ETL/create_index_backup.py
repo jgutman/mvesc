@@ -24,20 +24,19 @@ from mvesc_utility_functions import *
 
 def call_main(schema='clean', column='student_lookup'):
     with postgres_pgconnection_generator() as connection:
-        connection.autocommit = True
         with connection.cursor() as cursor:
             sqlcmd_table_names = "SELECT table_name FROM information_schema.tables WHERE table_schema='{}'".format(schema)
             all_table_names = list(pd.read_sql(sqlcmd_table_names, connection).table_name)
             for tab in all_table_names:
                 print("""--- Trying to index {schema}.{table}... """.format(schema=schema, table=tab))
                 sql_create_index = """create index {schema}_{table}_lookup_index 
-                on "{schema}"."{table}" ("{column}")""".format(schema=schema, table=tab, column=column)
+                on {schema}.{table} ({column})""".format(schema=schema, table=tab, column=column)
                 try:
-                    cursor.execute(sql_create_index)
-                    print(""" * Index in {schema}.{table} created!\n""".format(schema=schema, table=tab) )
-                except Exception as e:
-                    print(' - ', e)
-            connection.commit()
+                    cursor.execute(sql_create_index); connection.commit()
+                    print(""" * Index in {schema}.{table} created!""".format(schema=schema, table=tab) )
+                except:
+                    print(""" - Index in {schema}.{table} exists!""".format(schema=schema, table=tab) )
+                    pass
 
 if __name__=='__main__':
     parser = OptionParser()
