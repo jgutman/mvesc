@@ -123,14 +123,14 @@ def generate_gpa(grade_range=range(3,11),replace=False):
             #     cursor.execute(sql_create_index)
            
             # computing gpa and saving feature table
-            update_column_with_join(cursor, table, 'cumulative_gpa_gr_{}'\
-                                    .format(max(grade_range)),
-                                    'gpa',source_column='cumulative_gpa') 
+            # update_column_with_join(cursor, table, ['cumulative_gpa_gr_{}'\
+            #                         .format(max(grade_range))],
+            #                         'gpa',
+            #                         source_column_list=['cumulative_gpa']) 
             #for grade in grade_range:
                 #update_column_with_join(cursor, table, 
-                #                        column='gpa_gr_{}'.format(grade),
-                #                        source_table='gpa_{}'.format(grade))
-
+                #                       column_list=['gpa_gr_{}'.format(grade)],
+                #                       source_table='gpa_{}'.format(grade))
         connection.commit()
 
 def main():
