@@ -220,26 +220,66 @@ def read_in_yaml(filename=os.path.join(base_pathname,
 def scale_features(train, test, strategy):
     """
     """
+    num_values_by_column = {x: len(train[x].unique()) for x in train.columns}
+    zero_variance_columns = [k for k,v in num_values_by_column.items() if v == 1]
+    train.drop(zero_variance_columns, axis=1, inplace=True)
+    test.drop(zero_variance_columns, axis=1, inplace=True)
+
     if (strategy == 'none'):
         return train, test
-    elif(strategy == 'standard'):
-        return train, test
-    elif(strategy == 'robust'):
-        return train, test
+
+    elif(strategy == 'standard' or strategy == 'robust'):
+        non_binary_columns = [k for k, v in num_values_by_column.items() if v > 2]
+        scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
+        train_non_binary = train[non_binary_columns]
+        test_non_binary = test[non_binary_columns]
+        scaler.fit(train_non_binary)
+        train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
+            columns = non_binary_columns, index = train.index)
+        test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
+            columns = non_binary_columns, index = test.index)
+
+        train_scaled = train.drop(non_binary_columns, axis=1)
+        test_scaled = test.drop(non_binary_columns, axis=1)
+        train_scaled = train_scaled.merge(train_non_binary,
+            left_index=True, right_index=True)
+        test_scaled = test_scaled.merge(test_non_binary,
+            left_index=True, right_index=True)
+        return train_scaled, test_scaled
+
     else:
         print('unknown feature scaling strategy. try "{}", "{}", or "{}"'.format(
             'standard', 'robust', 'none'))
         return train, test
+
+def add_null_dummies(train):
+    """
+    """
+    data_null_columns = data[data.columns[data.isnull().sum() > 0]]
+    data_null_dummies = data_null_columns.isnull()*1.0
+    data_null_dummies.rename(columns=lambda x: x + '_isnull', inplace=True)
+    data_plus_dummies = data.merge(data_null_dummies,
+        left_index=True, right_index=True)
+    return data_plus_dummies
 
 def impute_missing_values(train, test, strategy):
     """
     """
     if (strategy=='none'):
         return train, test
-    elif(strategy == 'mean_plus_dummies'):
+
+    elif(strategy == 'mean_plus_dummies' or strategy == 'median_plus_dummies'):
+        train = add_null_dummies(train) # add feature_isnull columns 0 or 1
+        test = add_null_dummies(test)
+
+        imputer = Imputer(strategy=strategy.split("_")[0])
+        imputer.fit(train) # fit the imputer on the training mean/median
+        train = pd.DataFrame(imputer.transform(train), # returns a numpy array
+            columns = train.columns, index = train.index) # back to dataframe
+        test = pd.DataFrame(imputer.transform(test),
+            columns = test.columns, index = test.index)
         return train, test
-    elif(strategy == 'median_plus_dummies'):
-        return train, test
+
     else:
         print('unknown imputation strategy. try "{}", "{}", or "{}"'.format(
             'mean_plus_dummies', 'median_plus_dummies', 'none'))
@@ -298,14 +338,6 @@ def main():
         train, test = train_test_split(outcome_plus_features, test_size=0.20,
             random_state=model_options['random_seed'])
 
-    # do feature scaling here
-    train, test = scale_features(train, test,
-        model_options['feature_scaling'])
-
-    # do missing value feature imputation here
-    train, test = impute_missing_values(train, test,
-        model_options['missing_impute_strategy'])
-
     # get subtables for each for easy reference
     train_X = train.drop([model_options['outcome_name'],
         model_options['cohort_grade_level_begin']],axis=1)
@@ -313,6 +345,16 @@ def main():
         model_options['cohort_grade_level_begin']],axis=1)
     train_y = train[model_options['outcome_name']]
     test_y = test[model_options['outcome_name']]
+
+    # do missing value feature imputation here
+    train_X, test_X = impute_missing_values(train_X, test_X,
+        model_options['missing_impute_strategy'])
+    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
+
+    # do feature scaling here
+    train_X, test_X = scale_features(train_X, test_X,
+        model_options['feature_scaling'])
+    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
 
     ####
     # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
