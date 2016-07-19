@@ -15,7 +15,8 @@
 ##  Loaded dict is in alphabetical order; but no content is changed
 model_classes_selected: [logit, DT] # [SVM] # must be a list of strings!
 user_description: initial_skeleton_pipeline_test # this isn't currently used?
-file_save_name: gender_ethnicity # model name and extension appended automatically
+# file_save_name: gender_ethnicity # model name and extension appended automatically
+file_save_name: test_gpa_gender_ethnicity_imputed
 
 model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k_fold
@@ -31,10 +32,10 @@ validation_criterion: accuracy # f1 # average_precision
 # model_options['features_included'] must be a dictionary
 features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
-  # grades: [gpa_gr_9]
+  grades: [gpa_gr_3, gpa_gr_4, gpa_gr_5, gpa_gr_6, gpa_gr_7, gpa_gr_8, gpa_gr_9]
 
 outcome_name: not_on_time
 # currently implemented: impute numeric features with mean or median
 # add dummy for numeric + categorical, no mode imputation for categorical
-missing_impute_strategy: mean_plus_dummies # median_plus_dummies
-feature_scaling: none # none, standard, or robust options to be implemented
+missing_impute_strategy: median_plus_dummies # mean_plus_dummies
+feature_scaling: robust # none, standard, or robust options to be implemented

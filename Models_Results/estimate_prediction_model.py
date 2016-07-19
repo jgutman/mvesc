@@ -252,7 +252,7 @@ def scale_features(train, test, strategy):
             'standard', 'robust', 'none'))
         return train, test
 
-def add_null_dummies(train):
+def add_null_dummies(data):
     """
     """
     data_null_columns = data[data.columns[data.isnull().sum() > 0]]
