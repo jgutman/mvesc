@@ -45,52 +45,36 @@ def create_feature_table(cursor, table, schema = 'model', replace = False):
         .format(schema=schema, table=table))
 
 def update_column_with_join(cursor, table, column_list, source_table, 
-                            source_column_list = None, source_schema = None,
-                            schema='model'):
+                            source_schema = None, schema='model'):
     """ 
     Update column using join to match another table                 
     :param pg.cursor cursor: pg cursor
     :param str table: table to update
-    :param str column_list: list of column to update
-    :param str source_table: table of source
-    :param str source_column_list: list of source columns - column_list default 
-        if not None then must be the same length as column_list
+    :param str column_list: list of column in source_table to add to table
+    :param str source_table: table containing columns to add
     :param str source_schema: schema of source - None default for temp tables
     :param str schema: schema to update - 'model' default
     :return None:                      
     """
     # setting defaults
-    if not source_column_list:
-        source_column_list = column_list
     if not source_schema:
         source_schema_and_table = source_table
     else:
         source_schema_and_table = source_schema+'.'+source_table
     
-    # making columns
-    for ind,c in enumerate(column_list):
-        dtype = get_column_type(cursor, source_table, source_column_list[ind])
-        
-        sql_add_column = """
-        alter table {schema}.{table} add column {column} 
-        {dtype} default null;
-        """.format( schema=schema, table=table, column=c, dtype=dtype)
-        cursor.execute(sql_add_column);
-
     # joining columns
     sql_join_cmd = """
     alter table {schema}.{table} rename to {table}_temp;
     create table {schema}.{table} as
     select {schema}.{table}_temp.*, {source_cols} from {schema}.{table}_temp t1
     left join {source_schema_and_table} t2
-    on {schema}.{table}_temp.student_lookup = {temp_table}.student_lookup;
+    on {schema}.{table}_temp.student_lookup = {source_table}.student_lookup;
     drop table {schema}.{table}_temp;
-    """.format(schema=schema, table=table, column=column,
-               source_schema_and_table=source_schema_and_table, 
-               source_column=source_column)
+    """.format_map({'schema'=schema, 'table'=table, 
+               'source_schema_and_table'=source_schema_and_table, 
+               'source_cols'=", ".join(column_list))
     cursor.execute(sql_join_cmd)
-    print(""" - updated {schema}.{table}.{col} 
-    from {s_schema_and_table}.{s_col}; """\
-          .format(col=column, schema=schema, table=table, 
-                 s_schema_and_table=source_schema_and_table, 
-                  s_col=source_column))
+    print(""" - updated {source_cols} in {schema}.{table}
+    from {s_schema_and_table}; """\
+          .format(source_cols=", ".join(column_list), schema=schema, 
+                  table=table, s_schema_and_table=source_schema_and_table)
