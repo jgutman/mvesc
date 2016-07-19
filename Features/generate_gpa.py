@@ -5,7 +5,7 @@ Procedures:
 """
 from feature_utilities import *
 
-def main():
+def generate_gpa():
     schema, table = "model", "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
@@ -102,26 +102,28 @@ def main():
             from standard_grades group by student_lookup;
             """)
             
-            # freshman gpa
-            cursor.execute("""
-            create temp table gpa_9th as
-            select student_lookup,
-            avg(mark) as "gpa_9th"
-            from standard_grades 
-            where grade = 9
-            group by student_lookup
-            """)
+            # yearly gpa
+            for grade in range(9,11):
+                cursor.execute("""
+                create temp table gpa_{grade} as
+                select student_lookup,
+                avg(mark) as "gpa_gr_{grade}"
+                from standard_grades 
+                where grade = {grade}
+                group by student_lookup
+                """.format_map({'grade':grade}))
             
-            sql_create_index = """                                                   
-            create index lookup_index on {schema}.{table}(student_lookup)            
-            """.format(schema=schema, table=table)
-            cursor.execute(sql_create_index)
-            
+                sql_create_index = """                                                   
+                create index temp_lookup_index_{gr} on 
+                {schema}.{table}(student_lookup)            
+                """.format(gr=grade,schema=schema, table=table)
+                cursor.execute(sql_create_index)
+           
             # computing gpa and saving feature table
-            update_column_with_join(cursor, table, 'high_school_gpa', 'gpa')
-            update_column_with_join(cursor, table, 'gpa_9th', 'gpa_9th')
+            update_column_with_join(cursor, table, 'high_school_gpa', 'gpa') 
+            for grade in range(9,11):
+                update_column_with_join(cursor, table, 
+                                        column='gpa_gr_{}'.format(grade),
+                                        source_table='gpa_{}'.format(grade))
 
         connection.commit()
-
-if __name__=='__main__':
-    main()
