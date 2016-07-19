@@ -5,21 +5,21 @@ Procedures:
 """
 from feature_utilities import *
 
-def generate_gpa(grade_range=range(3,11),replace=False):
+def generate_gpa(grade_range=range(3,10),replace=False):
     schema, table = "model", "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # creating base table (if not existing)
             create_feature_table(cursor, table, replace=replace)
             
-            # grabbing high school grades
+            # grabbing relevant grades
             cursor.execute("""
             create temp table grades as select * from 
             clean.all_grades where
             student_lookup in
             (select student_lookup from model.outcome)
-            and grade < 11;
-            """)
+            and grade <= {max_yr} and grade >= {min_yr};
+            """.format(max_yr=max(grade_range),min_yr=min(grade_range)))
             
             # selecting numeric grades
             cursor.execute("""
@@ -96,15 +96,26 @@ def generate_gpa(grade_range=range(3,11),replace=False):
             union all 
             select * from  letter_standard_grades;
             """)
-            
-            # computing gpa
-            cursor.execute("""
-            create temp table gpa as 
-            select student_lookup, 
-            avg(mark) as "cumulative_gpa"
-            from standard_grades group by student_lookup;
-            """)
 
+            # yearly gpa
+            gpa_query = """
+            create temp table gpa as
+            select student_lookup, """
+            for grade in grade_range:
+                gpa_query += """
+                avg(case when grade = {grade} then mark end)
+                as gpa_gr_{grade}, """.format(grade=grade)
+            gpa_query = gpa_query[:-2] + """
+                from standard_grades
+                group by student_lookup;
+                """
+            cursor.execute(gpa_query)
+            cursor.execute("""
+            create index gpa_lookup_index on gpa(student_lookup)
+            """)
+            gpa_col_list = ["gpa_gr_{}".format(gr)
+                           for gr in grade_range]
+            
             # getting pass/fail classes
             cursor.execute("""
             create temp table pass_fail as
@@ -124,64 +135,41 @@ def generate_gpa(grade_range=range(3,11),replace=False):
             """)
             
             # computing pass/fail features
-
             pf_feature_query = """
             create temp table pf_features as
             select student_lookup, """
             for grade in grade_range:
                 pf_feature_query += """
-                count(case when grade = {gr} then 1 else 0 end) 
+                sum(case when grade = {gr} then 1 else 0 end) 
                 as num_pf_classes_gr_{gr},
-                sum(case when mark = 'p' and grade = {gr} then 1 else 0 end)
-                    /count(case when grade = {gr} then 1 else 0 end)::float 
-                as percent_passed_pf_classes_gr_{gr}, """\
-                    .format_map({'gr':grade})
+                sum(case when mark = 'p' and grade = {gr} then 1
+                         when mark = 'f' and grade = {gr} then 0 end)
+                    /sum(case when grade = {gr} then 1 else 0 end)::float 
+                as percent_passed_pf_classes_gr_{gr}, """.format(gr=grade)
             pf_feature_query = pf_feature_query[:-2] + """
                 from pass_fail
                 group by student_lookup
-                """
-            print(pf_feature_query)
+                """;
             cursor.execute(pf_feature_query)
+            cursor.execute("""
+            create index pf_lookup_index on pf_features(student_lookup)
+            """)
 
             pf_col_list = ["percent_passed_pf_classes_gr_{}".format(gr) 
                            for gr in grade_range]
             pf_col_list += ["num_pf_classes_gr_{}".format(gr)
                            for gr in grade_range]
             
-            # yearly gpa
-            # for grade in grade_range:
-            #     cursor.execute("""
-            #     create temp table gpa_{grade} as
-            #     select student_lookup,
-            #     avg(mark) as "gpa_gr_{grade}"
-            #     from standard_grades 
-            #     where grade = {grade}
-            #     group by student_lookup
-            #     """.format_map({'grade':grade}))
-            
-            #     sql_create_index = """
-            #     create index temp_lookup_index_{gr} on 
-            #     {schema}.{table}(student_lookup)            
-            #     """.format(gr=grade,schema=schema, table=table)
-            #     cursor.execute(sql_create_index)
-           
-            # computing gpa and saving feature table
-            # update_column_with_join(cursor, table, ['cumulative_gpa_gr_{}'\
-            #                         .format(max(grade_range))],
-            #                         'gpa',
-            #                         source_column_list=['cumulative_gpa']) 
-            #for grade in grade_range:
-                #update_column_with_join(cursor, table, 
-                #                       column_list=['gpa_gr_{}'.format(grade)],
-                #                       source_table='gpa_{}'.format(grade))
+            update_column_with_join(cursor,table, column_list=gpa_col_list,
+                                    source_table='gpa')
             update_column_with_join(cursor, table, 
                                     column_list=pf_col_list,
-                                    source_table = 'pf_features')
+                                    source_table='pf_features')
                                         
         connection.commit()
 
 def main():
-    generate_gpa()
+    generate_gpa(replace=True)
 
 if __name__=='__main__':
     main()
