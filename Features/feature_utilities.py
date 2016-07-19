@@ -66,15 +66,15 @@ def update_column_with_join(cursor, table, column_list, source_table,
     sql_join_cmd = """
     alter table {schema}.{table} rename to {table}_temp;
     create table {schema}.{table} as
-    select {schema}.{table}_temp.*, {source_cols} from {schema}.{table}_temp t1
+    select t1.*, {source_cols} from {schema}.{table}_temp t1
     left join {source_schema_and_table} t2
-    on {schema}.{table}_temp.student_lookup = {source_table}.student_lookup;
+    on t1.student_lookup = t2.student_lookup;
     drop table {schema}.{table}_temp;
-    """.format_map({'schema'=schema, 'table'=table, 
-               'source_schema_and_table'=source_schema_and_table, 
-               'source_cols'=", ".join(column_list))
+    """.format_map({'schema':schema, 'table':table,'source_table':source_table, 
+               'source_schema_and_table':source_schema_and_table, 
+                    'source_cols':", ".join(column_list)})
     cursor.execute(sql_join_cmd)
     print(""" - updated {source_cols} in {schema}.{table}
     from {s_schema_and_table}; """\
           .format(source_cols=", ".join(column_list), schema=schema, 
-                  table=table, s_schema_and_table=source_schema_and_table)
+                  table=table, s_schema_and_table=source_schema_and_table))
