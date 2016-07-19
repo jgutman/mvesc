@@ -118,12 +118,21 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out, cohorts_training):
     """ Splits the given joint_df of features & outcomes and
     returns a train/test dataset
-    :param pd.DataFrame joint_df:
-    :param list[int] cohorts_held_out:
+    :param pd.DataFrame joint_df: data frame with a cohort, outcome, and feature(s)
+    :param list[int] cohorts_held_out: a list of years to split test set on
+    :param string or list[int] cohorts_training: either the string 'all' or
+        a list of years to include in the training, must all precede the test set
+    :returns two dataframes consisting of rows from joint_df, one for training and
+        one to be used for testing
+    :rtype pd.DataFrame, pd.DataFrame
     """
     if (cohorts_training=='all'):
         train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
+        assert(np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
+            "Training years do not completely precede test years"
     else:
+        assert(max(cohorts_training) < min(cohorts_heldout)), \
+            "Training years do not completely precede test years"
         train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     return train, test
@@ -140,19 +149,29 @@ def measure_performance(outcomes, predictions):
     return performance_objects
 
 def build_outcomes_plus_features(model_options):
+    """
+        Returns a pandas dataframe containing the student_lookup, cohort identifier,
+        outcome variable, and all numerical or binarized features.
+        Reads in the features and outcomes from database according to the
+        specification given in model_options dictionary.
+        :param dict model_options: all options read in from yaml file
+
+        Assumes:
+        model.outcome table contains a column (name given in cohort_grade_level_begin)
+        with int values identifying each student's cohort year
+        e.g. 'cohort_9th' contains the year each student is seen in 9th grade
+        and contains an outcome column (name given in outcome_name)
+        and all feature and outcomes tables contain student_lookup
+
+        Usage:
+        select train, validation, and test based on values in column
+        'cohort_grade_level_begin' according to value in 'cohorts_held_out'
+    """
     with postgres_pgconnection_generator() as connection:
-        # get labeled outcomes
-        # Assumes:
-        # model.outcome table contains a column (name given in cohort_grade_level_begin) for each cohort base year we choose
-        # e.g. 'cohort_9th' contains the year each student is seen in 9th grade
-        # and contains an outcome column (name given in outcome_name)
-        # and 'student_lookup' columns
-        # Usage:
-        # select train, validation, and test based on values in column
-        # 'cohort_grade_level_begin' according to value in 'cohorts_held_out'
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
-            columns = ['student_lookup', model_options['outcome_name'], model_options['cohort_grade_level_begin']])
+            columns = ['student_lookup',
+            model_options['outcome_name'], model_options['cohort_grade_level_begin']])
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset = [colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
@@ -178,14 +197,53 @@ def build_outcomes_plus_features(model_options):
     return joint_label_features
 
 def read_in_yaml(filename=os.path.join(base_pathname,
-    'Models_Results', 'model_options.yaml')):
+        'Models_Results', 'model_options.yaml')):
     with open(filename, 'r') as f:
         model_options = yaml.load(f)
-    assert(type(model_options)==dict)
-    assert(type(model_options['features_included']==dict))
-    assert(type(model_options['model_classes_selected']==list))
-    assert(type(model_options['cohorts_held_out']==list))
+
+    # Maybe we want to have default values for these options and replace
+    # from a new yaml file as necessary
+    assert(type(model_options) == dict), "bad formatting in yaml file"
+    required_keys = set(('validation_criterion', 'features_included', 'cohorts_training',
+        'cohorts_held_out', 'file_save_name', 'model_classes_selected', 'outcome_name',
+        'cohort_grade_level_begin', 'model_test_holdout', 'random_seed'))
+    assert(all([key in model_options.keys() for key in required_keys])), \
+        "missing model specifications in yaml file"
+
+    assert(type(model_options['features_included']) == dict), "bad formatting in yaml file"
+    assert(type(model_options['model_classes_selected']) == list), "bad formatting in yaml file"
+    assert(type(model_options['cohorts_held_out']) == list), "bad formatting in yaml file"
+    assert(type(model_options['cohorts_training']) == list or
+        model_options['cohorts_training'] == 'all'), "bad formatting in yaml file"
     return model_options
+
+def scale_features(train, test, strategy):
+    """
+    """
+    if (strategy == 'none'):
+        return train, test
+    elif(strategy == 'standard'):
+        return train, test
+    elif(strategy == 'robust'):
+        return train, test
+    else:
+        print('unknown feature scaling strategy. try "{}", "{}", or "{}"'.format(
+            'standard', 'robust', 'none'))
+        return train, test
+
+def impute_missing_values(train, test, strategy):
+    """
+    """
+    if (strategy=='none'):
+        return train, test
+    elif(strategy == 'mean_plus_dummies'):
+        return train, test
+    elif(strategy == 'median_plus_dummies'):
+        return train, test
+    else:
+        print('unknown imputation strategy. try "{}", "{}", or "{}"'.format(
+            'mean_plus_dummies', 'median_plus_dummies', 'none'))
+        return train, test
 
 def main():
 # Create options file used to generate features
@@ -240,6 +298,14 @@ def main():
         train, test = train_test_split(outcome_plus_features, test_size=0.20,
             random_state=model_options['random_seed'])
 
+    # do feature scaling here
+    train, test = scale_features(train, test,
+        model_options['feature_scaling'])
+
+    # do missing value feature imputation here
+    train, test = impute_missing_values(train, test,
+        model_options['missing_impute_strategy'])
+
     # get subtables for each for easy reference
     train_X = train.drop([model_options['outcome_name'],
         model_options['cohort_grade_level_begin']],axis=1)
@@ -273,18 +339,20 @@ def main():
         # ignore cohorts and use random folds to estimate parameter
         print('k_fold_parameter_estimation')
         cohort_kfolds = LabelKFold(train.index,
-            n_folds=model_options['n_folds'])
+                n_folds = model_options['n_folds'])
 
     else:
-        print('unknown cross-validation strategy')
+        print('unknown cross-validation strategy. try "{}", "{}", or "{}"'.format(
+            'leave_cohort_out', 'k_fold', 'none'
+        ))
 
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
     best_validated_models = clf_loop(clfs, params, train_X, train_y,
-        criterion=model_options['validation_criterion'],
-        models_to_run=model_options['model_classes_selected'],
-        cv_folds=cohort_kfolds)
+        criterion = model_options['validation_criterion'],
+        models_to_run = model_options['model_classes_selected'],
+        cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
 
     for model_name, model in best_validated_models.items():
         clf = model.best_estimator_

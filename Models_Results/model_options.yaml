@@ -13,7 +13,7 @@
 #   ```
 ##  Then you can use it as a dictionary
 ##  Loaded dict is in alphabetical order; but no content is changed
-model_classes_selected: [logit, DT, SVM] # word is parsed as string
+model_classes_selected: [logit, DT] # [SVM] # must be a list of strings!
 user_description: initial_skeleton_pipeline_test # this isn't currently used?
 file_save_name: gender_ethnicity # model name and extension appended automatically
 
@@ -22,16 +22,19 @@ parameter_cross_validation_scheme: leave_cohort_out #k_fold
 cohort_grade_level_begin: cohort_9th
 n_folds: 10
 cohorts_held_out: [2012]
-# allowed values is all or a list of cohort years
+
+# allowed values for cohorts_training is 'all' or a list of cohort years
 cohorts_training: all # [2006, 2007, 2008, 2009]
 random_seed: 2187 # number is parsed as number
 validation_criterion: accuracy # f1 # average_precision
 
-features_included: # model_options['features_included'] must be a dictionary
+# model_options['features_included'] must be a dictionary
+features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
   # grades: [gpa_gr_9]
 
 outcome_name: not_on_time
-# currently: impute numeric features with mean, impute categorical with mode
-missing_impute_strategy: default_mean_dummies
+# currently implemented: impute numeric features with mean or median
+# add dummy for numeric + categorical, no mode imputation for categorical
+missing_impute_strategy: mean_plus_dummies # median_plus_dummies
 feature_scaling: none # none, standard, or robust options to be implemented
