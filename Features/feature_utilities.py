@@ -44,38 +44,47 @@ def create_feature_table(cursor, table, schema = 'model', replace = False):
         print(""" - Table {schema}.{table} created!"""\
         .format(schema=schema, table=table))
 
-def update_column_with_join(cursor, table, column, source_table, 
-                            source_column = None, source_schema = None,
+def update_column_with_join(cursor, table, column_list, source_table, 
+                            source_column_list = None, source_schema = None,
                             schema='model'):
     """ 
     Update column using join to match another table                 
     :param pg.cursor cursor: pg cursor
-    :param str source_schema: schema of source - None default for temp tables
-    :param str source_table: table of source
-    :param str source_column: column of source - defaults to column
-    :param str schema: schema to update
     :param str table: table to update
-    :param str column: column to update                    
+    :param str column_list: list of column to update
+    :param str source_table: table of source
+    :param str source_column_list: list of source columns - column_list default 
+        if not None then must be the same length as column_list
+    :param str source_schema: schema of source - None default for temp tables
+    :param str schema: schema to update - 'model' default
     :return None:                      
     """
-    if not source_column:
-        source_column = column
-    dtype = get_column_type(cursor, source_table, source_column)
+    # setting defaults
+    if not source_column_list:
+        source_column_list = column_list
     if not source_schema:
         source_schema_and_table = source_table
     else:
         source_schema_and_table = source_schema+'.'+source_table
-    sql_add_column = """
-    alter table {schema}.{table} add column {column} 
-    {dtype} default null;
-    """.format( schema=schema, table=table, column=column, dtype=dtype)
-    cursor.execute(sql_add_column);
+    
+    # making columns
+    for ind,c in enumerate(column_list):
+        dtype = get_column_type(cursor, source_table, source_column_list[ind])
+        
+        sql_add_column = """
+        alter table {schema}.{table} add column {column} 
+        {dtype} default null;
+        """.format( schema=schema, table=table, column=c, dtype=dtype)
+        cursor.execute(sql_add_column);
+
+    # joining columns
     sql_join_cmd = """
-    update {schema}.{table} t1
-    set {column}=
-    (select {source_column} from {source_schema_and_table} t2
-    where t2.student_lookup=t1.student_lookup and t2.{source_column} is not null
-    order by {source_column} desc limit 1);
+    alter table {schema}.{table} rename to {table}_temp;
+    create table {schema}.{table} as
+    select {schema}.{table}_temp.*, {source_cols} from {schema}.{table}_temp t1
+    left join {source_schema_and_table} t2
+    on {schema}.{table}_temp.student_lookup = {temp_table}.student_lookup;
+    drop table {schema}.{table}_temp;
     """.format(schema=schema, table=table, column=column,
                source_schema_and_table=source_schema_and_table, 
                source_column=source_column)
