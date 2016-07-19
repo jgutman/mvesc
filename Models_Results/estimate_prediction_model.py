@@ -23,34 +23,13 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
+from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 
 import yaml
 import numpy as np
 import pandas as pd
 
-def df2num(rawdf):
-    """ Convert data frame with numeric variables and strings to numeric dataframe
-
-    :param pd.dataframe rawdf: raw data frame
-    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
-    :rtype: pd.dataframe
-    Rules:
-    - 1. numeric columns unchanged;
-    - 2. strings converted to dummies;
-    - 3. the most frequent string is taken as reference category and dropped
-    - 4. new column name is: "ColumnName_Category"
-    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
-    """
-
-    numeric_df = rawdf.select_dtypes(include=[np.number])
-    str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
-    dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
-    numeric_df = numeric_df.join(dummy_col_df)
-    most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
-    reference_cols = ["{}_{}".format(key, value) for
-        key, value in most_frequent_values.items()]
-    numeric_df.drop(reference_cols, axis=1, inplace=True)
-    return numeric_df
+# def df2num(rawdf) # This function has been moved to utility
 
 ######
 # Setup Modeling Options and Functions
@@ -62,6 +41,7 @@ def define_clfs_params():
 
     clfs = {
         'logit': LogisticRegression(),
+        'LR_no_penalty': LogisticRegression(C=1e6),
         'DT': DecisionTreeClassifier(),
         'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
@@ -75,8 +55,11 @@ def define_clfs_params():
     }
 
     grid = {
-        'logit': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
-        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],
+        'logit': {'penalty': ['l1','l2'],
+            'C': [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0, 1e4]},
+        'LR_no_penalty': {},
+        'DT': {'criterion': ['gini', 'entropy'],
+            'max_depth': [1,5,10,20,50,100],
             'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
         'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100],
             'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
@@ -223,6 +206,12 @@ def main():
     # subset of various feature columns from various tables (features_included)
 
     outcome_plus_features = build_outcomes_plus_features(model_options)
+    # no null in the categorical values because we have feature_nan dummies
+    # there may be null values in the cohort or outcome label columns
+    # just drop these students from the data
+    outcome_plus_features.dropna(subset=[model_options['outcome_name'],
+        model_options['cohort_grade_level_begin']], inplace=True)
+    # imputation should happen after splitting into train and test
 
     # Use the gathered DataFrame in a predictive model
     # Steps:
