@@ -17,6 +17,7 @@ model_classes_selected: [logit, DT] # [SVM] # must be a list of strings!
 user_description: initial_skeleton_pipeline_test # this isn't currently used?
 # file_save_name: gender_ethnicity # model name and extension appended automatically
 file_save_name: test_gpa_gender_ethnicity_imputed
+write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k_fold
