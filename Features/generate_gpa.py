@@ -5,23 +5,26 @@ Procedures:
 """
 from feature_utilities import *
 
-def generate_gpa():
+def generate_gpa(grade_range=range(3,11),replace=False):
     schema, table = "model", "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # creating base table (if not existing)
-            create_feature_table(cursor, table)
+            create_feature_table(cursor, table, replace=replace)
             
             # grabbing high school grades
             cursor.execute("""
-            create temp table high_school as select * from 
-            clean.all_grades where grade >= 9;
+            create temp table grades as select * from 
+            clean.all_grades where
+            student_lookup in
+            (select student_lookup from model.outcome)
+            and grade < 11;
             """)
             
             # selecting numeric grades
             cursor.execute("""
              create temp table numeric_grades as
-             select * from high_school where 
+             select * from grades where 
                  mark like '0%' or mark like '1%' or mark like '2%' or 
                  mark like '3%' or mark like '4%' or mark like '5%' or
                  mark like '6%' or mark like '7%' or mark like '8%' or 
@@ -35,7 +38,7 @@ def generate_gpa():
             # selecting letter grades
             cursor.execute("""
             create temp table letter_grades as
-            select * from high_school where 
+            select * from grades where 
                 lower(mark) like 'a%' or  lower(mark) like 'b%' or  
                 lower(mark) like 'c%' or  lower(mark) like 'd%' or  
                 lower(mark) like 'f%';
@@ -98,32 +101,40 @@ def generate_gpa():
             cursor.execute("""
             create temp table gpa as 
             select student_lookup, 
-            avg(mark) as "high_school_gpa"
+            avg(mark) as "cumulative_gpa"
             from standard_grades group by student_lookup;
             """)
             
             # yearly gpa
-            for grade in range(9,11):
-                cursor.execute("""
-                create temp table gpa_{grade} as
-                select student_lookup,
-                avg(mark) as "gpa_gr_{grade}"
-                from standard_grades 
-                where grade = {grade}
-                group by student_lookup
-                """.format_map({'grade':grade}))
+            # for grade in grade_range:
+            #     cursor.execute("""
+            #     create temp table gpa_{grade} as
+            #     select student_lookup,
+            #     avg(mark) as "gpa_gr_{grade}"
+            #     from standard_grades 
+            #     where grade = {grade}
+            #     group by student_lookup
+            #     """.format_map({'grade':grade}))
             
-                sql_create_index = """                                                   
-                create index temp_lookup_index_{gr} on 
-                {schema}.{table}(student_lookup)            
-                """.format(gr=grade,schema=schema, table=table)
-                cursor.execute(sql_create_index)
+            #     sql_create_index = """
+            #     create index temp_lookup_index_{gr} on 
+            #     {schema}.{table}(student_lookup)            
+            #     """.format(gr=grade,schema=schema, table=table)
+            #     cursor.execute(sql_create_index)
            
             # computing gpa and saving feature table
-            update_column_with_join(cursor, table, 'high_school_gpa', 'gpa') 
-            for grade in range(9,11):
-                update_column_with_join(cursor, table, 
-                                        column='gpa_gr_{}'.format(grade),
-                                        source_table='gpa_{}'.format(grade))
+            update_column_with_join(cursor, table, 'cumulative_gpa_gr_{}'\
+                                    .format(max(grade_range)),
+                                    'gpa',source_column='cumulative_gpa') 
+            #for grade in grade_range:
+                #update_column_with_join(cursor, table, 
+                #                        column='gpa_gr_{}'.format(grade),
+                #                        source_table='gpa_{}'.format(grade))
 
         connection.commit()
+
+def main():
+    generate_gpa()
+
+if __name__=='__main__':
+    main()
