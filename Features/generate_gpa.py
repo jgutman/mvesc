@@ -104,6 +104,49 @@ def generate_gpa(grade_range=range(3,11),replace=False):
             avg(mark) as "cumulative_gpa"
             from standard_grades group by student_lookup;
             """)
+
+            # getting pass/fail classes
+            cursor.execute("""
+            create temp table pass_fail as
+            select student_lookup, grade, case 
+            when lower(mark) like 'u%' or
+                 lower(mark) like '0' 
+            then 'f'
+            when lower(mark) like 's%' or 
+                 lower(mark) like 'p%' or
+                 lower(mark) like 'o%' or
+                 lower(mark) like '1' or
+                 lower(mark) like '200'
+            then 'p'
+            end as mark
+            from grades;
+            delete from pass_fail where mark is null;
+            """)
+            
+            # computing pass/fail features
+
+            pf_feature_query = """
+            create temp table pf_features as
+            select student_lookup, """
+            for grade in grade_range:
+                pf_feature_query += """
+                count(case when grade = {gr} then 1 else 0 end) 
+                as num_pf_classes_gr_{gr},
+                sum(case when mark = 'p' and grade = {gr} then 1 else 0 end)
+                    /count(case when grade = {gr} then 1 else 0 end)::float 
+                as percent_passed_pf_classes_gr_{gr}, """\
+                    .format_map({'gr':grade})
+            pf_feature_query = pf_feature_query[:-2] + """
+                from pass_fail
+                group by student_lookup
+                """
+            print(pf_feature_query)
+            cursor.execute(pf_feature_query)
+
+            pf_col_list = ["percent_passed_pf_classes_gr_{}".format(gr) 
+                           for gr in grade_range]
+            pf_col_list += ["num_pf_classes_gr_{}".format(gr)
+                           for gr in grade_range]
             
             # yearly gpa
             # for grade in grade_range:
@@ -131,6 +174,10 @@ def generate_gpa(grade_range=range(3,11),replace=False):
                 #update_column_with_join(cursor, table, 
                 #                       column_list=['gpa_gr_{}'.format(grade)],
                 #                       source_table='gpa_{}'.format(grade))
+            update_column_with_join(cursor, table, 
+                                    column_list=pf_col_list,
+                                    source_table = 'pf_features')
+                                        
         connection.commit()
 
 def main():
