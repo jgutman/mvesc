@@ -38,7 +38,7 @@ def create_feature_table(cursor, table, schema = 'model', replace = False):
         cursor.execute(sql_drop);
         cursor.execute(sql_create);
         sql_create_index = """                                               
-        create index student_lookup_index on {schema}.{table}(student_lookup)
+        create index {schema}_{table}_index on {schema}.{table}(student_lookup)
         """.format(schema=schema, table=table)
         cursor.execute(sql_create_index)
         print(""" - Table {schema}.{table} created!"""\
