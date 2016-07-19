@@ -10,7 +10,7 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 
-def create_feature_table(cursor, table, schema = 'model'):
+def create_feature_table(cursor, table, schema = 'model', replace = False):
     """
     The current feature table is dropped and re-created with a single column
     containing unique student lookups numbers, set as an index
@@ -18,13 +18,15 @@ def create_feature_table(cursor, table, schema = 'model'):
     :param pg_cursor cursor:
     :param str table: feature table name 
     :param str schema: schema name for feature table
+    :param bool replace: if true the table will be replaced, 
+        if false an existing table will not be altered
     """
     cursor.execute("""
     select count(*) from information_schema.tables
     where table_schema = '{schema}' and table_name = '{table}'
     """.format_map({'schema':schema,'table':table}))
     table_exists = cursor.fetchall()[0][0]
-    if not table_exists:
+    if (not table_exists) or replace:
         sql_drop = "drop table if exists {schema}.{table};"\
             .format(schema=schema, table=table)
         sql_create = """                                                     
