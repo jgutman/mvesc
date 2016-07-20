@@ -224,6 +224,7 @@ def main():
         connection.commit()
     execute_sql_script(os.path.join(parentdir,
         'remove_duplicate_withdrawals_from_tracking.sql'))
+    
     print('done!')
 
 if __name__ == "__main__":
