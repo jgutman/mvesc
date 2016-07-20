@@ -126,7 +126,7 @@ for sheet_name in xl.sheet_names:
     table_name = excel_name + sheet_name[-4:]
     tab_name_json = add_file2table_jsonfile(excel_name+'->'+sheet_name, table_name)
     if tab_name_json==None:
-        print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(excel_name+'->'+sheet_name, table_name))
+        print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(excel_name+'->'+sheet_name, table_name))
         continue 
     df = xl.parse(sheet_name)
     names = list(df.columns)
@@ -153,7 +153,7 @@ schema2 = 'public'
 print('\n--- processing: ', filepath)
 tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
-    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
     df_Mobility = pd.read_excel(filepath, skiprows=1)
     df_Mobility2 = pd.read_excel(filepath)
@@ -183,9 +183,52 @@ newcol_dict = {col:col.lower() for col in jvs_df.columns}
 jvs_df = jvs_df.rename(columns=newcol_dict)
 tab_name_json = add_file2table_jsonfile(jvsd_fn.split('/')[-1], table_name)
 if tab_name_json==None:
-    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
+
+
+#++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
+# -1. read Excel file 
+# -2. upload the table
+schema1 = 'raw'
+schema2 = 'public'
+filepath = '/mnt/data/mvesc/PartnerData/2013-School-District-Typology.xlsx'
+table_name = 'School_District_Typology'
+print('\n--- processing: ', filepath)
+df = pd.read_excel(filepath, sheetname=0)
+newcol_dict = {col.strip():'_'.join(col.strip().lower().split(' ')).replace('.', '') for col in df.columns}
+newcol_dict['2013 Typology']='typology_2013'
+df = df.rename(columns=newcol_dict)
+tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
+if tab_name_json==None:
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+else:
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    print("table uploaded to mvesc: ", table_name)
+
+
+#++++++ ~/PartnerData/Sent_to_District_MLF_71916.xlsx ++++++#
+# -1. read Excel file 
+# -2. upload the table
+schema1 = 'raw'
+schema2 = 'public'
+filepath = '/mnt/data/mvesc/PartnerData/Sent_to_District_MLF_71916.xlsx'
+table_name = 'Miss_transfer_MLF_71916'
+print('\n--- processing: ', filepath)
+df = pd.read_excel(filepath, sheetname=0)
+newcol_dict = {col.strip():'_'.join(col.strip().split(' ')).replace('.', '') for col in df.columns}
+df = df.rename(columns=newcol_dict)
+tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
+if tab_name_json==None:
+    print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+else:
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    print("table uploaded to mvesc: ", table_name)
+
+
 

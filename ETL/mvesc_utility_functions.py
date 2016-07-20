@@ -21,6 +21,7 @@ import sys
 import os
 import json
 from contextlib import contextmanager
+import os
 
 ############ ETL Functions ############
 def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -42,12 +43,30 @@ def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
     engine = create_engine(sql_eng_str)
     return engine
 
+def execute_sql_script(sql_script, pass_file="/mnt/data/mvesc/pgpass"):
+    """ Executes the given sql script
+    Note: you can only run it on the mvesc server
+    :param str sql_script: filename of an sql script
+    :param str pass_file: file with the credential information
+    """
+    with open(pass_file, 'r') as f:
+        passinfo = f.read()
+    passinfo = passinfo.strip().split(':')
+    host_address = passinfo[0]
+    port = passinfo[1]
+    user_name = passinfo[2]
+    name_of_database = passinfo[3]
+    user_password = passinfo[4]
+    conn_info = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
+    os.system("psql -d {0} -f {1}".format(conn_info,sql_script))
+
+
 @contextmanager
 def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
-    :yield pg.connection generator: connection to database 
+    :yield pg.connection generator: connection to database
     """
     with open(pass_file, 'r') as f:
         passinfo = f.read()
@@ -64,7 +83,7 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
 ############ Reterive Database Information ############
 def get_all_table_names(cursor, schema='public'):
     """ Get all the table names as a list from a `schema` in mvesc
-    
+
     :param pg cursor object cursor: cursor for psql database
     :param str schema: schema name in the database
     :return list all_table_names: all table names in a `schema` in mvesc database
@@ -76,12 +95,12 @@ def get_all_table_names(cursor, schema='public'):
 
 def get_specific_table_names(cursor, column_name):
     """
-    Retrieves the list of names of tables in the database which contain a 
+    Retrieves the list of names of tables in the database which contain a
     column with the given name
 
-    :param pg object cursor: cursor in psql database                       
+    :param pg object cursor: cursor in psql database
     :param string column_name: column that should be in each of the returned tables
-    :rtype: list of strings                                       
+    :rtype: list of strings
     """
     table_names = get_all_table_names(cursor)
     to_remove = []
@@ -94,11 +113,11 @@ def get_specific_table_names(cursor, column_name):
 
 def get_column_names(cursor, table, schema='public'):
     """Get column names of a ntable  in a schema
-    
+
     :param pg cursor object cursor: cursor for psql database
     :param string table: table name in the database
     :param str schema: schema name in database
-    :rtype: list 
+    :rtype: list
     """
     cursor.execute("SELECT column_name FROM information_schema.columns \
     WHERE table_name = (%s) and table_schema=(%s)", [table, schema])
@@ -107,7 +126,7 @@ def get_column_names(cursor, table, schema='public'):
 
 def read_table_to_df(connection, table_name, columns=['*'], schema='public', nrows=20):
     """ Read the first n rows of a table
-    
+
     :param pg connection object connection: connection to psql database
     :param str table_name: Name of table to read in
     :param int nrows: number of rows to read in; default 20; -1 means all rows
@@ -136,10 +155,10 @@ def get_column_type(cursor, table_name, column_name):
         column_type = column_type[0][0]
     return column_type
 
-def clean_column(cursor, values, old_column_name, table_name, \
+def clean_column(cursor, values, old_column_name, table_name,
                  new_column_name=None, schema_name='clean', replace = 1):
     """
-    Cleans the given column by replacing values according to the given 
+    Cleans the given column by replacing values according to the given
     json file, which should be in the form:
     {
     "desired_name":["existing_name1", "existing_name2", ...],
@@ -175,12 +194,11 @@ def clean_column(cursor, values, old_column_name, table_name, \
         clean_col_query += """
         add column "{new_name}" {type};
         alter table {schema}."{table}"
-        alter column {new_name} type {type} using case 
-        """.format_map({'new_name':new_column_name, 'type': col_type, \
+        alter column {new_name} type {type} using case
+        """.format_map({'new_name':new_column_name, 'type': col_type,
                     'schema': schema_name, 'table':table_name})
 
     params = {} # dictionary to hold parameters for cursor.execute()
-
     with open(values, 'r') as f:
         json_dict = json.load(f)
 
@@ -190,7 +208,7 @@ def clean_column(cursor, values, old_column_name, table_name, \
         or_clause = "or "
         for old_name in old_name_list:
             clean_col_query += """
-            lower({old}) like %(item{n})s 
+            lower({old}) like %(item{n})s
             """.format_map({'old':old_column_name, 'n':count})
             clean_col_query += or_clause
             params['item{0}'.format(count)] = str(old_name)
@@ -199,21 +217,22 @@ def clean_column(cursor, values, old_column_name, table_name, \
         clean_col_query += "then  %(item{0})s \n".format(count)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
-    clean_col_query = clean_col_query[:-20]
+#    clean_col_query = clean_col_query[:-20]
     clean_col_query += "else {0} end; ".format(old_column_name)
-    if replace:
+
+    if replace and (old_column_name != new_column_name):
         clean_col_query += """
         alter table {schema}."{table}" rename column "{old}" to "{new}"
-        """.format_map({'schema':schema_name,'table':table_name,\
+        """.format_map({'schema':schema_name,'table':table_name,
                         'old':old_column_name, 'new':new_column_name})
+#    print(clean_col_query)
+#    print(params)
     cursor.execute(clean_col_query,params)
-
-
 
 ############ Functions to data frame processing ###################
 def df2num(rawdf):
     """ Convert data frame with numeric variables and strings to numeric dataframe
-    
+
     :param pd.dataframe rawdf: raw data frame
     :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
     :rtype: pd.dataframe
@@ -238,8 +257,7 @@ def df2num(rawdf):
         numeric_df = numeric_df.join(dummy_col_df)
     return numeric_df
 
-
-############ Upload file or directory to postgres (not useful in most cases)############### 
+############ Upload file or directory to postgres (not useful in most cases)###############
 def read_csv_noheader(filepath):
     """ Read a csv file with no header
 
