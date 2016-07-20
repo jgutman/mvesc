@@ -66,7 +66,7 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
-    :yield pg.connection generator: connection to database 
+    :yield pg.connection generator: connection to database
     """
     with open(pass_file, 'r') as f:
         passinfo = f.read()
@@ -83,7 +83,7 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
 ############ Reterive Database Information ############
 def get_all_table_names(cursor, schema='public'):
     """ Get all the table names as a list from a `schema` in mvesc
-    
+
     :param pg cursor object cursor: cursor for psql database
     :param str schema: schema name in the database
     :return list all_table_names: all table names in a `schema` in mvesc database
@@ -95,12 +95,12 @@ def get_all_table_names(cursor, schema='public'):
 
 def get_specific_table_names(cursor, column_name):
     """
-    Retrieves the list of names of tables in the database which contain a 
+    Retrieves the list of names of tables in the database which contain a
     column with the given name
 
-    :param pg object cursor: cursor in psql database                       
+    :param pg object cursor: cursor in psql database
     :param string column_name: column that should be in each of the returned tables
-    :rtype: list of strings                                       
+    :rtype: list of strings
     """
     table_names = get_all_table_names(cursor)
     to_remove = []
@@ -113,30 +113,31 @@ def get_specific_table_names(cursor, column_name):
 
 def get_column_names(cursor, table, schema='public'):
     """Get column names of a ntable  in a schema
-    
+
     :param pg cursor object cursor: cursor for psql database
     :param string table: table name in the database
     :param str schema: schema name in database
-    :rtype: list 
+    :rtype: list
     """
     cursor.execute("SELECT column_name FROM information_schema.columns \
     WHERE table_name = (%s) and table_schema=(%s)", [table, schema])
     columns = cursor.fetchall()
     return [c[0] for c in columns]
 
-def read_table_to_df(connection, table_name, schema='public', nrows=20):
+def read_table_to_df(connection, table_name, columns=['*'], schema='public', nrows=20):
     """ Read the first n rows of a table
-    
+
     :param pg connection object connection: connection to psql database
     :param str table_name: Name of table to read in
     :param int nrows: number of rows to read in; default 20; -1 means all rows
     :return: a pandas.dataframe object with n-rows
     :rtype: pandas.dataframe
     """
-    if nrows == -1:
-        sqlcmd = "SELECT * FROM %s.\"%s\";" % (schema, table_name)
+    sqlcmd = """SELECT {columns} FROM "{schema}"."{table}" """.format (columns=",".join(columns), schema=schema, table=table_name)
+    if nrows==-1:
+        sqlcmd = sqlcmd + ';'
     else:
-        sqlcmd = "SELECT * FROM %s.\"%s\" LIMIT %s;" % (schema, table_name, str(int(nrows)))
+        sqlcmd = sqlcmd + " limit {nrows};".format(nrows=str(nrows))
     df = pd.read_sql(sqlcmd, connection)
     return df
 
@@ -154,10 +155,10 @@ def get_column_type(cursor, table_name, column_name):
         column_type = column_type[0][0]
     return column_type
 
-def clean_column(cursor, values, old_column_name, table_name, 
+def clean_column(cursor, values, old_column_name, table_name,
                  new_column_name=None, schema_name='clean', replace = 1):
     """
-    Cleans the given column by replacing values according to the given 
+    Cleans the given column by replacing values according to the given
     json file, which should be in the form:
     {
     "desired_name":["existing_name1", "existing_name2", ...],
@@ -193,8 +194,8 @@ def clean_column(cursor, values, old_column_name, table_name,
         clean_col_query += """
         add column "{new_name}" {type};
         alter table {schema}."{table}"
-        alter column {new_name} type {type} using case 
-        """.format_map({'new_name':new_column_name, 'type': col_type, 
+        alter column {new_name} type {type} using case
+        """.format_map({'new_name':new_column_name, 'type': col_type,
                     'schema': schema_name, 'table':table_name})
 
     params = {} # dictionary to hold parameters for cursor.execute()
@@ -207,7 +208,7 @@ def clean_column(cursor, values, old_column_name, table_name,
         or_clause = "or "
         for old_name in old_name_list:
             clean_col_query += """
-            lower({old}) like %(item{n})s 
+            lower({old}) like %(item{n})s
             """.format_map({'old':old_column_name, 'n':count})
             clean_col_query += or_clause
             params['item{0}'.format(count)] = str(old_name)
@@ -228,8 +229,35 @@ def clean_column(cursor, values, old_column_name, table_name,
 #    print(params)
     cursor.execute(clean_col_query,params)
 
+############ Functions to data frame processing ###################
+def df2num(rawdf):
+    """ Convert data frame with numeric variables and strings to numeric dataframe
 
-############ Upload file or directory to postgres (not useful in most cases)############### 
+    :param pd.dataframe rawdf: raw data frame
+    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
+    :rtype: pd.dataframe
+    Rules:
+    - 1. numeric columns unchanged;
+    - 2. strings converted to dummeis;
+    - 3. the most frequenct string is taken as reference
+    - 4. new column name is: "ColumnName_Category"
+    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
+
+    """
+    numeric_types = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    numeric_df = rawdf.select_dtypes(include=numeric_types)
+    str_columns = list(filter(lambda x: x not in numeric_df.columns, rawdf.columns))
+    for col in str_columns:
+        dummy_col_df = pd.get_dummies(rawdf[col])
+        col_names = dummy_col_df.columns
+        col_names = {cat:col+'_'+cat for cat in col_names }
+        dummy_col_df = dummy_col_df.rename(columns=col_names)
+        most_class_col = dummy_col_df.sum().idxmax()
+        dummy_col_df = dummy_col_df.drop([most_class_col], axis=1)
+        numeric_df = numeric_df.join(dummy_col_df)
+    return numeric_df
+
+############ Upload file or directory to postgres (not useful in most cases)###############
 def read_csv_noheader(filepath):
     """ Read a csv file with no header
 

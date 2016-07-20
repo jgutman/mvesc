@@ -1,0 +1,42 @@
+### yaml demo file for mvesc
+# Simple Rules
+# - very similiar to json / dict
+# - allow inline comment with #; no block comment options
+# - use space; no TAB
+# - number of spaces does NOT matter; keep keys hierarchically aligned
+# - at least 1 space after ':', '-'
+# - load it in Python:
+#   ```
+#   import yaml
+#   with open('model_options.yaml', 'r') as f:
+#       model_options = yaml.load(f)
+#   ```
+##  Then you can use it as a dictionary
+##  Loaded dict is in alphabetical order; but no content is changed
+model_classes_selected: [logit, DT] # [SVM] # must be a list of strings!
+user_description: initial_skeleton_pipeline_test # this isn't currently used?
+# file_save_name: gender_ethnicity # model name and extension appended automatically
+file_save_name: test_gpa_gender_ethnicity_imputed
+write_predictions_to_database: False
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: leave_cohort_out #k_fold
+cohort_grade_level_begin: cohort_9th
+n_folds: 10
+cohorts_held_out: [2011, 2012]
+
+# allowed values for cohorts_training is 'all' or a list of cohort years
+cohorts_training: all # [2006, 2007, 2008, 2009]
+random_seed: 2187 # number is parsed as number
+validation_criterion: accuracy # f1 # average_precision
+
+# model_options['features_included'] must be a dictionary
+features_included:
+  demographics: [ethnicity, gender] # list of columns in brackets
+  grades: [gpa_gr_3, gpa_gr_4, gpa_gr_5, gpa_gr_6, gpa_gr_7, gpa_gr_8, gpa_gr_9]
+
+outcome_name: not_on_time
+# currently implemented: impute numeric features with mean or median
+# add dummy for numeric + categorical, no mode imputation for categorical
+missing_impute_strategy: median_plus_dummies # mean_plus_dummies
+feature_scaling: robust # none, standard, or robust options to be implemented
