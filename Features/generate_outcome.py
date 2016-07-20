@@ -1,5 +1,5 @@
 """ Generate Outcome table
-SQL command is used to replace outcomes table
+QL command is used to replace outcomes table
 Can be used for multiple outcome and cohorts definition
 """
 import os, sys
