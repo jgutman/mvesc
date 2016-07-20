@@ -23,7 +23,7 @@ model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k_fold
 cohort_grade_level_begin: cohort_9th
 n_folds: 10
-cohorts_held_out: [2012]
+cohorts_held_out: [2011, 2012]
 
 # allowed values for cohorts_training is 'all' or a list of cohort years
 cohorts_training: all # [2006, 2007, 2008, 2009]
