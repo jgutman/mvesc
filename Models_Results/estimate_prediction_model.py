@@ -8,7 +8,7 @@ split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
-from mvesc_utility_functions import *
+from mvesc_utility_functions import postgres_pgconnection_generator, df2num
 
 # all model import statements
 from sklearn import svm
@@ -131,7 +131,7 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
         assert(np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
     else:
-        assert(max(cohorts_training) < min(cohorts_heldout)), \
+        assert(max(cohorts_training) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
         train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
