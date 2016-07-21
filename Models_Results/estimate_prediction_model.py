@@ -9,6 +9,7 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
+from save_reports import *
 
 from optparse import OptionParser
 
@@ -280,7 +281,7 @@ def impute_missing_values(train, test, strategy):
             'mean_plus_dummies', 'median_plus_dummies', 'none'))
         return train, test
 
-def run_all_models(model_options, clfs, params):
+def run_all_models(model_options, clfs, params, save_location):
     # Based on options, draw in data and select the appropriate
     # labeled outcome column (outcome_name)
     # cohort identification column (cohort_grade_level_begin)
@@ -394,6 +395,7 @@ def run_all_models(model_options, clfs, params):
         # store time to completion [missing]
 
         saved_outputs = {
+            'model_name' : model_name,
             'estimator' : model,
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
@@ -402,9 +404,17 @@ def run_all_models(model_options, clfs, params):
         }
 
         # save outputs
-        file_name = ('/mnt/data/mvesc/Models_Results/'
-             + model_options['file_save_name'] +'_' + model_name + '.pkl')
+        file_name = (save_location
+             + model_options['file_save_name']
+             + '_' + model_name + '.pkl')
         joblib.dump(saved_outputs, file_name )
+
+        # write output summary to a database
+        # (A) write to a database table to store summary
+        # (B) write to and update an HTML/Markdown file
+        # to create visual tables and graphics for results
+
+        write_model_report(save_location, saved_outputs)
 
 def main():
 # Create options file used to generate features
@@ -419,6 +429,8 @@ def main():
         help="filename for model options; default 'model_options.yaml' ")
     parser.add_option('-g','--gridpath', dest='grid_options_file',
         help="filename for grid options; default 'grid_options_bare.yaml' ")
+    parser.add_option('-o', '--outputpath', dest='save_location',
+        help="location for saving output reports; default 'Reports/' ")
 
     (options, args) = parser.parse_args()
 
@@ -427,19 +439,24 @@ def main():
             'model_options.yaml')
     grid_options_file = os.path.join(base_pathname, 'Models_Results',
             'grid_options_bare.yaml')
+    save_location = os.path.join(base_pathname, 'Reports')
     if options.model_options_file:
         model_options_file = options.model_options_file
     if options.grid_options_file:
         grid_options_file = options.grid_options_file
+    if options.save_location:
+        save_location = options.save_location
 
     model_options = read_in_yaml(model_options_file)
 
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
 
+    # get grid search options for all classifiers
     clfs, params = define_clfs_params(grid_options_file)
 
-    run_all_models(model_options, clfs, params)
+    # run the models and generate the markdown reports
+    run_all_models(model_options, clfs, params, save_location)
 
 if __name__ == '__main__':
     main()
