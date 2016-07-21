@@ -8,7 +8,7 @@ split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
-from mvesc_utility_functions import postgres_pgconnection_generator, df2num
+from mvesc_utility_functions import *
 
 from optparse import OptionParser
 
@@ -185,7 +185,7 @@ def read_in_yaml(filename=os.path.join(base_pathname,
     This function contains assertions specific to the model options yaml file.
     Should only be used to read in the model options yaml file and not other
     kinds of yaml files.
-    
+
     :param string filename: full path of yaml file containing model options
     :returns: a dictionary of model options and their values
     :rtype dict
@@ -222,22 +222,25 @@ def scale_features(train, test, strategy):
 
     elif(strategy == 'standard' or strategy == 'robust'):
         non_binary_columns = [k for k, v in num_values_by_column.items() if v > 2]
-        scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
-        train_non_binary = train[non_binary_columns]
-        test_non_binary = test[non_binary_columns]
-        scaler.fit(train_non_binary)
-        train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
-            columns = non_binary_columns, index = train.index)
-        test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
-            columns = non_binary_columns, index = test.index)
+        if (len(non_binary_columns) > 0):
+            scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
+            train_non_binary = train[non_binary_columns]
+            test_non_binary = test[non_binary_columns]
+            scaler.fit(train_non_binary)
+            train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
+                columns = non_binary_columns, index = train.index)
+            test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
+                columns = non_binary_columns, index = test.index)
 
-        train_scaled = train.drop(non_binary_columns, axis=1)
-        test_scaled = test.drop(non_binary_columns, axis=1)
-        train_scaled = train_scaled.merge(train_non_binary,
-            left_index=True, right_index=True)
-        test_scaled = test_scaled.merge(test_non_binary,
-            left_index=True, right_index=True)
-        return train_scaled, test_scaled
+            train_scaled = train.drop(non_binary_columns, axis=1)
+            test_scaled = test.drop(non_binary_columns, axis=1)
+            train_scaled = train_scaled.merge(train_non_binary,
+                left_index=True, right_index=True)
+            test_scaled = test_scaled.merge(test_non_binary,
+                left_index=True, right_index=True)
+            return train_scaled, test_scaled
+        else:
+            return train, test
 
     else:
         print('unknown feature scaling strategy. try "{}", "{}", or "{}"'.format(

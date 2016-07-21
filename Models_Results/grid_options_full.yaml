@@ -1,12 +1,12 @@
 # grid search options, extensive version
 logit:
     penalty: [l1, l2]
-    C: [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0, 1e4]
+    C: [.00001, .0001, .001, 0.01, 0.1, 1.0, 10.0, 100, 1000]
 LR_no_penalty: {}
 DT:
     criterion: [gini, entropy]
     max_depth: [1, 5, 10, 20, 50, 100]
-    max_features: [sqrt, log2],
+    max_features: [sqrt, log2]
     min_samples_split: [2, 5, 10]
 RF:
     n_estimators: [1, 10, 100, 1000, 10000]
