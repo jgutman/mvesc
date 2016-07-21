@@ -1,0 +1,19 @@
+# grid search options, bare version
+logit:
+    penalty: [l1]
+    C: [.0001, .001, 0.01, 0.1, 1.0, 10.0]
+LR_no_penalty: {}
+DT:
+    criterion: [entropy]
+RF: {}
+SGD:
+    loss: [hinge]
+    penalty: [l2]
+ET: {}
+AB: {}
+GB: {}
+NB: {}
+SVM:
+    C: [.0001, .001, 0.01, 0.1, 1.0, 10.0]
+    kernel: [linear]
+KNN: {}
