@@ -5,4 +5,4 @@ pgpass
 */.ipynb_checkpoints/*
 Descriptives/*/.ipynb_checkpoints/*
 Descriptives/*/.cache/*
-ETL/__pycache__/*
+*/__pycache__/*
