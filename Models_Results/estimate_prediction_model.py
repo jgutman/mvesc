@@ -9,6 +9,7 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
+from save_reports import *
 
 # all model import statements
 from sklearn import svm
@@ -28,8 +29,6 @@ from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 import yaml
 import numpy as np
 import pandas as pd
-
-# def df2num(rawdf) # This function has been moved to utility
 
 ######
 # Setup Modeling Options and Functions
@@ -105,7 +104,6 @@ def clf_loop(clfs, params, train_X, train_y,
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
-        #param_grid = ParameterGrid(parameter_values)
         best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
         best_validated_models[model_name].fit(train_X, train_y)
 
@@ -131,7 +129,7 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
         assert(np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
     else:
-        assert(max(cohorts_training) < min(cohorts_heldout)), \
+        assert(max(cohorts_training) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
         train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
@@ -292,8 +290,16 @@ def main():
 # The model options needs to read in what tables to draw features from
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
+    
+    try:
+        save_location = sys.argv[1]
+        options_location = sys.argv[2]
+    except:
+        print("usage: python estimate_prediction_model  <directory to save to> "
+              "<location of model options file>")
+        sys.exit(1)
 
-    model_options = read_in_yaml()
+    model_options = read_in_yaml(options_location)
 
     # set seed for this program from model_options
     np.random.seed(model_options['random_seed'])
@@ -412,6 +418,7 @@ def main():
         #        store time to completion [missing]
 
         saved_outputs = {
+            'model_name' : model_name,
             'estimator' : model,
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
@@ -419,7 +426,7 @@ def main():
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
         # save outputs
-        file_name = ('/mnt/data/mvesc/Models_Results/'
+        file_name = (save_location
              + model_options['file_save_name'] +'_' + model_name + '.pkl')
         joblib.dump(saved_outputs, file_name )
 
@@ -427,18 +434,8 @@ def main():
         #    - (A) write to a database table to store summary
         #    - (B) write to and update an HTML/Markdown file
         #    to create visual tables and graphics for results
-
-    # db_saved_outputs = {
-    # 'train_f1': f1_score(train_y, train_prob_preds),
-    # 'test_f1': f1_score(test_y, test_prob_preds)
-    # }
-
-    #db_saved_outputs.update(model_options)
-
-    #with postgres_pgconnection_generator() as connection:
-    #    with connection.cursor() as cursor:
-    #        build_results_table(cursor)
-    #        add_row(db_saved_outputs)
+        
+        write_model_report(save_location, saved_outputs)
 
 if __name__ == '__main__':
     main()

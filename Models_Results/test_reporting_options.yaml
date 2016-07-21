@@ -26,7 +26,7 @@ n_folds: 10
 cohorts_held_out: [2011]
 
 # allowed values for cohorts_training is 'all' or a list of cohort years
-cohorts_training: all # [2006, 2007, 2008, 2009]
+cohorts_training: [2006, 2007, 2008, 2009, 2010] # need to remove 2012 from all
 random_seed: 2187 # number is parsed as number
 validation_criterion: accuracy # f1 # average_precision
 
