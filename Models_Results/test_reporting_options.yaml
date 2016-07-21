@@ -20,7 +20,7 @@ file_save_name: test_reporting
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort
-parameter_cross_validation_scheme: leave_cohort_out #k_fold
+parameter_cross_validation_scheme: k_fold #leave_cohort_out
 cohort_grade_level_begin: cohort_9th
 n_folds: 10
 cohorts_held_out: [2011]
@@ -33,7 +33,7 @@ validation_criterion: accuracy # f1 # average_precision
 # model_options['features_included'] must be a dictionary
 features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
-  grades: [gpa_gr_3, gpa_gr_4, gpa_gr_5, gpa_gr_6, gpa_gr_7, gpa_gr_8, gpa_gr_9]
+  grades: [gpa_gr_9]
 
 outcome_name: not_on_time
 # currently implemented: impute numeric features with mean or median
