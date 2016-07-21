@@ -8,14 +8,14 @@ this run is used to test the reporting functions
 * train cohorts: all except test/val
 * cross-validation scheme: temporal cohort
 	 * using accuracy
-* imputations strategy: median_plus_dummies
+* imputation strategy: median plus dummies
 
 ### Features Used
+* grades
+	 * gpa_gr_9
 * demographics
 	 * ethnicity
 	 * gender
-* grades
-	 * gpa_gr_9
 
 ### Performance Metrics
 ![test_reporting_logit_precision_recall.png](test_reporting_logit_precision_recall.png)
