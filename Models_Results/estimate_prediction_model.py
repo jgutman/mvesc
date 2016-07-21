@@ -10,6 +10,8 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import postgres_pgconnection_generator, df2num
 
+from optparse import OptionParser
+
 # all model import statements
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
@@ -35,7 +37,7 @@ import pandas as pd
 # Setup Modeling Options and Functions
 
 # maybe this should be moved to a yaml or json file as well
-def define_clfs_params():
+def define_clfs_params(filename):
     # model_options[model_classes_selected] determines which of these models
     # are actually run, all parameter options in grid run for each selected model
 
@@ -54,28 +56,9 @@ def define_clfs_params():
         'KNN': KNeighborsClassifier(n_neighbors=3)
     }
 
-    grid = {
-        'logit': {'penalty': ['l1','l2'],
-            'C': [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0, 1e4]},
-        'LR_no_penalty': {},
-        'DT': {'criterion': ['gini', 'entropy'],
-            'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'SGD': {'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
-        'ET': {'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,
-            'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'AB': {'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
-        'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],
-            'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
-        'NB' : {},
-        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
-        'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],
-            'algorithm': ['auto','ball_tree','kd_tree']}
-    }
+    with open(filename, 'r') as f:
+        grid = yaml.load(f)
+
     return clfs, grid
 
 def clf_loop(clfs, params, train_X, train_y,
@@ -198,6 +181,15 @@ def build_outcomes_plus_features(model_options):
 
 def read_in_yaml(filename=os.path.join(base_pathname,
         'Models_Results', 'model_options.yaml')):
+    """
+    This function contains assertions specific to the model options yaml file.
+    Should only be used to read in the model options yaml file and not other
+    kinds of yaml files.
+    
+    :param string filename: full path of yaml file containing model options
+    :returns: a dictionary of model options and their values
+    :rtype dict
+    """
     with open(filename, 'r') as f:
         model_options = yaml.load(f)
 
@@ -285,19 +277,7 @@ def impute_missing_values(train, test, strategy):
             'mean_plus_dummies', 'median_plus_dummies', 'none'))
         return train, test
 
-def main():
-# Create options file used to generate features
-# OR Read in an existing human-created options file
-
-# The model options needs to read in what tables to draw features from
-# and what columns to draw from each of those tables
-# Also needs to read in an option to output all results to a database
-
-    model_options = read_in_yaml()
-
-    # set seed for this program from model_options
-    np.random.seed(model_options['random_seed'])
-
+def run_all_models(model_options, clfs, params):
     # Based on options, draw in data and select the appropriate
     # labeled outcome column (outcome_name)
     # cohort identification column (cohort_grade_level_begin)
@@ -364,7 +344,6 @@ def main():
     # if we require cross-validation of parameters, we can either
     #    (a) hold out another cohort in each fold for cross-validation
     #    (b) fold all cohorts together for k-fold parameter estimation
-    clfs, params = define_clfs_params()
 
     if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
@@ -405,11 +384,11 @@ def main():
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
-        #    into a results folder
-        #        according to sklearn documentation, use joblib instead of pickle
-        #            save as a .pkl extension
-        #        store option inputs (randomSeed, train/test split rules, features)
-        #        store time to completion [missing]
+        # into a results folder
+        # according to sklearn documentation, use joblib instead of pickle
+        # save as a .pkl extension
+        # store option inputs (random_seed, train/test split rules, features)
+        # store time to completion [missing]
 
         saved_outputs = {
             'estimator' : model,
@@ -418,27 +397,46 @@ def main():
             'test_set_soft_preds' : test_set_scores,
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
+
         # save outputs
         file_name = ('/mnt/data/mvesc/Models_Results/'
              + model_options['file_save_name'] +'_' + model_name + '.pkl')
         joblib.dump(saved_outputs, file_name )
 
-        # write output summary to a database
-        #    - (A) write to a database table to store summary
-        #    - (B) write to and update an HTML/Markdown file
-        #    to create visual tables and graphics for results
+def main():
+# Create options file used to generate features
+# OR Read in an existing human-created options file
 
-    # db_saved_outputs = {
-    # 'train_f1': f1_score(train_y, train_prob_preds),
-    # 'test_f1': f1_score(test_y, test_prob_preds)
-    # }
+# The model options needs to read in what tables to draw features from
+# and what columns to draw from each of those tables
+# Also needs to read in an option to output all results to a database
 
-    #db_saved_outputs.update(model_options)
+    parser = OptionParser()
+    parser.add_option('-m','--modelpath', dest='model_options_file',
+        help="filename for model options; default 'model_options.yaml' ")
+    parser.add_option('-g','--gridpath', dest='grid_options_file',
+        help="filename for grid options; default 'grid_options_bare.yaml' ")
 
-    #with postgres_pgconnection_generator() as connection:
-    #    with connection.cursor() as cursor:
-    #        build_results_table(cursor)
-    #        add_row(db_saved_outputs)
+    (options, args) = parser.parse_args()
+
+    ### Parameters to entered from the options or use default####
+    model_options_file = os.path.join(base_pathname, 'Models_Results',
+            'model_options.yaml')
+    grid_options_file = os.path.join(base_pathname, 'Models_Results',
+            'grid_options_bare.yaml')
+    if options.model_options_file:
+        model_options_file = options.model_options_file
+    if options.grid_options_file:
+        grid_options_file = options.grid_options_file
+
+    model_options = read_in_yaml(model_options_file)
+
+    # set seed for this program from model_options
+    np.random.seed(model_options['random_seed'])
+
+    clfs, params = define_clfs_params(grid_options_file)
+
+    run_all_models(model_options, clfs, params)
 
 if __name__ == '__main__':
     main()
