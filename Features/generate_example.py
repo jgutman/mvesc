@@ -14,6 +14,7 @@ def generate_x(replace = False):
             update_column_with_join(cursor, table, 
                                     column = ['new_col_1', 'new_col_2'], 
                                     source_table = 'new_table')
+            connection.commit()
             # optional parameters:
             #    source_schema - if the source is not a temporary table
             # note: there is no longer an optional parameter for new column
