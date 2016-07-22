@@ -425,6 +425,7 @@ def main():
             'test_set_soft_preds' : test_set_scores,
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
+            'parameter_grid' : params[model_name],
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
         # save outputs
