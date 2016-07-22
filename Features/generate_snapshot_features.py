@@ -3,7 +3,9 @@ parentdir = os.path.abspath('/home/zzhang/mvesc/ETL')
 sys.path.insert(0,parentdir)
 from feature_utilities import *()
 
-def create_temp_table_of_raw_data_from_snapshots(connection, cursor, grade_range = range(1,10)):
+import yaml
+
+def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,10)):
     """ Contains a manually made list of raw features from the snapshots
     to create a column for each grade level. It collapses the raw data from
     snapshots on student_lookup. The choice of aggregation/collapse is given to
@@ -41,6 +43,9 @@ def create_temp_table_of_raw_data_from_snapshots(connection, cursor, grade_range
     'status' : 'max'
     }
 
+    with open('hard_code_imputation.yaml', 'r') as f:
+        hard_code_imputation = yaml.load(f)
+
     # this initiates a list to store the created column names in the temp table
     list_of_created_grade_specific_columns = []
 
@@ -55,11 +60,21 @@ def create_temp_table_of_raw_data_from_snapshots(connection, cursor, grade_range
             # create string for new column name
             new_column_name = '{}_gr_{}'.format(raw_feature, grade_level)
 
+            # check for coalesce value
+            if raw_feature in hard_code_imputation:
+                if type(hard_code_imputation[raw_feature]) is int:
+                    coalesce_value = ', {}'.format(hard_code_imputation[raw_feature])
+                else:
+                    coalesce_value = ", '{}'".format(hard_code_imputation[raw_feature])
+            else:
+                coalesce_value = ''
+
             # generate query for this grade level
             sql_query_individual_columns += """
-            {agg_func}(case when grade = {grade_level} then {raw_feature} end) as
+            coalesce({agg_func}(case when grade = {grade_level} then {raw_feature} end){coalesce_value}) as
             {new_column_name}, """.format(agg_func = 'max',
                                           grade_level = grade_level,
+                                          coalesce_value = coalesce_value,
                                           raw_feature = raw_feature,
                                           new_column_name = new_column_name)
 
@@ -89,7 +104,7 @@ def generate_raw_snapshot_features(replace=False):
             create_feature_table(cursor, table, replace=replace)
             
             # generate temp table for raw snapshot features
-            list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(connection, cursor)
+            list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor)
             
             # merge in with snapshots
             update_column_with_join(cursor, table, 
