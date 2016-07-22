@@ -13,14 +13,15 @@
 #   ```
 ##  Then you can use it as a dictionary
 ##  Loaded dict is in alphabetical order; but no content is changed
-model_classes_selected: [logit, DT] # [SVM] # must be a list of strings!
-user_description: this run is used to test the reporting functions
+
+model_classes_selected: [logit, DT] # must be a list of strings!
+user_description: testing the reporting functions
 # model name and extension appended automatically
 file_save_name: test_reporting
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort
-parameter_cross_validation_scheme: k_fold #leave_cohort_out
+parameter_cross_validation_scheme: leave_cohort_out #k-fold
 cohort_grade_level_begin: cohort_9th
 n_folds: 10
 cohorts_held_out: [2011]
@@ -28,15 +29,16 @@ cohorts_held_out: [2011]
 # allowed values for cohorts_training is 'all' or a list of cohort years
 cohorts_training: [2006, 2007, 2008, 2009, 2010] # need to remove 2012 from all
 random_seed: 2187 # number is parsed as number
-validation_criterion: accuracy # f1 # average_precision
+validation_criterion: average_precision #accuracy # f1
 
 # model_options['features_included'] must be a dictionary
 features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
-  grades: [gpa_gr_9]
+  grades: [gpa_gr_9] #, percent_passed_pf_classes_gr_9, num_pf_classes_gr_9]
+  absence: [days_absent_gr_9, days_absent_unexcused_gr_9, discipline_incidents_gr_9, tardy_gr_9, tardy_unexcused_gr_9]
 
-outcome_name: not_on_time
+outcome_name: definite
 # currently implemented: impute numeric features with mean or median
 # add dummy for numeric + categorical, no mode imputation for categorical
 missing_impute_strategy: median_plus_dummies # mean_plus_dummies
-feature_scaling: robust # none, standard, or robust options to be implemented
+feature_scaling: none # none, standard, or robust options to be implemented

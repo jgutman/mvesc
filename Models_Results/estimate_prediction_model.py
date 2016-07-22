@@ -12,7 +12,7 @@ from mvesc_utility_functions import *
 from save_reports import *
 
 # all model import statements
-from sklearn import svm
+from sklearn import svm # change to scv
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier
@@ -404,10 +404,10 @@ def main():
 
     for model_name, model in best_validated_models.items():
         clf = model.best_estimator_
-        if hasattr(clf, "decision_function"):
-            test_set_scores = clf.decision_function(test_X)
-        else:
+        if hasattr(clf, "predict_proba"):
             test_set_scores = clf.predict_proba(test_X)[:,1]
+        else:
+            test_set_scores = clf.decision_function(test_X)
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
@@ -423,12 +423,14 @@ def main():
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
             'test_set_soft_preds' : test_set_scores,
+            'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
+            'features' : train_X.columns,
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
         # save outputs
-        file_name = (save_location
-             + model_options['file_save_name'] +'_' + model_name + '.pkl')
-        joblib.dump(saved_outputs, file_name )
+        
+        file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
+        joblib.dump(saved_outputs, os.path.join(save_location, file_name))
 
         # write output summary to a database
         #    - (A) write to a database table to store summary

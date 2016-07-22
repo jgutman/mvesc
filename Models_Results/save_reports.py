@@ -13,15 +13,27 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     confusion_matrix
 
+def DT_top_features(model, columns):
+    # placeholder
+    pass
+
+def logit_top_features(model, columns):
+    coefs = model.best_estimator_.coef_
+    top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                       key=lambda x: x[1], reverse=True)
+    return top_coefs[:3]
+    
+    
+
 def plot_score_distribution(soft_predictions, save_location, 
                             run_name, model_name):
+    min_x = min(min(soft_predictions), 0)
+    max_x = max(max(soft_predictions), 1)
     plt.figure()
-    plt.hist(soft_predictions, 
-             np.linspace(min(min(soft_predictions), 0),
-                         max(max(soft_predictions), 1), 
-                         100), align = 'left')
+    plt.hist(soft_predictions, np.linspace(min_x,max_x,100), align = 'left')
     plt.title("distribution of scores for {} model".format(model_name))
     plt.xlabel("soft prediction score")
+    plt.xlim([min_x,max_x])
     plt.ylabel("number of students")
     base = save_location + "/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
@@ -56,6 +68,7 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
 
 def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
                      run_name, model_name):
+    # add precision/recall cutoffs
     plt.figure()
     cm = confusion_matrix(test_y, soft_predictions > threshold)
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
@@ -72,7 +85,12 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
                 bbox_inches='tight')
     
 
-def markdown_report(f,model_options,save_location, run_name,model_name):
+def markdown_report(f, save_location, saved_outputs):
+    model_options = saved_outputs['model_options']
+    model_name = saved_outputs['model_name']
+    run_name = model_options['file_save_name']
+    test_y = saved_outputs['test_y']
+    test_set_scores = saved_outputs['test_set_soft_preds']
 
     # header
     f.write("# Report for {}\n".format(" ".join(run_name.split('_'))
@@ -81,25 +99,43 @@ def markdown_report(f,model_options,save_location, run_name,model_name):
     
     # model options used
     f.write("\n### Model Options\n")
+
     f.write("* label used: {}\n".format(model_options['outcome_name']))
+
     f.write("* initial cohort grade: {}\n"\
             .format(model_options['cohort_grade_level_begin'][-3:-2]))
+
     f.write("* test cohorts: {}\n"\
             .format(", ".join([str(a) for a in 
                                model_options['cohorts_held_out']])))
+
+    f.write("\t * {0} positive examples, {1} negative examples\n"\
+            .format(sum(test_y==1), sum(test_y==0)))
+
     train_set = model_options['cohorts_training']
     if train_set == "all":
         train_set += " except test/val"
     else:
         train_set = ", ".join([str(a) for a in train_set])
     f.write("* train cohorts: {}\n".format(train_set))
-    cv_scheme = " ".join(model_options['model_test_holdout'].split('_'))
+
+    f.write("\t * {0} postive examples, {1} negative examples\n"\
+            .format(saved_outputs['train_set_balance'][1],
+                    saved_outputs['train_set_balance'][0]))
+
+    cv_scheme = " ".join(model_options['parameter_cross_validation_scheme']\
+                         .split('_'))
     if "fold" in cv_scheme:
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
     f.write("* cross-validation scheme: {}\n".format(cv_scheme))
+
     f.write("\t * using {}\n".format(model_options['validation_criterion']))
+
     imputation = " ".join(model_options['missing_impute_strategy'].split('_'))
     f.write("* imputation strategy: {}\n".format(imputation))
+
+    scaling = model_options['feature_scaling']
+    f.write("* scaling strategy: {}\n".format(scaling))
     
     # features used 
     f.write("\n### Features Used\n")
@@ -110,6 +146,13 @@ def markdown_report(f,model_options,save_location, run_name,model_name):
 
     # performance metrics (must have first generated these images)
     f.write("\n### Performance Metrics\n")
+    if model_name == 'logit':
+        top_features = logit_top_features(saved_outputs['estimator'],
+                                          saved_outputs['features'])
+        f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})"\
+                .format(top_features[0][0],top_features[0][1],
+                        top_features[1][0],top_features[1][1],
+                        top_features[2][0],top_features[2][1]))
     images = [a for a in os.listdir(save_location) if 
               ('png' in a and model_name in a and run_name in a)]
     for fn in images:
@@ -122,7 +165,7 @@ def write_model_report(save_location, saved_outputs):
     run_name = model_options['file_save_name']
     test_y = saved_outputs['test_y']
     test_set_scores = saved_outputs['test_set_soft_preds']
-    
+
     plot_score_distribution(test_set_scores, save_location, run_name, 
                             model_name)
     plot_precision_recall_threshold(test_set_scores, test_y, save_location, 
@@ -131,9 +174,10 @@ def write_model_report(save_location, saved_outputs):
                           run_name, model_name)
     plot_confusion_matrix(test_set_scores, test_y, .5, save_location, 
                           run_name, model_name)
-
+    plot_confusion_matrix(test_set_scores, test_y, .3, save_location, 
+                          run_name, model_name)
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
-        markdown_report(f,model_options,save_location, run_name,model_name)
+                markdown_report(f,save_location, saved_outputs)
     print("report written to",save_location)
 
 

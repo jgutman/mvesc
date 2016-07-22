@@ -35,7 +35,11 @@ def main():
                 case
                     when outcome_category='dropout' then 1
                     else 0
-                end as is_dropout
+                end as is_dropout,
+                case 
+                    when outcome_category='on-time' or outcome_category='late' then 0
+                    when outcome_category='dropout' then 1
+                end as definite
                 from {source_schema}.{source_table}
                 where outcome_category is not null
             ) as all_outcomes""".format(table=table,
