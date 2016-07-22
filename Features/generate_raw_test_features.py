@@ -43,7 +43,20 @@ def derive_per_year_normalized_oaa_scores(connection):
     # after oaa_raw is converted, merge with the year of students
     oaa_with_grade_year = oaa_raw.join(wide_year_took_oaa, on = 'student_lookup')
 
+    oaa_summary_df = pd.DataFrame(data = {'year_of_test' : range(2006, 2016)})
     # create another table with grade level averages
+    for year_test_type in list_of_year_test_types:
+        # get the mean and std and count
+        agg_by_year_of_test = oaa_with_grade_year.groupby(corresponding_col).agg({year_test_type:['mean', 'std', 'count']})
+        agg_by_year_of_test.reset_index().reset_index()
+        agg_by_year_of_test.rename(columns = {corresponding_col : 'year_of_test'}, inplace = True)
+        # join with oaa_summary_df
+        oaa_summary_df = oaa_summary_df.join(agg_by_year_of_test, on = 'year_of_test')
+
+
+
+        # make percentile function also
+
     oaa_with_grade_year.groupby
 
 
