@@ -1,119 +1,52 @@
 from feature_utilities import *
 
+def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
+    query_join_mobility_features = """create temporary table {t} as
+    select * from
+        (select distinct(student_lookup)
+        from clean.all_snapshots) student_list
+    """.format(t=table)
 
-'''
-def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,10)):
-    """ Contains a manually made list of raw features from the snapshots
-    to create a column for each grade level. It collapses the raw data from
-    snapshots on student_lookup. The choice of aggregation/collapse is given to
-    the user, though it usually uses the 'max' function in SQL.
-    Performs this by creating one column for each feature*grade combination,
-    and then collapsing on student_lookup.
-    :param object cursor: a cursor to interact with the database
-    :param list grade_range: a list of specific grades to capture
-    :rtype list: a list of the columns created in the temp_snapshots_table
-    """
+    for max_grade in grade_range:
+        mobility_count_changes = """left join
+        (select student_lookup, count(distinct street) n_addresses_to_gr_{gr},
+            count(distinct district) n_districts_to_gr_{gr},
+            count(distinct city) n_cities_to_gr_{gr}
+        from clean.all_snapshots where grade <= {gr}
+        group by student_lookup) mobility_gr_{gr}
+        using(student_lookup)
+        """.format(gr=max_grade)
+        query_join_mobility_features += mobility_count_changes
 
-    # list of the features we will just take the raw values from (for now)
-    list_of_raw_time_snapshot_features = ['days_absent', 'days_absent_excused',
-                        'days_absent_unexcused',
-                        'days_present', 'disability', 'disadvantagement',
-                        'discipline_incidents', 'district', 'gifted',
-                        'iss', 'limited_english', 'oss', 'section_504_plan',
-                        'special_ed', 'status']
+    # print(query_join_mobility_features)
+    cursor.execute(query_join_mobility_features)
+    cursor.execute("select * from {t}".format(t=table))
+    col_names = [i[0] for i in cursor.description]
+    return(col_names[1:])
 
-    agg_func_dict = {'days_absent' : 'max',
-    'days_absent_excused' : 'max',
-    'days_absent_unexcused' : 'max',
-    'days_present' : 'max',
-    'disability' : 'max',
-    'disadvantagement': 'max',
-    'discipline_incidents' : 'max',
-    'district' : 'max',
-    'gifted' : 'max',
-    'iss' : 'max',
-    'limited_english' : 'max',
-    'oss' : 'max',
-    'section_504_plan' : 'max',
-    'special_ed' : 'max',
-    'status' : 'max'
-    }
+def generate_x(replace = False):
+    schema, table = "model", "mobility"
 
-    # this initiates a list to store the created column names in the temp table
-    list_of_created_grade_specific_columns = []
-
-    print('Starting to join raw features per grade from snapshots')
-
-    # loop through the given features
-    sql_query_individual_columns = 'select student_lookup, '
-    for raw_feature in list_of_raw_time_snapshot_features:
-        # grab the feature value for each grade level for students
-        # and aggregate that across all grade levels
-        for grade_level in grade_range:
-            # create string for new column name
-            new_column_name = '{}_gr_{}'.format(raw_feature, grade_level)
-
-            # generate query for this grade level
-            sql_query_individual_columns += """
-            {agg_func}(case when grade = {grade_level} then {raw_feature} end) as
-            {new_column_name}, """.format(agg_func = 'max',
-                                          grade_level = grade_level,
-                                          raw_feature = raw_feature,
-                                          new_column_name = new_column_name)
-
-        list_of_created_grade_specific_columns.extend(
-                ['{}_gr_{}'.format(raw_feature, x) for x in grade_range])
-
-    # use the generated sql cases and insert it as a subtable for
-    # creating a temp table for snapshots data
-    # note that this aggregates by student_lookup
-    sql_create_temp_table = """drop table if exists temp_snapshot_table;
-    create temp table temp_snapshot_table as
-        ({sql_query_individual_columns}
-        from clean.all_snapshots group by student_lookup);""".\
-        format(sql_query_individual_columns = sql_query_individual_columns[:-2]) # the -2 is for the last comma
-
-    cursor.execute(sql_create_temp_table); connection.commit()
-    sql_create_index = "create index lookup_index on temp_snapshot_table(student_lookup)"
-    cursor.execute(sql_create_index); connection.commit()
-
-    # get list of created columns in temp table
-    list_of_created_grade_specific_columns = []
-
-    return list_of_created_grade_specific_columns
-'''
-
-
-'''
-def generate_x(replace=False):
-    schema, table = "model", "snapshots"
+    print("building {}.{}".format(schema, table))
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            create_feature_table(cursor, table, replace=replace)
+            create_feature_table(cursor, table)
 
-            # generate temp table for raw snapshot features
-            list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor)
-            # merge in with snapshots
-            update_column_with_join(cursor, table,
-                                    column = list_of_temp_cols,
-                                    source_table = 'temp_snapshot_table')
-            print('Finished adding raw features from snapshots')
+            # some code to generate the feature
+            # in column new_col_1, new_col_2, etc in table new_table
+            # following step will be more efficient
+            # if new_table has an index
 
-            # generate temp table for age-based snapshot features
-            list_of_temp_cols = blank(cursor)
-            # merge in with snapshots
-            update_column_with_join(cursor, table,
-                                    column = list_of_temp_cols,
-                                    source_table = 'temp_snapshot_table')
-            print('Finished adding age-based features from snapshots')
+            column_list = create_temp_mobility(cursor, grade_range=range(1,13))
+            update_column_with_join(cursor, table, column_list,
+                'mobility_counts')
 
-                # some code to generate the feature
-                # in column new_col, table new_table
-                # following step will be more efficient
-                # if new_table has an index
+            # optional parameters:
+            #    source_schema - if the source is not a temporary table
+            # note: there is no longer an optional parameter for new column
+            # names - they will be the same in the feature table as
+            # they are in the table you feed in
+        connection.commit()
 
-
-                # optional parameters:
-                #    source_column - if the source has a different name than desired
-#    source_schema - if the source is not a temporary table
-'''
+if __name__ == '__main__':
+    generate_x()
