@@ -1,5 +1,7 @@
 from feature_utilities import *
 
+
+'''
 def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,10)):
     """ Contains a manually made list of raw features from the snapshots
     to create a column for each grade level. It collapses the raw data from
@@ -40,7 +42,7 @@ def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,1
     # this initiates a list to store the created column names in the temp table
     list_of_created_grade_specific_columns = []
 
-    print 'Starting to join raw features per grade from snapshots'
+    print('Starting to join raw features per grade from snapshots')
 
     # loop through the given features
     sql_query_individual_columns = 'select student_lookup, '
@@ -79,7 +81,10 @@ def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,1
     list_of_created_grade_specific_columns = []
 
     return list_of_created_grade_specific_columns
+'''
 
+
+'''
 def generate_x(replace=False):
     schema, table = "model", "snapshots"
     with postgres_pgconnection_generator() as connection:
@@ -92,7 +97,7 @@ def generate_x(replace=False):
             update_column_with_join(cursor, table,
                                     column = list_of_temp_cols,
                                     source_table = 'temp_snapshot_table')
-            print 'Finished adding raw features from snapshots'
+            print('Finished adding raw features from snapshots')
 
             # generate temp table for age-based snapshot features
             list_of_temp_cols = blank(cursor)
@@ -100,7 +105,7 @@ def generate_x(replace=False):
             update_column_with_join(cursor, table,
                                     column = list_of_temp_cols,
                                     source_table = 'temp_snapshot_table')
-            print 'Finished adding age-based features from snapshots'
+            print('Finished adding age-based features from snapshots')
 
                 # some code to generate the feature
                 # in column new_col, table new_table
@@ -111,3 +116,4 @@ def generate_x(replace=False):
                 # optional parameters:
                 #    source_column - if the source has a different name than desired
 #    source_schema - if the source is not a temporary table
+'''
