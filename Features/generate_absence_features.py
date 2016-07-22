@@ -1,3 +1,18 @@
+""" Generate Absence related features
+For Each Grade, generate features:
+- absence
+- absence_unexecused
+- tardy 
+- tardy_unexecused
+- medical
+- absence_consec
+- tardy_consec
+
+Note: features from top to bottom, there are more and more missing values,
+espeically for some specific grades
+"""
+
+
 import os, sys
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
@@ -86,22 +101,106 @@ def update_column_with_join(cursor, table, column, source_table,
             s_schema_and_table=source_schema_and_table, 
             s_col=source_column, grade=grade))
     
-def append_grade(col='col', grade=9):
-    """ Append grade level to column name
-        eg. 'absence' for grade 9: 'absence_gr_09'
-    :param str col: column name
-    :param int grade: grade level in integer
-    :return str newname: the colname in the feature table; if error, return None
-    :rtype str or None
+def update_join_type_cnt(cursor, table, column, source_table, 
+                            source_column = None, source_schema = 'clean',
+                            schema='model', dtype='varchar(64)', type_str = 'tardy', grade=9):
+    """ 
+    Update column using join to match another table                 
+    :param pg.cursor cursor: pg cursor
+    :param str source_schema: schema of source - None default for temp tables
+    :param str source_table: table of source
+    :param str source_column: column of source - defaults to column
+    :param str schema: schema to update
+    :param str table: table to update
+    :param str column: column to update
+    :param int grade: grade level to subset to
+    :return None:                      
     """
-    grd = str(grade)
-    lenGrade = len(grd)
-    if len(grd)==1:
-        return col+'_gr_'+'0'+grd
-    elif len(grd)==2:
-        return col+'_gr_'+grd
+    tab_temp = 'temp_table'
+    if not source_column:
+        source_column = column
+    if not source_schema:
+        source_schema_and_table = source_table
     else:
-        return None
+        source_schema_and_table = source_schema+'.'+source_table
+    sql_drop_temp = """drop table if exists {table};""".format(table=tab_temp)
+    cursor.execute(sql_drop_temp)
+    sql_create_agg_temp = """
+    create temporary table {temp_table} as 
+    select t1.student_lookup, count(*) from {schema}.{table} t1, {source_schema}.{source_table} t2
+    where t1.student_lookup=t2.student_lookup and grade={grade} and absence_desc like '%{type_str}%'
+    group by t1.student_lookup;""".format(temp_table=tab_temp, schema=schema, table=table, type_str=type_str,
+                                          source_schema=source_schema, source_table=source_table, grade=grade)
+    cursor.execute(sql_create_agg_temp)
+    sql_create_temp_index = """create index tdy_cnt_index on {0}(student_lookup);""".format(tab_temp);
+    cursor.execute(sql_create_temp_index)
+    
+    dtype = get_column_type(cursor, tab_temp, 'count')
+    sql_add_column = """
+    alter table {schema}.{table} add column {column} {dtype} default null;
+    """.format( schema=schema, table=table, column=column, dtype=dtype )
+    cursor.execute(sql_add_column);
+    sql_join_cmd = """
+    update {schema}.{table} t1
+    set {column}=
+    (select count from {tab_temp} t2
+    where t2.student_lookup=t1.student_lookup and t2.count is not null
+    order by count desc limit 1);
+    """.format(schema=schema, table=table, column=column, tab_temp=tab_temp)
+    cursor.execute(sql_join_cmd)
+    print(""" - updated {schema}.{table}.{col} from {s_schema_and_table}.{s_col} for grade {grade}; """.format(
+            col=column, schema=schema, table=table, 
+            s_schema_and_table=source_schema_and_table, 
+            s_col=source_column, grade=grade))
+    
+def update_consec(cursor, table, column, source_table, 
+                            source_column = None, source_schema = 'clean',
+                            schema='model', type_str = 'absence', grade=9):
+    """ 
+     Update column using consec aggreated data                 
+    :param pg.cursor cursor: pg cursor
+    :param str source_schema: schema of source - None default for temp tables
+    :param str source_table: table of source
+    :param str source_column: column of source - defaults to column
+    :param str schema: schema to update
+    :param str table: table to update
+    :param str column: column to update
+    :param int grade: grade level to subset to
+    :return None:                      
+    """
+    tab_temp = 'temp_table'
+    source_column = type_str+'_conseq_count'
+    sql_drop_temp = """drop table if exists {table};""".format(table=tab_temp)
+    cursor.execute(sql_drop_temp)
+    sql_create_agg_temp = """
+    create temporary table {temp_table} as 
+    select t1.student_lookup, sum(t2.{source_column}) as csum from {schema}.{table} t1, {source_schema}.{source_table} t2
+    where t1.student_lookup=t2.student_lookup and grade={grade} and absence_desc like '%{type_str}%'
+    group by t1.student_lookup;""".format(temp_table=tab_temp, schema=schema, table=table, type_str=type_str,
+        source_column=source_column, source_schema=source_schema, source_table=source_table, grade=grade)
+    cursor.execute(sql_create_agg_temp)
+    sql_create_temp_index = """create index consec_agg_index on {0}(student_lookup);""".format(tab_temp);
+    cursor.execute(sql_create_temp_index)
+    
+    dtype = get_column_type(cursor, source_table, source_column)
+    sql_add_column = """
+    alter table {schema}.{table} add column {column} {dtype} default null;
+    """.format(schema=schema, table=table, column=column, dtype=dtype )
+    cursor.execute(sql_add_column);
+    sql_join_cmd = """
+    update only {schema}.{table} t1
+    set {column}=
+    ( select csum from {tmp_tab} t2
+      where t2.student_lookup=t1.student_lookup
+      limit 1
+    );""".format(schema=schema, table=table, column=column, tmp_tab=tab_temp)
+    cursor.execute(sql_join_cmd)
+    print(""" - updated {schema}.{table}.{col} from {s_schema}.{s_table}.{s_col} for grade {grade}; """.format(
+            col=column, schema=schema, table=table, 
+            s_schema=source_schema, s_table=source_table, 
+            s_col=source_column, grade=grade))
+    
+    
 
 def main():
     schema, table = "model" ,"absence"
@@ -116,15 +215,15 @@ def main():
             # days_absent columns
             source_table, source_column = tab_snapshots, 'days_absent'
             for grd in range(gr_min, gr_max+1):
-                column = append_grade(source_column, grd)
+                column = source_column+'_gr_'+str(grd)
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
-           
+
             # days_absent_unexecused
             source_table, source_column = tab_snapshots, 'days_absent_unexcused'
             for grd in range(gr_min, gr_max+1):
-                column = append_grade(source_column, grd)
+                column = source_column+'_gr_'+str(grd)
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
@@ -132,13 +231,55 @@ def main():
             # discipline_incidents
             source_table, source_column = tab_snapshots, 'discipline_incidents'
             for grd in range(gr_min, gr_max+1):
-                column = append_grade(source_column, grd)
+                column = source_column+'_gr_'+str(grd)
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
-                
-            # tardy_unexecused will be added later; need to find grade levels  
+            # tardy
+            source_table = tab_absence
+            new_col_name = 'tardy'
+            for grd in range(gr_min, gr_max+1):
+                column = new_col_name + '_gr_' + str(grd)
+                update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
+                                source_column = None, source_schema = 'clean',
+                                schema='model', type_str='tardy', grade=grd)
             
+            # tardy_unexecused
+            source_table = tab_absence
+            new_col_name = 'tardy_unexcused'
+            for grd in range(gr_min, gr_max+1):
+                column = new_col_name + '_gr_' + str(grd)
+                update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
+                                source_column = None, source_schema = 'clean',
+                                schema='model', type_str='tardy_unexcused', grade=grd)
+            
+            # med
+            source_table = tab_absence
+            new_col_name = 'medical'
+            for grd in range(gr_min, gr_max+1):
+                column = new_col_name + '_gr_' + str(grd)
+                update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
+                                source_column = None, source_schema = 'clean',
+                                schema='model', type_str='med', grade=grd)
+            
+            # consequtive absence days
+            source_table = tab_absence
+            new_col_name = 'absence'
+            for grd in range(gr_min, gr_max+1):
+                column = new_col_name + '_consec_gr_' + str(grd)
+                update_consec(cursor, table, column, source_table, 
+                            source_column = None, source_schema = 'clean',
+                            schema='model', type_str = 'absence', grade=grd)
+                    
+            # consequtive tardy days
+            source_table = tab_absence
+            new_col_name = 'tardy'
+            for grd in range(gr_min, gr_max+1):
+                column = new_col_name + '_consec_gr_' + str(grd)
+                update_consec(cursor, table, column, source_table, 
+                            source_column = None, source_schema = 'clean',
+                            schema='model', type_str = 'tardy', grade=grd)
+        
             connection.commit()
         
 if __name__ =='__main__':
