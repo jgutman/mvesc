@@ -10,9 +10,10 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import *
+from optparse import OptionParser
 
 # all model import statements
-from sklearn import svm # change to scv
+from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier
@@ -34,7 +35,7 @@ import pandas as pd
 # Setup Modeling Options and Functions
 
 # maybe this should be moved to a yaml or json file as well
-def define_clfs_params():
+def define_clfs_params(filename):
     # model_options[model_classes_selected] determines which of these models
     # are actually run, all parameter options in grid run for each selected model
 
@@ -53,28 +54,9 @@ def define_clfs_params():
         'KNN': KNeighborsClassifier(n_neighbors=3)
     }
 
-    grid = {
-        'logit': {'penalty': ['l1','l2'],
-            'C': [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0, 1e4]},
-        'LR_no_penalty': {},
-        'DT': {'criterion': ['gini', 'entropy'],
-            'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'SGD': {'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
-        'ET': {'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,
-            'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'AB': {'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
-        'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],
-            'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
-        'NB' : {},
-        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],
-            'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10]},
-        'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
-        'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],
-            'algorithm': ['auto','ball_tree','kd_tree']}
-    }
+    with open(filename, 'r') as f:
+        grid = yaml.load(f)
+
     return clfs, grid
 
 def clf_loop(clfs, params, train_X, train_y,
@@ -196,6 +178,15 @@ def build_outcomes_plus_features(model_options):
 
 def read_in_yaml(filename=os.path.join(base_pathname,
         'Models_Results', 'model_options.yaml')):
+    """
+    This function contains assertions specific to the model options yaml file.
+    Should only be used to read in the model options yaml file and not other
+    kinds of yaml files.
+
+    :param string filename: full path of yaml file containing model options
+    :returns: a dictionary of model options and their values
+    :rtype dict
+    """
     with open(filename, 'r') as f:
         model_options = yaml.load(f)
 
@@ -228,22 +219,25 @@ def scale_features(train, test, strategy):
 
     elif(strategy == 'standard' or strategy == 'robust'):
         non_binary_columns = [k for k, v in num_values_by_column.items() if v > 2]
-        scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
-        train_non_binary = train[non_binary_columns]
-        test_non_binary = test[non_binary_columns]
-        scaler.fit(train_non_binary)
-        train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
-            columns = non_binary_columns, index = train.index)
-        test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
-            columns = non_binary_columns, index = test.index)
+        if (len(non_binary_columns) > 0):
+            scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
+            train_non_binary = train[non_binary_columns]
+            test_non_binary = test[non_binary_columns]
+            scaler.fit(train_non_binary)
+            train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
+                columns = non_binary_columns, index = train.index)
+            test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
+                columns = non_binary_columns, index = test.index)
 
-        train_scaled = train.drop(non_binary_columns, axis=1)
-        test_scaled = test.drop(non_binary_columns, axis=1)
-        train_scaled = train_scaled.merge(train_non_binary,
-            left_index=True, right_index=True)
-        test_scaled = test_scaled.merge(test_non_binary,
-            left_index=True, right_index=True)
-        return train_scaled, test_scaled
+            train_scaled = train.drop(non_binary_columns, axis=1)
+            test_scaled = test.drop(non_binary_columns, axis=1)
+            train_scaled = train_scaled.merge(train_non_binary,
+                left_index=True, right_index=True)
+            test_scaled = test_scaled.merge(test_non_binary,
+                left_index=True, right_index=True)
+            return train_scaled, test_scaled
+        else:
+            return train, test
 
     else:
         print('unknown feature scaling strategy. try "{}", "{}", or "{}"'.format(
@@ -283,27 +277,7 @@ def impute_missing_values(train, test, strategy):
             'mean_plus_dummies', 'median_plus_dummies', 'none'))
         return train, test
 
-def main():
-# Create options file used to generate features
-# OR Read in an existing human-created options file
-
-# The model options needs to read in what tables to draw features from
-# and what columns to draw from each of those tables
-# Also needs to read in an option to output all results to a database
-    
-    try:
-        save_location = sys.argv[1]
-        options_location = sys.argv[2]
-    except:
-        print("usage: python estimate_prediction_model  <directory to save to> "
-              "<location of model options file>")
-        sys.exit(1)
-
-    model_options = read_in_yaml(options_location)
-
-    # set seed for this program from model_options
-    np.random.seed(model_options['random_seed'])
-
+def run_all_models(model_options, clfs, params, save_location):
     # Based on options, draw in data and select the appropriate
     # labeled outcome column (outcome_name)
     # cohort identification column (cohort_grade_level_begin)
@@ -370,7 +344,6 @@ def main():
     # if we require cross-validation of parameters, we can either
     #    (a) hold out another cohort in each fold for cross-validation
     #    (b) fold all cohorts together for k-fold parameter estimation
-    clfs, params = define_clfs_params()
 
     if model_options['parameter_cross_validation_scheme'] == 'none':
         # no need to further manipulate train dataset
@@ -411,11 +384,11 @@ def main():
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
-        #    into a results folder
-        #        according to sklearn documentation, use joblib instead of pickle
-        #            save as a .pkl extension
-        #        store option inputs (randomSeed, train/test split rules, features)
-        #        store time to completion [missing]
+        # into a results folder
+        # according to sklearn documentation, use joblib instead of pickle
+        # save as a .pkl extension
+        # store option inputs (random_seed, train/test split rules, features)
+        # store time to completion [missing]
 
         saved_outputs = {
             'model_name' : model_name,
@@ -428,8 +401,8 @@ def main():
             'parameter_grid' : params[model_name],
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
+
         # save outputs
-        
         file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
         joblib.dump(saved_outputs, os.path.join(save_location, file_name))
 
@@ -437,8 +410,50 @@ def main():
         #    - (A) write to a database table to store summary
         #    - (B) write to and update an HTML/Markdown file
         #    to create visual tables and graphics for results
-        
+
         write_model_report(save_location, saved_outputs)
+
+def main():
+# Create options file used to generate features
+# OR Read in an existing human-created options file
+
+# The model options needs to read in what tables to draw features from
+# and what columns to draw from each of those tables
+# Also needs to read in an option to output all results to a database
+
+    parser = OptionParser()
+    parser.add_option('-m','--modelpath', dest='model_options_file',
+        help="filename for model options; default 'model_options.yaml' ")
+    parser.add_option('-g','--gridpath', dest='grid_options_file',
+        help="filename for grid options; default 'grid_options_bare.yaml' ")
+    parser.add_option('-o', '--outputpath', dest='save_location',
+        help="location for saving output reports; default 'Reports/' ")
+
+    (options, args) = parser.parse_args()
+
+    ### Parameters to entered from the options or use default####
+    model_options_file = os.path.join(base_pathname, 'Models_Results',
+            'model_options.yaml')
+    grid_options_file = os.path.join(base_pathname, 'Models_Results',
+            'grid_options_bare.yaml')
+    save_location = os.path.join(base_pathname, 'Reports')
+    if options.model_options_file:
+        model_options_file = options.model_options_file
+    if options.grid_options_file:
+        grid_options_file = options.grid_options_file
+    if options.save_location:
+        save_location = options.save_location
+
+    model_options = read_in_yaml(model_options_file)
+
+    # set seed for this program from model_options
+    np.random.seed(model_options['random_seed'])
+
+    # get grid search options for all classifiers
+    clfs, params = define_clfs_params(grid_options_file)
+
+    # run the models and generate the markdown reports
+    run_all_models(model_options, clfs, params, save_location)
 
 if __name__ == '__main__':
     main()
