@@ -10,11 +10,10 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import *
-
 from optparse import OptionParser
 
 # all model import statements
-from sklearn import svm
+from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier
@@ -31,8 +30,6 @@ from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 import yaml
 import numpy as np
 import pandas as pd
-
-# def df2num(rawdf) # This function has been moved to utility
 
 ######
 # Setup Modeling Options and Functions
@@ -89,7 +86,6 @@ def clf_loop(clfs, params, train_X, train_y,
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
-        #param_grid = ParameterGrid(parameter_values)
         best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
         best_validated_models[model_name].fit(train_X, train_y)
 
@@ -381,10 +377,10 @@ def run_all_models(model_options, clfs, params, save_location):
 
     for model_name, model in best_validated_models.items():
         clf = model.best_estimator_
-        if hasattr(clf, "decision_function"):
-            test_set_scores = clf.decision_function(test_X)
-        else:
+        if hasattr(clf, "predict_proba"):
             test_set_scores = clf.predict_proba(test_X)[:,1]
+        else:
+            test_set_scores = clf.decision_function(test_X)
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
@@ -400,19 +396,20 @@ def run_all_models(model_options, clfs, params, save_location):
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
             'test_set_soft_preds' : test_set_scores,
+            'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
+            'features' : train_X.columns,
+            'parameter_grid' : params[model_name],
             'performance_objects' : measure_performance(test_y, test_set_scores)
         }
 
         # save outputs
-        file_name = (save_location
-             + model_options['file_save_name']
-             + '_' + model_name + '.pkl')
-        joblib.dump(saved_outputs, file_name )
+        file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
+        joblib.dump(saved_outputs, os.path.join(save_location, file_name))
 
         # write output summary to a database
-        # (A) write to a database table to store summary
-        # (B) write to and update an HTML/Markdown file
-        # to create visual tables and graphics for results
+        #    - (A) write to a database table to store summary
+        #    - (B) write to and update an HTML/Markdown file
+        #    to create visual tables and graphics for results
 
         write_model_report(save_location, saved_outputs)
 
