@@ -11,6 +11,7 @@ sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import *
 from optparse import OptionParser
+from custom_scorers import *
 
 # all model import statements
 from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
@@ -86,7 +87,8 @@ def clf_loop(clfs, params, train_X, train_y,
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
-        best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
+        best_validated_models[model_name] = GridSearchCV(clf, parameter_values,
+            scoring=criterion, cv=cv_folds)
         best_validated_models[model_name].fit(train_X, train_y)
 
         model_cv_score = best_validated_models[model_name].best_score_
@@ -364,14 +366,14 @@ def run_all_models(model_options, clfs, params, save_location):
 
     else:
         print('unknown cross-validation strategy. try "{}", "{}", or "{}"'.format(
-            'leave_cohort_out', 'k_fold', 'none'
-        ))
+            'leave_cohort_out', 'k_fold', 'none'))
 
+    criterion = parse_criterion_string(model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
     best_validated_models = clf_loop(clfs, params, train_X, train_y,
-        criterion = model_options['validation_criterion'],
+        criterion = criterion,
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
 
