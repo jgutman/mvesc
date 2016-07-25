@@ -52,7 +52,9 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             # standardizing numeric grades
             cursor.execute("""
             create temp table numeric_standard_grades as
-            select student_lookup, case
+            select student_lookup, course_code, course_name, grade, 
+                school_year, district,clean_term, percent_of_year,
+            case
                 when mark < 60 then 0
                 when mark < 63 then 0.7
                 when mark < 67 then 1
@@ -65,14 +67,16 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                 when mark < 90 then 3.3
                 when mark < 94 then 3.7
                 when mark < 100 then 4
-            end as "mark", grade
+            end as "mark"
             from numeric_grades;
             """)
             
             # standardizing letter grades
             cursor.execute("""
             create temp table letter_standard_grades as
-            select student_lookup, case
+            select student_lookup, course_code, course_name, grade, 
+                school_year, district,clean_term, percent_of_year,
+            case
                 when mark like 'a' or mark like 'a+' then 4
                 when mark like 'a-' then 3.7
                 when mark like 'b+' then 3.3
@@ -85,7 +89,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                 when mark like 'd' then 1
                 when mark like 'd-' then 0.7
                 when mark like 'f' then 0
-            end as "mark", grade
+            end as "mark"
             from letter_grades;
             """)
             
@@ -97,16 +101,42 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             select * from  letter_standard_grades;
             """)
 
+            # selecting final grades and weighting by length
+            cursor.execute("""
+            create temp table avg_grades as
+            select student_lookup, course_code, avg(mark) as avg_mark, 
+                sum(percent_of_year) as course_length
+            from standard_grades
+            group by student_lookup, course_code;
+            
+            create temp table final_grades as
+            select distinct on (s.student_lookup, s.course_code) 
+                s.student_lookup, s.course_code, s.course_name,
+                case when clean_term = 'final' then mark else avg_mark end 
+                as final_mark,
+            course_length, s.grade
+            from standard_grades as s
+            left join avg_grades  as a
+            on s.student_lookup = a.student_lookup 
+            and s.course_code = a.course_code;
+            """)
+
             # yearly gpa
             gpa_query = """
             create temp table gpa as
             select student_lookup, """
             for grade in grade_range:
                 gpa_query += """
-                avg(case when grade = {grade} then mark end)
-                as gpa_gr_{grade}, """.format(grade=grade)
+                case
+                when sum(case when grade = {grade} then course_length end) = 0 
+                     then 0
+                else sum(case when grade = {grade} then 
+                              final_mark * course_length end)/
+                              sum(case when grade = {grade} 
+                     then course_length end)
+                end as gpa_gr_{grade}, """.format(grade=grade)
             gpa_query = gpa_query[:-2] + """
-                from standard_grades
+                from final_grades
                 group by student_lookup;
                 """
             cursor.execute(gpa_query)
@@ -169,7 +199,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
         connection.commit()
 
 def main():
-    generate_gpa(replace=True)
+    generate_gpa(range(3,13),replace=True)
 
 if __name__=='__main__':
     main()
