@@ -136,8 +136,8 @@ alter table clean.all_snapshots drop column lunch;
 --select gender as d, count(*) from clean.all_snapshots group by d order by d;
 update clean.all_snapshots set gender=upper(left(trim(gender), 1));
 -- set students with multiple conflicting ethnicity as multiracial
-update snapshots set ethnicity='M' where student_lookup in
-  (select student_lookup from snapshots
+update clean.all_snapshots set ethnicity='M' where student_lookup in
+  (select student_lookup from clean.all_snapshots
     group by student_lookup
     having count(distinct ethnicity) > 1);
 
