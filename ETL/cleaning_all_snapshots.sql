@@ -2,15 +2,15 @@
 --select min(birth_date), max(birth_date) from clean.all_snapshots;
 	-- older than 21 in 2006
 --select student_lookup, birth_date, grade, school_name, school_year from clean.all_snapshots where birth_date < cast('1986-04-11' as date);
-	-- 17 questionable birth_dates	
+	-- 17 questionable birth_dates
 	-- 63878 is a 30 year old 1st grader at tri-valley high school?
 
 -- cities
 --select city, count(city) from clean.all_snapshots group by city order by city;
 alter table clean.all_snapshots alter column city type text using lower(city);
-alter table clean.all_snapshots alter column city type text using 
-case 
-when city like '%vile' then overlay(city placing 'ville' from (char_length(city)-3) for 5  ) 
+alter table clean.all_snapshots alter column city type text using
+case
+when city like '%vile' then overlay(city placing 'ville' from (char_length(city)-3) for 5  )
 when city like 'cosh%' then 'coshocton'
 when city like 'duncan falls' then 'duncan falls'
 when city like '%fult%' then 'east fultonham'
@@ -21,25 +21,25 @@ when city like '%perry' then 'mount perry'
 when city like 'new lex%' then 'new lexington'
 when city like '%s%zan%' then 'south zanesville'
 when city like 'zan%' then 'zanesville'
-when city like 'west laf%' then 'west lafayette' 
+when city like 'west laf%' then 'west lafayette'
 else city
 end;
 
--- diplomas 
+-- diplomas
 --select diploma_type, count(diploma_type) from clean.all_snapshots group by diploma_type;
-alter table clean.all_snapshots alter column diploma_type type text using 
-case 
+alter table clean.all_snapshots alter column diploma_type type text using
+case
 when diploma_type like '%Regular%' then 'regular'
 when diploma_type like '*%' then 'none'
 when diploma_type like '%Honors%' then 'honors'
 end;
 
--- disability 
+-- disability
 --select disability_code, disability_desc from clean.all_snapshots group by disability_code, disability_desc order by disability_code, disability_desc;
 --select disability_desc, count(disability_desc) from clean.all_snapshots group by disability_desc;
 --select disability_code, count(disability_code) from clean.all_snapshots group by disability_code;
-alter table clean.all_snapshots alter column disability_desc type text using 
-case 
+alter table clean.all_snapshots alter column disability_desc type text using
+case
 when lower(disability_desc) like '%multiple%' or disability_code like '01' then 'multiple'
 when lower(disability_desc) like 'deaf%/blind' or disability_code like '02' then 'deaf/blind'
 when lower(disability_desc) like '%deaf' or disability_code like '03' then 'deafness'
@@ -61,8 +61,8 @@ alter table clean.all_snapshots drop column disability_code;
 
 -- disadvantagement
 --select disadvantagement_code, disadvantagement_desc, count(*) from clean.all_snapshots group by disadvantagement_code, disadvantagement_desc order by disadvantagement_code, disadvantagement_desc;
-alter table clean.all_snapshots alter column disadvantagement_desc type text using 
-case 
+alter table clean.all_snapshots alter column disadvantagement_desc type text using
+case
 when disadvantagement_code like '1' then 'economic'
 when disadvantagement_code like '2' then 'academic'
 when disadvantagement_code like '3' then 'both'
@@ -86,7 +86,7 @@ alter table clean.all_snapshots alter column district_withdraw_date type date us
 -- ethnicity
 --select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
 UPDATE ONLY clean.all_snapshots
-            SET ethnicity = 
+            SET ethnicity =
             case
             when trim(ethnicity)='*' then 'M' --'Multiracial'
             when trim(ethnicity)='1' then 'I' --'American Indian'
@@ -123,18 +123,23 @@ UPDATE ONLY clean.all_snapshots
 alter table clean.all_snapshots alter column flag1 type text using coalesce(flag1,flag2);
 alter table clean.all_snapshots rename column flag1 to lunch;
 alter table clean.all_snapshots drop column flag2;
-alter table clean.all_snapshots alter column lunch type text using 
-case 
+alter table clean.all_snapshots alter column lunch type text using
+case
 when lower(lunch) like 'f' or lower(lunch) like 'r' then 'economic'
 else null end; -- tossing a few (~50) miscelanous values
 
-alter table clean.all_snapshots alter column disadvantagement type text using 
+alter table clean.all_snapshots alter column disadvantagement type text using
 coalesce(disadvantagement, lunch);
 alter table clean.all_snapshots drop column lunch;
 
 -- gender
 --select gender as d, count(*) from clean.all_snapshots group by d order by d;
-update clean.all_snapshots set gender=upper(left(trim(gender), 1))
+update clean.all_snapshots set gender=upper(left(trim(gender), 1));
+-- set students with multiple conflicting ethnicity as multiracial
+update snapshots set ethnicity='M' where student_lookup in
+  (select student_lookup from snapshots
+    group by student_lookup
+    having count(distinct ethnicity) > 1);
 
 -- gifted
 --select gifted as d, count(*) from clean.all_snapshots group by d order by d;
@@ -155,17 +160,17 @@ update clean.all_snapshots set gender=upper(left(trim(gender), 1))
 
 -- dealing with graduate 'GR' codes using function in clean_and_consolidate
 -- dealing with other codes
-update clean.all_snapshots set grade =  
+update clean.all_snapshots set grade =
 	case when grade like '**' then null
 		 when grade like '13' or grade like '14' then '23'
 		 when grade like 'PS%' or grade like '-2' then '-1'
 		 when grade like 'KG' then '0'
 		 when grade like 'IN' or grade like 'DR' then null -- inactive students
 		 when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
-		 when grade like 'UG' then null -- means ungraded 
-		 else grade	
+		 when grade like 'UG' then null -- means ungraded
+		 else grade
 	end;
-	 				
+
 
 alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
@@ -181,18 +186,18 @@ alter table clean.all_snapshots alter column grade type text using nullif(grade,
 -- oss
 --select oss as d, count(*) from clean.all_snapshots group by d order by d;
 
--- school 
+-- school
 --select school_code, lower(school_name), count(*) from clean.all_snapshots group by school_code, school_name order by school_code, school_name;
 	-- names not very consistent, just use code?
-	
+
 -- section 504
 --select section_504_plan as d, count(*) from clean.all_snapshots group by d order by d;
 
 -- IRNs
 --select coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn) as d, count(*) from clean.all_snapshots group by d order by d;
-alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
+alter table clean.all_snapshots alter column withdrawn_to_irn type text using
 coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn);
-alter table clean.all_snapshots alter column withdrawn_to_irn type text using 
+alter table clean.all_snapshots alter column withdrawn_to_irn type text using
 nullif(withdrawn_to_irn, '******');
 alter table clean.all_snapshots drop column sent_to_1_irn;
 alter table clean.all_snapshots drop column sent_to_2_irn;
@@ -203,7 +208,7 @@ alter table clean.all_snapshots drop column sent_to_2_irn;
 -- state
 --select state as d, count(*) from clean.all_snapshots group by d order by d;
 
--- status 
+-- status
 --select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
 
 --select status as d, count(*) from clean.all_snapshots group by d order by d;
@@ -212,7 +217,7 @@ alter table clean.all_snapshots drop column sent_to_2_irn;
 
 -- withdrawal codes
 --select distinct withdraw_reason from clean.all_snapshots;
-alter table clean.all_snapshots alter column withdraw_reason type text using 
+alter table clean.all_snapshots alter column withdraw_reason type text using
 case
 when withdraw_reason like '36' or withdraw_reason like '16' then 'withdrew - PS' -- the 16 is a typo correction for one student
 when withdraw_reason like '37' then 'withdrew - KG'
