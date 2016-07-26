@@ -11,19 +11,60 @@ from estimate_prediction_model import read_in_yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
-    confusion_matrix
+    confusion_matrix, precision_score
 
-def DT_top_features(model, columns):
-    # placeholder
-    pass
+class Top_features():
+    def DT(model, columns, k):
+        imp = model.best_estimator_.feature_importances_
+        top_feat = sorted(zip(columns,imp.tolist()),
+                           key=lambda x: x[1], reverse=True)
+        return top_feat[:k]
 
-def logit_top_features(model, columns):
-    coefs = model.best_estimator_.coef_
-    top_coefs = sorted(zip(columns,coefs.tolist()[0]),
-                       key=lambda x: x[1], reverse=True)
-    return top_coefs[:3]
+    def logit(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
+
+    # def SVM(model, columns, k):
+    #     coefs = model.best_estimator_.coef_
+    #     top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+    #                        key=lambda x: x[1], reverse=True)
+    #     return top_coefs[:k]
+
     
+def plot_precision_recall_n(y_true, y_prob, save_location, 
+                            run_name, model_name):
+    # from Rayid's magicloops code
+    y_score = y_prob
+    precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
+    precision_curve = precision_curve[:-1]
+    recall_curve = recall_curve[:-1]
+    pct_above_per_thresh = []
+    number_scored = len(y_score)
+    for value in pr_thresholds:
+        num_above_thresh = len(y_score[y_score>=value])
+        pct_above_thresh = num_above_thresh / float(number_scored)
+        pct_above_per_thresh.append(pct_above_thresh)
+    pct_above_per_thresh = np.array(pct_above_per_thresh)
+    plt.clf()
+    fig, ax1 = plt.subplots()
+    ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+    ax1.set_xlabel('percent of population')
+
+    ax1.set_ylabel('precision', color='b')
+    ax2 = ax1.twinx()
+    ax2.plot(pct_above_per_thresh, recall_curve, 'r')
+    ax2.set_ylabel('recall', color='r')
     
+    base = save_location + "/" + run_name + "_" + model_name
+    plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
+
+def precision_at_k(y_true, y_scores, k):
+    # from Rayid's magicloops code
+    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
+    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    return precision_score(y_true, y_pred)    
 
 def plot_score_distribution(soft_predictions, save_location, 
                             run_name, model_name):
@@ -95,7 +136,8 @@ def markdown_report(f, save_location, saved_outputs):
     # header
     f.write("# Report for {}\n".format(" ".join(run_name.split('_'))
                                        + " " + model_name))
-    f.write(model_options['user_description']+'\n')
+    f.write(model_options['user_description']+',')
+    f.write("cross-validation in {:0.2f} seconds".format(saved_outputs['time']))
     
     # model options used
     f.write("\n### Model Options\n")
@@ -151,9 +193,18 @@ def markdown_report(f, save_location, saved_outputs):
 
     # performance metrics (must have first generated these images)
     f.write("\n### Performance Metrics\n")
-    if model_name == 'logit':
-        top_features = logit_top_features(saved_outputs['estimator'],
-                                          saved_outputs['features'])
+    prec_10 = precision_at_k(test_y, test_set_scores, .1)
+    prec_5 = precision_at_k(test_y, test_set_scores, .05)
+    f.write("precision on top 10%: {:0.3}  ".format(prec_10))
+    f.write("precision on top 5%: {:0.3}  ".format(prec_5))
+    try:
+        get_top_features = getattr(Top_features, model_name)
+    except AttributeError:
+        print('top features not implemented for {}'.format(model_name))
+        pass
+    else:
+        top_features = get_top_features(saved_outputs['estimator'],
+                                        saved_outputs['features'], 3)
         f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})"\
                 .format(top_features[0][0],top_features[0][1],
                         top_features[1][0],top_features[1][1],
@@ -173,12 +224,14 @@ def write_model_report(save_location, saved_outputs):
 
     plot_score_distribution(test_set_scores, save_location, run_name, 
                             model_name)
-    plot_precision_recall_threshold(test_set_scores, test_y, save_location, 
-                                    run_name, model_name)
+    #plot_precision_recall_threshold(test_set_scores, test_y, save_location, 
+    #                                run_name, model_name)
     plot_precision_recall(test_set_scores, test_y, save_location, 
                           run_name, model_name)
-    plot_confusion_matrix(test_set_scores, test_y, .5, save_location, 
-                          run_name, model_name)
+    plot_precision_recall_n(test_y, test_set_scores,save_location, 
+                            run_name, model_name)
+    #plot_confusion_matrix(test_set_scores, test_y, .5, save_location, 
+    #                      run_name, model_name)
     plot_confusion_matrix(test_set_scores, test_y, .3, save_location, 
                           run_name, model_name)
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
@@ -187,6 +240,7 @@ def write_model_report(save_location, saved_outputs):
 
 
 def main():
+    # note: this testing is outdated
     try:
         save_location = sys.argv[1]
         options_location = sys.argv[2]

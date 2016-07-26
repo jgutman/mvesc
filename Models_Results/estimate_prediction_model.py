@@ -30,6 +30,7 @@ from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 import yaml
 import numpy as np
 import pandas as pd
+from my_timer import Timer
 
 ######
 # Setup Modeling Options and Functions
@@ -82,17 +83,20 @@ def clf_loop(clfs, params, train_X, train_y,
     :rtype dict(string: GridSearchCV)
     """
     best_validated_models = dict()
+    validated_model_times = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
-        best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
-        best_validated_models[model_name].fit(train_X, train_y)
-
+        with Timer(model_name) as t:
+            best_validated_models[model_name] = GridSearchCV(clf, parameter_values, scoring=criterion, cv=cv_folds)
+            best_validated_models[model_name].fit(train_X, train_y)
+            validated_model_times[model_name] = t.time_check()
+            
         model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model} cv_score: {score}".format(
-            model=model_name, score=model_cv_score))
-    return best_validated_models
+        print("model: {model}, best {criterion} score: {score}".format(
+            model=model_name, criterion=criterion, score=model_cv_score))
+    return best_validated_models, validated_model_times
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out, cohorts_training):
@@ -108,10 +112,10 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     """
     if (cohorts_training=='all'):
         train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
-        assert(np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
+        assert (np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
     else:
-        assert(max(cohorts_training) < min(cohorts_held_out)), \
+        assert (max(cohorts_training) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
         train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
@@ -163,6 +167,14 @@ def build_outcomes_plus_features(model_options):
         # plus a column for the requested possible features
 
         for table, column_names in model_options['features_included'].items():
+            for c in column_names:
+                try: 
+                    grade =  int(c.split('_')[-1])
+                except: 
+                    pass # ignoring features not connected to a grade level
+                else: 
+                    assert grade <= model_options['prediction_grade_level'], \
+                           "feature {} after prediction window".format(c)
             features = read_table_to_df(connection, table_name = table,
                 schema = 'model', nrows = -1,
                 columns=(['student_lookup'] + column_names))
@@ -196,7 +208,7 @@ def read_in_yaml(filename=os.path.join(base_pathname,
     required_keys = set(('validation_criterion', 'features_included', 'cohorts_training',
         'cohorts_held_out', 'file_save_name', 'model_classes_selected', 'outcome_name',
         'cohort_grade_level_begin', 'model_test_holdout', 'random_seed'))
-    assert(all([key in model_options.keys() for key in required_keys])), \
+    assert (all([key in model_options.keys() for key in required_keys])), \
         "missing model specifications in yaml file"
 
     assert(type(model_options['features_included']) == dict), "bad formatting in yaml file"
@@ -329,12 +341,12 @@ def run_all_models(model_options, clfs, params, save_location):
     # do missing value feature imputation here
     train_X, test_X = impute_missing_values(train_X, test_X,
         model_options['missing_impute_strategy'])
-    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
+    assert (all(train_X.columns == test_X.columns)), "train and test have different columns"
 
     # do feature scaling here
     train_X, test_X = scale_features(train_X, test_X,
         model_options['feature_scaling'])
-    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
+    assert (all(train_X.columns == test_X.columns)), "train and test have different columns"
 
     ####
     # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
@@ -370,7 +382,7 @@ def run_all_models(model_options, clfs, params, save_location):
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
-    best_validated_models = clf_loop(clfs, params, train_X, train_y,
+    best_validated_models, validated_model_times = clf_loop(clfs, params, train_X, train_y,
         criterion = model_options['validation_criterion'],
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
@@ -399,7 +411,8 @@ def run_all_models(model_options, clfs, params, save_location):
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
             'parameter_grid' : params[model_name],
-            'performance_objects' : measure_performance(test_y, test_set_scores)
+            'performance_objects' : measure_performance(test_y, test_set_scores),
+            'time': validated_model_times[model_name]
         }
 
         # save outputs
