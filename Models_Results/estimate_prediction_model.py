@@ -30,7 +30,9 @@ from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 import yaml
 import numpy as np
 import pandas as pd
+
 from my_timer import Timer
+from custom_scorers import *
 
 ######
 # Setup Modeling Options and Functions
@@ -380,11 +382,13 @@ def run_all_models(model_options, clfs, params, save_location):
             'leave_cohort_out', 'k_fold', 'none'
         ))
 
+        criterion = parse_criterion_string(
+            model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
     best_validated_models, validated_model_times = clf_loop(clfs, params, train_X, train_y,
-        criterion = model_options['validation_criterion'],
+        criterion = criterion,
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
 
