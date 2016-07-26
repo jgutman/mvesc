@@ -134,9 +134,9 @@ def markdown_report(f, save_location, saved_outputs):
     test_set_scores = saved_outputs['test_set_soft_preds']
 
     # header
-    f.write("# Report for {}".format(" ".join(run_name.split('_'))
+    f.write("# Report for {}\n".format(" ".join(run_name.split('_'))
                                        + " " + model_name))
-    f.write(model_options['user_description']+',')
+    f.write(model_options['user_description']+',\n')
     
     # model options used
     f.write("### Model Options\n")
