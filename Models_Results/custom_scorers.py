@@ -20,7 +20,8 @@ def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
         return 0.0
 
 def scorer_at_top_k(k, metric):
-    scorer = make_scorer(precision_recall_at_top_k, needs_proba=True,
+    scorer = make_scorer(precision_recall_at_top_k,
+        # needs_proba = False, needs_threshold = False,
         k=k, metric=metric)
     return scorer
 
