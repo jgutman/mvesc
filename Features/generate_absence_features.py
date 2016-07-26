@@ -24,11 +24,23 @@ from mvesc_utility_functions import *
 import numpy as np
 import pandas as pd
 
-
 # functions
-def create_feature_table(cursor, table, schema = 'model', replace = False):
+def set_null_as_0(cursor, column, schema='clean', table='absence'):
+    """ Set null data points as 0 (be careful to assume so)
+
+    :param pg.connection.cursor cursor: postgres cursor
+    :param str column: column name
+    :param str schema: schema name
+    :param str table: table name
     """
-    The current feature table is dropped and re-created with a single column
+    sqlcmd = """
+    update {schema}.{table}
+    set {column}=0 
+    where {column} is null;""".format(schema=schema, table=table, column=column)
+    cursor.execute(sqlcmd)
+
+def create_feature_table(cursor, table, schema = 'model', replace = False):
+    """ The current feature table is dropped and re-created with a single column
     containing unique student lookups numbers, set as an index
     :param pg_cursor cursor:
     :param str table: feature table name 
@@ -62,8 +74,8 @@ def create_feature_table(cursor, table, schema = 'model', replace = False):
 def update_column_with_join(cursor, table, column, source_table, 
                             source_column = None, source_schema = 'clean',
                             schema='model', dtype='varchar(64)', grade=9):
-    """ 
-    Update column using join to match another table                 
+    """Update column using join to match another table               
+
     :param pg.cursor cursor: pg cursor
     :param str source_schema: schema of source - None default for temp tables
     :param str source_table: table of source
@@ -82,7 +94,7 @@ def update_column_with_join(cursor, table, column, source_table,
         source_schema_and_table = source_schema+'.'+source_table
     dtype = get_column_type(cursor, source_table, source_column)
     sql_add_column = """
-    alter table {schema}.{table} add column {column} {dtype} default null;
+    alter table {schema}.{table} add column {column} {dtype} default 0;
     """.format( schema=schema, table=table, column=column, dtype=dtype )
     cursor.execute(sql_add_column);
     sql_join_cmd = """
@@ -104,8 +116,8 @@ def update_column_with_join(cursor, table, column, source_table,
 def update_join_type_cnt(cursor, table, column, source_table, 
                             source_column = None, source_schema = 'clean',
                             schema='model', dtype='varchar(64)', type_str = 'tardy', grade=9):
-    """ 
-    Update column using join to match another table                 
+    """Update column using join to match another table                 
+
     :param pg.cursor cursor: pg cursor
     :param str source_schema: schema of source - None default for temp tables
     :param str source_table: table of source
@@ -137,7 +149,7 @@ def update_join_type_cnt(cursor, table, column, source_table,
     
     dtype = get_column_type(cursor, tab_temp, 'count')
     sql_add_column = """
-    alter table {schema}.{table} add column {column} {dtype} default null;
+    alter table {schema}.{table} add column {column} {dtype} default 0;
     """.format( schema=schema, table=table, column=column, dtype=dtype )
     cursor.execute(sql_add_column);
     sql_join_cmd = """
@@ -156,8 +168,8 @@ def update_join_type_cnt(cursor, table, column, source_table,
 def update_consec(cursor, table, column, source_table, 
                             source_column = None, source_schema = 'clean',
                             schema='model', type_str = 'absence', grade=9):
-    """ 
-     Update column using consec aggreated data                 
+    """ Update column using consec aggreated data 
+                
     :param pg.cursor cursor: pg cursor
     :param str source_schema: schema of source - None default for temp tables
     :param str source_table: table of source
@@ -184,7 +196,7 @@ def update_consec(cursor, table, column, source_table,
     
     dtype = get_column_type(cursor, source_table, source_column)
     sql_add_column = """
-    alter table {schema}.{table} add column {column} {dtype} default null;
+    alter table {schema}.{table} add column {column} {dtype} default 0;
     """.format(schema=schema, table=table, column=column, dtype=dtype )
     cursor.execute(sql_add_column);
     sql_join_cmd = """
@@ -206,7 +218,7 @@ def main():
     schema, table = "model" ,"absence"
     source_schema = "clean"
     tab_snapshots, tab_absence = "all_snapshots", "all_absences"
-    gr_min, gr_max = 4, 11
+    gr_min, gr_max = 3, 10
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
@@ -219,6 +231,7 @@ def main():
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
 
             # days_absent_unexecused
             source_table, source_column = tab_snapshots, 'days_absent_unexcused'
@@ -227,14 +240,17 @@ def main():
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
-                
+                set_null_as_0(cursor, column, schema=schema, table=table)
+
             # discipline_incidents
-            source_table, source_column = tab_snapshots, 'discipline_incidents'
-            for grd in range(gr_min, gr_max+1):
-                column = source_column+'_gr_'+str(grd)
-                update_column_with_join(cursor, table, column=column, source_table=source_table, 
-                                source_column = source_column, source_schema = 'clean',
-                                schema='model', grade=grd)
+#            source_table, source_column = tab_snapshots, 'discipline_incidents'
+#            for grd in range(gr_min, gr_max+1):
+#                column = source_column+'_gr_'+str(grd)
+#                update_column_with_join(cursor, table, column=column, source_table=source_table, 
+#                                source_column = source_column, source_schema = 'clean',
+#                                schema='model', grade=grd)
+#                set_null_as_0(cursor, column, schema=schema, table=table)
+                
             # tardy
             source_table = tab_absence
             new_col_name = 'tardy'
@@ -243,6 +259,7 @@ def main():
                 update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
                                 source_column = None, source_schema = 'clean',
                                 schema='model', type_str='tardy', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
             
             # tardy_unexecused
             source_table = tab_absence
@@ -252,6 +269,7 @@ def main():
                 update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
                                 source_column = None, source_schema = 'clean',
                                 schema='model', type_str='tardy_unexcused', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
             
             # med
             source_table = tab_absence
@@ -261,6 +279,7 @@ def main():
                 update_join_type_cnt(cursor, table, column=column, source_table=source_table, 
                                 source_column = None, source_schema = 'clean',
                                 schema='model', type_str='med', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
             
             # consequtive absence days
             source_table = tab_absence
@@ -270,6 +289,7 @@ def main():
                 update_consec(cursor, table, column, source_table, 
                             source_column = None, source_schema = 'clean',
                             schema='model', type_str = 'absence', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
                     
             # consequtive tardy days
             source_table = tab_absence
@@ -279,9 +299,9 @@ def main():
                 update_consec(cursor, table, column, source_table, 
                             source_column = None, source_schema = 'clean',
                             schema='model', type_str = 'tardy', grade=grd)
+                set_null_as_0(cursor, column, schema=schema, table=table)
         
             connection.commit()
         
 if __name__ =='__main__':
         main()
-
