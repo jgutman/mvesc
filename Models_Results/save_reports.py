@@ -139,18 +139,18 @@ def markdown_report(f, save_location, saved_outputs):
     f.write(model_options['user_description']+',')
     
     # model options used
-    f.write("### Model Options")
+    f.write("### Model Options\n")
 
-    f.write("* label used: {}".format(model_options['outcome_name']))
+    f.write("* label used: {}\n".format(model_options['outcome_name']))
 
-    f.write("* initial cohort grade: {}"\
+    f.write("* initial cohort grade: {}\n"\
             .format(model_options['cohort_grade_level_begin'][-3:-2]))
 
-    f.write("* test cohorts: {}"\
+    f.write("* test cohorts: {}\n"\
             .format(", ".join([str(a) for a in 
                                model_options['cohorts_held_out']])))
 
-    f.write("\t * {0} positive examples, {1} negative examples"\
+    f.write("\t * {0} positive examples, {1} negative examples\n"\
             .format(sum(test_y==1), sum(test_y==0)))
 
     train_set = model_options['cohorts_training']
@@ -158,9 +158,8 @@ def markdown_report(f, save_location, saved_outputs):
         train_set += " except test/val"
     else:
         train_set = ", ".join([str(a) for a in train_set])
-    f.write("* train cohorts: {}".format(train_set))
-
-    f.write("\t * {0} postive examples, {1} negative examples"\
+    f.write("* train cohorts: {}\n".format(train_set))
+    f.write("\t * {0} postive examples, {1} negative examples\n"\
             .format(saved_outputs['train_set_balance'][1],
                     saved_outputs['train_set_balance'][0]))
 
@@ -168,33 +167,34 @@ def markdown_report(f, save_location, saved_outputs):
                          .split('_'))
     if "fold" in cv_scheme:
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
-    f.write("* cross-validation scheme: {}".format(cv_scheme))
+    f.write("* cross-validation scheme: {}\n".format(cv_scheme))
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator'].best_estimator_
     n_models = 1;
     for param, options in params.items():
         option_str = ", ".join([str(a) for a in options])
-        f.write("\t * searching {} in {}".format(param, option_str))
-        f.write("\t * chose {} = {}".format(param, getattr(model,param)))
+        f.write("\t * searching {} in {}\n".format(param, option_str))
+        f.write("\t * chose {} = {}\n".format(param, getattr(model,param)))
         n_models *= len(options)
-    f.write("\t * using {}".format(model_options['validation_criterion']))
+    f.write("\t * using {}\n".format(model_options['validation_criterion']))
 
     imputation = " ".join(model_options['missing_impute_strategy'].split('_'))
-    f.write("* imputation strategy: {}".format(imputation))
+    f.write("* imputation strategy: {}\n".format(imputation))
 
     scaling = model_options['feature_scaling']
-    f.write("* scaling strategy: {}".format(scaling))
+    f.write("* scaling strategy: {}\n".format(scaling))
     
     # features used 
-    f.write("### Features Used")
+    f.write("### Features Used\n")
     for key, features in model_options['features_included'].items():
-        f.write("* {}".format(key))
+        f.write("* {}\n".format(key))
         for i in features:
-            f.write("\t * {}".format(i))
+            f.write("\t * {}\n".format(i))
 
     # performance metrics (must have first generated these images)
-    f.write("### Performance Metrics")
-    f.write("on average, model run in {:0.2f} seconds <br/>".format(saved_outputs['time']/float(n_models)))
+    f.write("### Performance Metrics\n")
+    f.write("on average, model run in {:0.2f} seconds ({} times) <br/>"\
+            .format(saved_outputs['time']/float(n_models),n_models))
     prec_10 = precision_at_k(test_y, test_set_scores, .1)
     prec_5 = precision_at_k(test_y, test_set_scores, .05)
     f.write("precision on top 10%: {:0.3} <br/>".format(prec_10))
@@ -207,14 +207,14 @@ def markdown_report(f, save_location, saved_outputs):
     else:
         top_features = get_top_features(saved_outputs['estimator'],
                                         saved_outputs['features'], 3)
-        f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})"\
+        f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})\n"\
                 .format(top_features[0][0],top_features[0][1],
                         top_features[1][0],top_features[1][1],
                         top_features[2][0],top_features[2][1]))
     images = [a for a in os.listdir(save_location) if 
               ('png' in a and model_name in a and run_name in a)]
     for fn in images:
-        f.write("![{fn}]({fn})".format(fn=fn))
+        f.write("![{fn}]({fn})\n".format(fn=fn))
         
 
 def write_model_report(save_location, saved_outputs):
