@@ -155,7 +155,8 @@ def build_outcomes_plus_features(model_options):
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
             columns = ['student_lookup',
-            model_options['outcome_name'], model_options['cohort_grade_level_begin']])
+            model_options['outcome_name'], 
+            model_options['cohort_grade_level_begin']])
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset = [colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)

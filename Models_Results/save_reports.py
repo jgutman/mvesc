@@ -136,10 +136,10 @@ def markdown_report(f, save_location, saved_outputs):
     # header
     f.write("# Report for {}\n".format(" ".join(run_name.split('_'))
                                        + " " + model_name))
-    f.write(model_options['user_description']+',\n')
+    f.write(model_options['user_description']+'\n')
     
     # model options used
-    f.write("### Model Options\n")
+    f.write("\n### Model Options\n")
 
     f.write("* label used: {}\n".format(model_options['outcome_name']))
 
@@ -185,14 +185,14 @@ def markdown_report(f, save_location, saved_outputs):
     f.write("* scaling strategy: {}\n".format(scaling))
     
     # features used 
-    f.write("### Features Used\n")
+    f.write("\n### Features Used\n")
     for key, features in model_options['features_included'].items():
         f.write("* {}\n".format(key))
         for i in features:
             f.write("\t * {}\n".format(i))
 
     # performance metrics (must have first generated these images)
-    f.write("### Performance Metrics\n")
+    f.write("\n### Performance Metrics\n")
     f.write("on average, model run in {:0.2f} seconds ({} times) <br/>"\
             .format(saved_outputs['time']/float(n_models),n_models))
     prec_10 = precision_at_k(test_y, test_set_scores, .1)
