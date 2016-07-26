@@ -30,12 +30,23 @@ warnings.filterwarnings("ignore")
 
 
 def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
+    """Yield successive n-sized chunks from l.
+    
+    :param list l: a list to generate iterator
+    :param int n: the number of elements to return per iteration
+    :return list: a subset of list with n elements or less
+    :rtype list
+    """
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
 def read_absences_lookups(conn, lookups = None):
     """ Read data of certain lookup-chunk
+
+    :param pg.connection conn: postgres connector
+    :param list lookups: lookups to query from the database
+    :return pd.dataframe: data frame of all rows for the student_lookups
+    :rtype pd.dataframe
     """
     sqlcmd = """select * from clean.all_absences 
     where student_lookup in {0} 
@@ -45,7 +56,11 @@ def read_absences_lookups(conn, lookups = None):
 
 def consec_agg(df, desc_str='absence'):
     """ Aggreate consective days of a certain type
+    
+    :param pd.dataframe df: data frame of absence data
+    :param str desc_str: description string of what types of absence to aggregate
     :return pd.dataframe sumdf: sumdf with lookups, dates, counts 
+    :rtype pd.dataframe
     """
     new_date_col, new_cnt_col = desc_str+'_starting_date', desc_str+'_consec_count'
     subdf = df[[desc_str in desc for desc in df.absence_desc]]
@@ -71,6 +86,15 @@ def consec_agg(df, desc_str='absence'):
 
 
 def update_absence(cursor, table='clean.all_absences', col='absence'):
+    """ Update the clean.all_absences using the consecutive aggregations 
+    1. the reason to do this is the consecutive-dates-process takes 10~30 minutes to generate;
+    2. keep the feature-generation process consistent with other features
+  
+    :param cursor: sql cursor
+    :param str table: the table name to update
+    :param str col: the column name to construct on, e.g. col+'agg'
+
+    """
     col_date, dtype_date = col+'_starting_date', 'date'
     col_cnt, dtype_cnt = col+'_consec_count', 'int'
     if col=='absence':
@@ -113,14 +137,6 @@ def main():
             lookups = list(pd.read_sql_query('select distinct student_lookup from clean.all_absences;', connection).student_lookup)
             random.shuffle(lookups)
             lookups = lookups[:2000]
-    #         sql_add_column = """alter table {schema}.{table} drop if exists column {column};
-    #         alter table {schema}.{table} add column {column} {dtype} default null;
-    #         """.format( schema=schema, table=table, column=new_date_col, dtype=dtype_date)
-    #         #cursor.execute(sql_add_column)
-    #         sql_add_column = """alter table {schema}.{table} drop if exists column {column};
-    #         alter table {schema}.{table} add column {column} {dtype} default null;
-    #         """.format( schema=schema, table=table, column=new_cnt_col, dtype=dtype_cnt)
-            #cursor.execute(sql_add_column)
 
             print(' - generating agggated dataframe of absences...')
             final_abs_df = pd.DataFrame()
