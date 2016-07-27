@@ -96,13 +96,14 @@ def run_comparisons_and_plot(outcome_nicknames, descriptives,
             filename = ('compare_' + columns[0] + '_' + '_'.join(outcome_nicknames.keys()))
             plot_comparisons(median_gpa_comparison, grades, os.path.join(descriptives, filename),
                              [k for k in outcome_nicknames.keys()], [v for v in outcome_nicknames.values()],
-                             outcome_colors = ['g', 'r'], ylabel = 'Median GPA',
+                             outcome_colors = ['g', 'y', 'r',], ylabel = 'Median GPA',
                              title = 'GPA by grade and outcome category')
             return os.path.join(descriptives, filename)
 
 def main():
     outcome_nicknames = OrderedDict([('graduates', '4 year graduation'),
-                        ('hasIRN', 'dropout')])
+                        ('noIRN', 'no withdraw to IRN'),
+                        ('dropout', 'dropout')])
     descriptives = os.path.join(base_pathname, "Descriptives")
     fn = run_comparisons_and_plot(outcome_nickname, descriptives)
     print('Plot created in {}.png'.format(fn))
