@@ -218,7 +218,7 @@ def main():
     schema, table = "model" ,"absence"
     source_schema = "clean"
     tab_snapshots, tab_absence = "all_snapshots", "all_absences"
-    gr_min, gr_max = 3, 10
+    gr_min, gr_max = 3, 11
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
@@ -226,8 +226,9 @@ def main():
             
             # days_absent columns
             source_table, source_column = tab_snapshots, 'days_absent'
+            new_col_name = 'absence'
             for grd in range(gr_min, gr_max+1):
-                column = source_column+'_gr_'+str(grd)
+                column = new_col_name+'_gr_'+str(grd)
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
@@ -235,8 +236,9 @@ def main():
 
             # days_absent_unexecused
             source_table, source_column = tab_snapshots, 'days_absent_unexcused'
+            new_col_name = 'absence_unexcused'
             for grd in range(gr_min, gr_max+1):
-                column = source_column+'_gr_'+str(grd)
+                column = new_col_name+'_gr_'+str(grd)
                 update_column_with_join(cursor, table, column=column, source_table=source_table, 
                                 source_column = source_column, source_schema = 'clean',
                                 schema='model', grade=grd)
