@@ -26,11 +26,11 @@ class Top_features():
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
-    # def SVM(model, columns, k):
-    #     coefs = model.best_estimator_.coef_
-    #     top_coefs = sorted(zip(columns,coefs.tolist()[0]),
-    #                        key=lambda x: x[1], reverse=True)
-    #     return top_coefs[:k]
+    def SVM(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
 
     
 def plot_precision_recall_n(y_true, y_prob, save_location, 
@@ -56,7 +56,7 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     ax2 = ax1.twinx()
     ax2.plot(pct_above_per_thresh, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
-    
+
     base = save_location + "/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
 
@@ -65,6 +65,7 @@ def precision_at_k(y_true, y_scores, k):
     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
     return precision_score(y_true, y_pred)    
+
 
 def plot_score_distribution(soft_predictions, save_location, 
                             run_name, model_name):
