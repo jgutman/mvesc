@@ -109,7 +109,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             from standard_grades
             group by student_lookup, course_code;
             
-            create temp table final_grades as
+            create table clean.final_grades as
             select distinct on (s.student_lookup, s.course_code) 
                 s.student_lookup, s.course_code, s.course_name,
                 case when clean_term = 'final' then mark else avg_mark end 
@@ -120,6 +120,11 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             on s.student_lookup = a.student_lookup 
             and s.course_code = a.course_code;
             """)
+
+            # adding subjects to final grades table
+            clean_column(cursor, 'class_subjects.json', final_grades, 
+                         new_column_name = 'subject',
+                         replace = 0)
 
             # yearly gpa
             gpa_query = """
@@ -136,7 +141,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                      then course_length end)
                 end as gpa_gr_{grade}, """.format(grade=grade)
             gpa_query = gpa_query[:-2] + """
-                from final_grades
+                from clean.final_grades
                 group by student_lookup;
                 """
             cursor.execute(gpa_query)
@@ -190,6 +195,44 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             pf_col_list += ["num_pf_classes_gr_{}".format(gr)
                            for gr in grade_range]
             
+
+            # grouping by subject
+            subject_list = ['language', 'stem','humanities','art','health',
+                            'future prep','interventions']
+            subject_gpa_query = """
+            create temp table subject_gpa_counts as
+            select student_lookup, """
+            for grade in grade_range:
+                for subject in subject_list:
+                    subject_gpa_query += """ 
+                    case
+                    when sum(case when grade = {grade} and subject = {subject}
+                                  then course_length end) = 0 
+                    then 0
+                    else sum(case when grade = {grade} and subject = {subject}
+                    then final_mark * course_length end)/
+                         sum(case when grade = {grade} and subject = {subject}
+                                  then course_length end)
+                    end as {subject}_gpa_gr_{grade}, 
+                    sum(case when grade = {grade} and subject = {subject}
+                             then 1 else 0 end) 
+                        as num_{subject}_classes_gr_{grade}, """\
+                        .format(grade=grade,subject=subject)
+            gpa_query = gpa_query[:-2] + """
+            from clean.final_grades
+            group by student_lookup;
+            """
+            cursor.execute(subject_gpa_query)
+            cursor.execute("""
+            create index subject_lookup_index on 
+            subject_gpa_counts(student_lookup)
+            """)
+            
+            subject_gpa_counts_cols = [i[0] for i in cursor.description]
+
+            update_column_with_join(cursor,table, 
+                                    column_list=subject_gpa_counts_cols,
+                                    source_table='subject_gpa_counts')
             update_column_with_join(cursor,table, column_list=gpa_col_list,
                                     source_table='gpa')
             update_column_with_join(cursor, table, 
