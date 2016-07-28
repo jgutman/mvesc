@@ -47,7 +47,7 @@ def generate_x(replace = False):
             # following step will be more efficient
             # if new_table has an index
 
-            column_list = create_temp_mobility(cursor, grade_range=range(1,13))
+            column_list = create_temp_mobility(cursor, grade_range=range(3,13))
             update_column_with_join(cursor, table, column_list,
                 'mobility_counts')
 
