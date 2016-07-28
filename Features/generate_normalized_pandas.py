@@ -1,7 +1,7 @@
 import os, sys
 parentdir = os.path.abspath('/home/zzhang/mvesc/ETL')
 sys.path.insert(0,parentdir)
-from feature_utilities import *()
+from feature_utilities import *
 
 import yaml
 
@@ -46,9 +46,13 @@ def get_table_of_student_in_grade_which_year():
     print('appropriate table created in python')
 
     # write to postgres
-    df2postgres(wide_year_took_oaa, 'grade_year_max_pairs', schema = 'clean', if_exists = 'replace')
+    # df2postgres(wide_year_took_oaa, 'grade_year_max_pairs', schema = 'clean', if_exists = 'replace')
     # print confirmation
     print('grade_year_max_pairs has been created from dataframe')
+    # return
+    # set index on oaa_raw
+    wide_year_took_oaa.set_index('student_lookup', inplace = True)
+    return wide_year_took_oaa
 
 
 def convert_oaa_ogt_to_numeric():
@@ -100,100 +104,31 @@ def convert_oaa_ogt_to_numeric():
             oaa_raw[year_test_type+'_cheat'].replace({'not_a_num':0, 'cheat':1, 'missing':None}, inplace = True)
 
     # write table as oaaogt_numeric
-    df2postgres(oaa_raw, 'oaaogt_numeric', schema = 'clean', if_exists = 'replace')
+    # df2postgres(oaa_raw, 'oaaogt_numeric', schema = 'clean', if_exists = 'replace')
     # print confirmation
     print('oaaogt_numeric has been created')
+    # set index on oaa_raw
+    oaa_raw.set_index('student_lookup', drop = False, inplace = True)
     # return list of columns
-    return list_of_year_test_types
-
-def create_aggregate_stats_table(cursor, list_of_year_test_types):
-    """ Make an aggregate temporary table
-    """
-
-    # join the grade year pairs
-    
-    grade_year_pairs = ['was_in_grade_{}'.format(x) for x in range(3,9)]
-    grade_year_pairs = ', '.join(grade_year_pairs)
-
-    sql_join_to_temp_table = """create temp table oaa_with_grade_year as
-    (select t1.*, {list_of_grades} from clean.oaaogt_numeric as t1 
-    left join clean.grade_year_max_pairs as t2 
-    on t1.student_lookup = t2.student_lookup);""".format(list_of_grades = grade_year_pairs)
-    # execute
-    cursor.execute(sql_join_to_temp_table)
-
-    corresponding_grade_dict = {'third' : 'was_in_grade_3',
-        'fourth' : 'was_in_grade_4',
-        'fifth' : 'was_in_grade_5',
-        'sixth' : 'was_in_grade_6',
-        'seventh' : 'was_in_grade_7',
-        'eighth' : 'was_in_grade_8'}
-
-    # create a separate aggregate table
-    sql_create_agg_table = """drop table if exists agg_oaa_stats;
-    create temp table agg_oaa_stats as
-    (select {corresponding_grade} as year_test_taken,
-        avg({score_column}) as {mean_col_name},
-        count({score_column}) as {count_col_name},
-        stddev_samp({score_column}) as {stddev_col_name}
-        from oaa_with_grade_year group by {corresponding_grade});
-        """.format(score_column = list_of_year_test_types.iloc[0] + "_ss",
-                   mean_col_name = list_of_year_test_types.iloc[0] + "_mean",
-                   count_col_name = list_of_year_test_types.iloc[0] + "_count",
-                   stddev_col_name = list_of_year_test_types.iloc[0] + "_std",
-                   corresponding_grade = corresponding_grade_dict[list_of_year_test_types.iloc[0].split("_")[0]])
-    sql_create_agg_table += """
-    update only agg_oaa_stats
-    set year_test_taken =
-        case
-        when year_test_taken is null then 3000
-        else year_test_taken
-        end;"""
-    # execute
-    cursor.execute(sql_create_agg_table)    
-
-    print("looping through and creating aggregates")
-    prev_temp_table_name = "agg_oaa_stats"
-    for test_name in list_of_year_test_types[1:]:
-        print(test_name)
-
-        sql_join_script = """
-        create temp table {temp_table_name} as
-        (select agg.*, t2.{mean_col_name},
-            t2.{count_col_name}, t2.{stddev_col_name}
-        from {prev_temp_table_name} as agg left join
-            (select case 
-                when {corresponding_grade} is null then 3000
-                else {corresponding_grade}
-                end 
-                as year_test_taken, 
-                avg({score_column}) as {mean_col_name},
-                count({score_column}) as {count_col_name},
-                stddev_samp({score_column}) as {stddev_col_name}
-                from oaa_with_grade_year group by {corresponding_grade}) as t2
-            on agg.year_test_taken = t2.year_test_taken);""".format(score_column = test_name + "_ss",
-                   mean_col_name = test_name + "_mean",
-                   count_col_name = test_name + "_count",
-                   stddev_col_name = test_name + "_std",
-                   corresponding_grade = corresponding_grade_dict[test_name.split("_")[0]],
-                   temp_table_name = test_name + "_temp",
-                   prev_temp_table_name = prev_temp_table_name)
-        # assign for next iteration
-        prev_temp_table_name = test_name + "_temp"
-        # execute
-        cursor.execute(sql_join_script)
-
-    # Finally save final oaa aggregates table in clean
-    print("finished making many temp tables, save into schema")
-    sql_save_temp_table = """drop table if exists clean.oaa_aggregates;
-    create table clean.oaa_aggregates as
-    (select * from {final_temp_table_name});""".format(final_temp_table_name = list_of_year_test_types.iloc[-1]+"_temp")
-    cursor.execute(sql_save_temp_table)
+    return oaa_raw, list_of_year_test_types
 
 def normalize_oaa_scores(cursor, list_of_year_test_types):
     """ makes a temporary table to perform the normalization for each test and joins it to a final table
     """
 
+    grade_year_pairs = get_table_of_student_in_grade_which_year()
+    oaa_numeric, list_of_year_test_types = convert_oaa_ogt_to_numeric()
+
+    # join these two tables to assign group memberships
+    oaa_with_grade_year = oaa_numeric.merge(grade_year_pairs, on = 'student_lookup', how = 'left')
+    oaa_normalized = oaa_with_grade_year[['student_lookup']]
+
+    oaa_with_grade_year.set_index('student_lookup', inplace = True)
+    oaa_normalized.set_index('student_lookup', inplace = True)
+
+    # prep zscore function
+    zscore = lambda x: (x - x.mean()) / x.std()
+    # and corresponding grade dict
     corresponding_grade_dict = {'third' : 'was_in_grade_3',
         'fourth' : 'was_in_grade_4',
         'fifth' : 'was_in_grade_5',
@@ -201,24 +136,32 @@ def normalize_oaa_scores(cursor, list_of_year_test_types):
         'seventh' : 'was_in_grade_7',
         'eighth' : 'was_in_grade_8'}
 
-    for test_name in list_of_year_test_types[0:1]:
-        print(test_name)
-        # create temporary table for calcuation
-        sql_do_calculation = """drop table if exists {temp_table_name};
-        create temp table {temp_table_name} as
-        (select t1.student_lookup, t1.{test_name},
-            t2.year_test_taken, t2.{mean_col_name}, 
-            t2.{count_col_name}, t2.{stddev_col_name} from
-            oaa_with_grade_year as t1 left join clean.oaa_aggregates as t2
-            on t1.{corresponding_grade} = t2.year_test_taken);
-        """.format(test_name = test_name + "_ss",
-                   mean_col_name = test_name + "_mean",
-                   count_col_name = test_name + "_count",
-                   stddev_col_name = test_name + "_std",
-                   temp_table_name = test_name + "_temp",
-                   corresponding_grade = corresponding_grade_dict[test_name.split("_")[0]])
+    for test in list_of_year_test_types:
+        # corresponding
+        corresponding_year = corresponding_grade_dict[test.split('_')[0]]
+        print(corresponding_year)
+        # fill in with 3000 for observations with missing years (LOTS OF THESE)
+        oaa_with_grade_year[corresponding_year].fillna(value = 3000, inplace = True)
+        # get column of normalized scores
+        normalized_column = oaa_with_grade_year[[test+'_ss', corresponding_year]]\
+            .groupby(corresponding_year).transform(zscore)
+        normalized_column.columns = [test+"_normalized"]
+        oaa_normalized = pd.concat([oaa_normalized, normalized_column], axis = 1)
 
-    # create temporary 
+        # percentile column
+        percentile_column = oaa_with_grade_year[[test+'_ss', corresponding_year]]\
+                .groupby(corresponding_year).transform(lambda x: x.rank() / len(x))
+        percentile_column.columns = [test+"_percentile"]
+        oaa_normalized = pd.concat([oaa_normalized, percentile_column], axis = 1)
+
+        # get the string rank assignment for a student
+        test_score_categorical = oaa_with_grade_year[[test+'_pl', test+'_cheat']]
+        oaa_normalized = pd.concat([oaa_normalized, test_score_categorical], axis = 1)
+
+    print("OAA Normalized and Placement Table Made")
+    df2postgres(oaa_normalized, 'oaa_normalized', schema = 'features', if_exists = 'replace')
+    print("OAA Normalized Uploaded to Postgres")
+
 
 def generate_raw_snapshot_features(replace=False):
     schema, table = "model", "snapshots"
@@ -258,24 +201,6 @@ def generate_raw_snapshot_features(replace=False):
             #                         source_table = 'temp_snapshot_table')
             # print 'Finished adding age-based features from snapshots'
 
-            # optional parameters:
-            #    source_column - if the source has a different name than desired
-            #    source_schema - if the source is not a temporary table
-
-def generate_x(replace=False):
-    schema, table = "model", "test_scores"
-    with postgres_pgconnection_generator() as connection:
-        with connection.cursor() as cursor:
-            create_feature_table(cursor, table, replace=replace)
-            
-            # generate temp table for raw snapshot features
-            list_of_temp_cols = create_temp_table_of_raw_test_scores(cursor)
-            # merge in with snapshots
-            update_column_with_join(cursor, table, 
-                                    column = list_of_temp_cols, 
-                                    source_table = 'temp_test_table')
-            print 'Finished adding raw features from test scores'
-                
             # optional parameters:
             #    source_column - if the source has a different name than desired
             #    source_schema - if the source is not a temporary table
