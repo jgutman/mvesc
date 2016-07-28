@@ -11,7 +11,6 @@ sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import *
 from optparse import OptionParser
-from custom_scorers import *
 
 # all model import statements
 from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
@@ -32,6 +31,9 @@ import yaml
 import numpy as np
 import pandas as pd
 
+from my_timer import Timer
+from custom_scorers import *
+
 ######
 # Setup Modeling Options and Functions
 
@@ -45,8 +47,10 @@ def define_clfs_params(filename):
         'LR_no_penalty': LogisticRegression(C=1e6),
         'DT': DecisionTreeClassifier(),
         'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
-        'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
-        'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
+        'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1,
+                                   criterion='entropy'),
+        'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
+                                 algorithm="SAMME", n_estimators=200),
         'SVM': svm.SVC(kernel='linear', probability=False),
         'GB': GradientBoostingClassifier(
             learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
@@ -83,39 +87,44 @@ def clf_loop(clfs, params, train_X, train_y,
     :rtype dict(string: GridSearchCV)
     """
     best_validated_models = dict()
+    validated_model_times = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
-        best_validated_models[model_name] = GridSearchCV(clf, parameter_values,
-            scoring=criterion, cv=cv_folds)
-        best_validated_models[model_name].fit(train_X, train_y)
-
+        with Timer(model_name) as t:
+            best_validated_models[model_name] = \
+                GridSearchCV(clf, parameter_values, scoring=criterion, 
+                             cv=cv_folds)
+            best_validated_models[model_name].fit(train_X, train_y)
+            validated_model_times[model_name] = t.time_check()
+            
         model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model} cv_score: {score}".format(
-            model=model_name, score=model_cv_score))
-    return best_validated_models
+        print("model: {model}, best {criterion} score: {score}".format(
+            model=model_name, criterion=criterion, score=model_cv_score))
+    return best_validated_models, validated_model_times
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out, cohorts_training):
     """ Splits the given joint_df of features & outcomes and
     returns a train/test dataset
-    :param pd.DataFrame joint_df: data frame with a cohort, outcome, and feature(s)
+    :param pd.DataFrame joint_df: data frame with a cohort, outcome, and features
     :param list[int] cohorts_held_out: a list of years to split test set on
     :param string or list[int] cohorts_training: either the string 'all' or
         a list of years to include in the training, must all precede the test set
-    :returns two dataframes consisting of rows from joint_df, one for training and
-        one to be used for testing
+    :returns two dataframes consisting of rows from joint_df, one for training 
+        and one to be used for testing
     :rtype pd.DataFrame, pd.DataFrame
     """
     if (cohorts_training=='all'):
         train = joint_df[~joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
-        assert(np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
+        assert (np.max(train[cohort_grade_level_begin]) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
     else:
-        assert(max(cohorts_training) < min(cohorts_held_out)), \
+        assert (max(cohorts_training) < min(cohorts_held_out)), \
             "Training years do not completely precede test years"
-        train = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_training)]
+        train = joint_df[joint_df[cohort_grade_level_begin].\
+                         isin(cohorts_training)]
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     return train, test
 
@@ -125,37 +134,38 @@ def measure_performance(outcomes, predictions):
     :param list[float] predictions:
     """
     performance_objects = {}
-    performance_objects['pr_curve'] = precision_recall_curve(outcomes, predictions)
+    performance_objects['pr_curve'] = precision_recall_curve(outcomes, 
+                                                             predictions)
     performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
-    #performance_objects['confusion_matrix'] = confusion_matrix(outcomes,predictions)
     return performance_objects
 
 def build_outcomes_plus_features(model_options):
     """
-        Returns a pandas dataframe containing the student_lookup, cohort identifier,
-        outcome variable, and all numerical or binarized features.
-        Reads in the features and outcomes from database according to the
-        specification given in model_options dictionary.
-        :param dict model_options: all options read in from yaml file
-
-        Assumes:
-        model.outcome table contains a column (name given in cohort_grade_level_begin)
-        with int values identifying each student's cohort year
-        e.g. 'cohort_9th' contains the year each student is seen in 9th grade
-        and contains an outcome column (name given in outcome_name)
-        and all feature and outcomes tables contain student_lookup
-
-        Usage:
-        select train, validation, and test based on values in column
-        'cohort_grade_level_begin' according to value in 'cohorts_held_out'
+    Returns a pandas dataframe containing the student_lookup, cohort identifier,
+    outcome variable, and all numerical or binarized features.
+    Reads in the features and outcomes from database according to the
+    specification given in model_options dictionary.
+    :param dict model_options: all options read in from yaml file
+    
+    Assumes:
+    model.outcome table contains a column (name in cohort_grade_level_begin)
+    with int values identifying each student's cohort year
+    e.g. 'cohort_9th' contains the year each student is seen in 9th grade
+    and contains an outcome column (name given in outcome_name)
+    and all feature and outcomes tables contain student_lookup
+    
+    Usage:
+    select train, validation, and test based on values in column
+    'cohort_grade_level_begin' according to value in 'cohorts_held_out'
     """
     with postgres_pgconnection_generator() as connection:
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
             columns = ['student_lookup',
-            model_options['outcome_name'], model_options['cohort_grade_level_begin']])
+            model_options['outcome_name'], 
+            model_options['cohort_grade_level_begin']])
         # drop students without student_lookup, outcome, or cohort identifier
-        # can use subset = [colnames] to drop based on NAs in certain columns only
+        # can use subset=[colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
         joint_label_features = outcomes_with_student_lookup.copy()
 
@@ -165,6 +175,14 @@ def build_outcomes_plus_features(model_options):
         # plus a column for the requested possible features
 
         for table, column_names in model_options['features_included'].items():
+            for c in column_names:
+                try: 
+                    grade =  int(c.split('_')[-1])
+                except: 
+                    pass # ignoring features not connected to a grade level
+                else: 
+                    assert grade <= model_options['prediction_grade_level'], \
+                           "feature {} after prediction window".format(c)
             features = read_table_to_df(connection, table_name = table,
                 schema = 'model', nrows = -1,
                 columns=(['student_lookup'] + column_names))
@@ -195,24 +213,30 @@ def read_in_yaml(filename=os.path.join(base_pathname,
     # Maybe we want to have default values for these options and replace
     # from a new yaml file as necessary
     assert(type(model_options) == dict), "bad formatting in yaml file"
-    required_keys = set(('validation_criterion', 'features_included', 'cohorts_training',
-        'cohorts_held_out', 'file_save_name', 'model_classes_selected', 'outcome_name',
-        'cohort_grade_level_begin', 'model_test_holdout', 'random_seed'))
-    assert(all([key in model_options.keys() for key in required_keys])), \
+    required_keys = set(('validation_criterion', 'features_included',
+                         'cohorts_training','cohorts_held_out', 'file_save_name',
+                         'model_classes_selected', 'outcome_name',
+                         'cohort_grade_level_begin', 'model_test_holdout',
+                         'random_seed'))
+    assert (all([key in model_options.keys() for key in required_keys])), \
         "missing model specifications in yaml file"
-
-    assert(type(model_options['features_included']) == dict), "bad formatting in yaml file"
-    assert(type(model_options['model_classes_selected']) == list), "bad formatting in yaml file"
-    assert(type(model_options['cohorts_held_out']) == list), "bad formatting in yaml file"
+    assert(type(model_options['features_included']) == dict), \
+        "bad formatting in yaml file"
+    assert(type(model_options['model_classes_selected']) == list),\
+        "bad formatting in yaml file"
+    assert(type(model_options['cohorts_held_out']) == list),\
+        "bad formatting in yaml file"
     assert(type(model_options['cohorts_training']) == list or
-        model_options['cohorts_training'] == 'all'), "bad formatting in yaml file"
+        model_options['cohorts_training'] == 'all'),\
+        "bad formatting in yaml file"
     return model_options
 
 def scale_features(train, test, strategy):
     """
     """
     num_values_by_column = {x: len(train[x].unique()) for x in train.columns}
-    zero_variance_columns = [k for k,v in num_values_by_column.items() if v == 1]
+    zero_variance_columns = [k for k,v in num_values_by_column.items()
+                             if v == 1]
     train.drop(zero_variance_columns, axis=1, inplace=True)
     test.drop(zero_variance_columns, axis=1, inplace=True)
 
@@ -220,7 +244,8 @@ def scale_features(train, test, strategy):
         return train, test
 
     elif(strategy == 'standard' or strategy == 'robust'):
-        non_binary_columns = [k for k, v in num_values_by_column.items() if v > 2]
+        non_binary_columns = [k for k, v in num_values_by_column.items() 
+                              if v > 2]
         if (len(non_binary_columns) > 0):
             scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
             train_non_binary = train[non_binary_columns]
@@ -242,8 +267,8 @@ def scale_features(train, test, strategy):
             return train, test
 
     else:
-        print('unknown feature scaling strategy. try "{}", "{}", or "{}"'.format(
-            'standard', 'robust', 'none'))
+        print('unknown feature scaling strategy. try "{}", "{}", or "{}"'\
+              .format('standard', 'robust', 'none'))
         return train, test
 
 def add_null_dummies(data):
@@ -331,15 +356,18 @@ def run_all_models(model_options, clfs, params, save_location):
     # do missing value feature imputation here
     train_X, test_X = impute_missing_values(train_X, test_X,
         model_options['missing_impute_strategy'])
-    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
+    assert (all(train_X.columns == test_X.columns)),\
+        "train and test have different columns"
 
     # do feature scaling here
     train_X, test_X = scale_features(train_X, test_X,
         model_options['feature_scaling'])
-    assert(all(train_X.columns == test_X.columns)), "train and test have different columns"
+    assert (all(train_X.columns == test_X.columns)),\
+        "train and test have different columns"
 
     ####
-    # From now on, we IGNORE the `test`, `test_X`, `test_y` data until we evaluate the model
+    # From now on, we IGNORE the `test`, `test_X`, `test_y` data 
+    # until we evaluate the model
     ####
 
     ## (4B) Fit on Training ##
@@ -351,7 +379,8 @@ def run_all_models(model_options, clfs, params, save_location):
         # no need to further manipulate train dataset
         cohort_kfolds = 2 # hacky way to have GridSearchCV fit to 2 k-folds
 
-    elif model_options['parameter_cross_validation_scheme'] == 'leave_cohort_out':
+    elif model_options['parameter_cross_validation_scheme'] == \
+         'leave_cohort_out':
         # choose another validation set amongst the training set to
         # estimate parameters and model selection across cohort folds
         print('leave_cohort_out')
@@ -365,14 +394,16 @@ def run_all_models(model_options, clfs, params, save_location):
                 n_folds = model_options['n_folds'])
 
     else:
-        print('unknown cross-validation strategy. try "{}", "{}", or "{}"'.format(
-            'leave_cohort_out', 'k_fold', 'none'))
+        print('unknown cross-validation strategy. try "{}", "{}", or "{}"'\
+              .format('leave_cohort_out', 'k_fold', 'none'))
 
-    criterion = parse_criterion_string(model_options['validation_criterion'])
+    
+    criterion = parse_criterion_string(
+            model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
-    best_validated_models = clf_loop(clfs, params, train_X, train_y,
+    best_validated_models, validated_model_times = clf_loop(clfs, params, train_X, train_y,
         criterion = criterion,
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
@@ -401,7 +432,8 @@ def run_all_models(model_options, clfs, params, save_location):
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
             'parameter_grid' : params[model_name],
-            'performance_objects' : measure_performance(test_y, test_set_scores)
+            'performance_objects' : measure_performance(test_y, test_set_scores),
+            'time': validated_model_times[model_name]
         }
 
         # save outputs
