@@ -40,22 +40,24 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
-def read_absences_lookups(conn, lookups = None):
+def read_absences_lookups(conn, lookups = None, table='all_absences', schema='clean'):
     """ Read data of certain lookup-chunk
 
     :param pg.connection conn: postgres connector
     :param list lookups: lookups to query from the database
+    :param str table: table name
+    :param str schema: schema name
     :return pd.dataframe: data frame of all rows for the student_lookups
     :rtype pd.dataframe
     """
-    sqlcmd = """select * from clean.all_absences 
-    where student_lookup in {0} 
-    order by student_lookup, date; """.format(str(tuple(lookups)))
+    sqlcmd = """select * from {schema}."{table}" 
+    where student_lookup in {lookups} 
+    order by student_lookup, date; """.format(schema=schema, table=table, lookups=str(tuple(lookups)))
     return pd.read_sql_query(sqlcmd, conn)
 
 
-def consec_agg(df, desc_str='absence'):
-    """ Aggreate consective days of a certain type
+def consecutive_aggregate(df, desc_str='absence'):
+    """ Aggreate consective days of a certain type of absence
     
     :param pd.dataframe df: data frame of absence data
     :param str desc_str: description string of what types of absence to aggregate
@@ -63,12 +65,11 @@ def consec_agg(df, desc_str='absence'):
     :rtype pd.dataframe
     """
     new_date_col, new_cnt_col = desc_str+'_starting_date', desc_str+'_consec_count'
-    subdf = df[[desc_str in desc for desc in df.absence_desc]]
+    subdf = df[[desc_str in desc for desc in df.absence_desc]] # subset rows of relevant absence
     starting_dates=[None] * (subdf.shape[0])
     for i in range(subdf.shape[0]-1):
-        row1, row2 = subdf.iloc[[i]], subdf.iloc[[i+1]]
-        index = row1.index[0]
-        if row1.student_lookup.values[0]==row2.student_lookup.values[0]:
+        row1, row2 = subdf.iloc[[i]], subdf.iloc[[i+1]] # get consecutive rows
+        if row1.student_lookup.values[0]==row2.student_lookup.values[0]: #PythonSucksSubseting#
             if (((row2.date.values[0]  - row1.date.values[0]).days == 1) or  
             (row2.weekday.values[0]==1 and row1.weekday.values[0]>4 and 
              (row2.date.values[0]-row1.date.values[0]).days<4)):
@@ -78,6 +79,7 @@ def consec_agg(df, desc_str='absence'):
                 else:
                     starting_dates[i]=starting_dates[i-1]
                     starting_dates[i+1]=starting_dates[i-1]
+    
     subdf[new_date_col] = starting_dates
     sumdf = subdf.groupby(by=['student_lookup', new_date_col]).count().reset_index()[['student_lookup', new_date_col,'month']]
     sumdf = sumdf.rename(columns={'month':new_cnt_col})
@@ -112,6 +114,8 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
     """.format(table=table, column=col_cnt, dtype=dtype_cnt)
     cursor.execute(sql_add_column)
     
+    # join the consecutive absence to table clean.all_absences 
+    # so that we can use the same feature generation process
     sql_join_cmd = """
     update only {table} t1
     set {column_date}=t2.{column_date},
@@ -128,23 +132,26 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
             table=table, col1=col_date, col2=col_cnt, tab_int=table_intermed))
     
 def main():
-    chunksize = 100
+    chunksize = 200
     schema, table = 'clean', 'all_absences'
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
             print('------ Running generate_consec_absence_columns.py -------')
             lookups = list(pd.read_sql_query('select distinct student_lookup from clean.all_absences;', connection).student_lookup)
-            random.shuffle(lookups)
-            lookups = lookups[:2000]
+            random.shuffle(lookups) # shuffle lookup list so that we have roughly uniform workload for each chunk of students
+            lookups_len = len(lookups)
 
             print(' - generating agggated dataframe of absences...')
             final_abs_df = pd.DataFrame()
             final_tdy_df = pd.DataFrame()
+            processed_len = 0.0
             for chunk_lookups in chunks(lookups, chunksize):
                 df = read_absences_lookups(connection, lookups=chunk_lookups)
-                final_abs_df = final_abs_df.append(consec_agg(df, desc_str='absence'), ignore_index=True)
-                final_tdy_df = final_tdy_df.append(consec_agg(df, desc_str='tardy'), ignore_index=True)
+                final_abs_df = final_abs_df.append(consecutive_aggregate(df, desc_str='absence'), ignore_index=True)
+                final_tdy_df = final_tdy_df.append(consecutive_aggregate(df, desc_str='tardy'), ignore_index=True)
+                processed_len = processed_len + len(chunk_lookups)
+                print("   {:2.2%} students processed; still processing...".format(1.*processed_len/len(lookups)), end="\r")
 
             print(' - writing agg-dataframes to public...')
             eng = postgres_engine_generator()
@@ -161,7 +168,7 @@ def main():
             print(' - updating clean.absence by joining...')
             update_absence(cursor, table='clean.all_absences', col='absence') # changed from absence_test to absence; run again
             update_absence(cursor, table='clean.all_absences', col='tardy')
-            print(' - Done!')
+            print(' - Done: generate_consec_absence_columns.py!')
             
 if __name__=='__main__':
     main()
