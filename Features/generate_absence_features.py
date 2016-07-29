@@ -1,10 +1,9 @@
 """ Generate Absence related features
-<<<<<<< HEAD
-Depends on tables: 
+Depends on tables:
 - clean.all_snapshots
 - clean.all_absences
 
-Depends on code: 
+Depends on code:
 - generate_absence_features.py (1 min to run)
 - generate_consec_absence_columns.py (30 mins to run)
 
@@ -12,27 +11,16 @@ Depends on code:
 For Each Grade, generate features:
 - absence
 - absence_unexecused
-- tardy 
-=======
-For Each Grade, generate features:
-- absence
-- absence_unexecused
 - tardy
->>>>>>> master
 - tardy_unexecused
 - medical
 - absence_consec
 - tardy_consec
 
-<<<<<<< HEAD
 Note: 97% daily absence data are after 2009,
-which means Grade 5+ can have outcome category; 
+which means Grade 5+ can have outcome category;
 So features for Grade 3~5 are very sparse, and not suggested to use
 
-=======
-Note: features from top to bottom, there are more and more missing values,
-espeically for some specific grades
->>>>>>> master
 """
 
 
@@ -46,13 +34,8 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 import numpy as np
 import pandas as pd
-<<<<<<< HEAD
 from feature_utilities import *
 
-=======
-
-# functions
->>>>>>> master
 def set_null_as_0(cursor, column, schema='clean', table='absence'):
     """ Set null data points as 0 (be careful to assume so)
 
@@ -63,14 +46,13 @@ def set_null_as_0(cursor, column, schema='clean', table='absence'):
     """
     sqlcmd = """
     update {schema}.{table}
-<<<<<<< HEAD
-    set {column}=0 
+    set {column}=0
     where {column} is null;""".format(schema=schema, table=table, column=column)
     cursor.execute(sqlcmd)
     return None
-    
 
-def create_simple_temp_table(cursor, temp_table, source_table, source_column, 
+
+def create_simple_temp_table(cursor, temp_table, source_table, source_column,
                              new_column, grade, source_schema='clean'):
     """
     Create simple temp table using `create table as select *`
@@ -94,8 +76,8 @@ def create_simple_temp_table(cursor, temp_table, source_table, source_column,
     sql_index = "create index lookup_index on {t}(student_lookup)".format(t=temp_table)
     cursor.execute(sql_tmp_table)
     return None
-    
-def create_absence_type_temp_table(cursor, temp_table, source_table, 
+
+def create_absence_type_temp_table(cursor, temp_table, source_table,
                                    new_column, type_str, grade, source_schema='clean'):
     """
     Create temp table for only certain type of absences
@@ -109,7 +91,7 @@ def create_absence_type_temp_table(cursor, temp_table, source_table,
     """
     sql_create_agg_temp = """
     drop table if exists {tmp};
-    create temporary table {tmp} as 
+    create temporary table {tmp} as
     select student_lookup, count(*) as {nc} from {ss}.{st}
     where grade={grd} and absence_desc like '%{type_str}%'
     group by student_lookup;
@@ -119,7 +101,7 @@ def create_absence_type_temp_table(cursor, temp_table, source_table,
     cursor.execute(sql_create_temp_index)
     return None
 
-def create_consec_absence_temp_table(cursor, temp_table, source_table, source_column, 
+def create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
                                      new_column, grade, source_schema='clean'):
     """
     Create temp table for only consecutive absences
@@ -134,22 +116,16 @@ def create_consec_absence_temp_table(cursor, temp_table, source_table, source_co
     """
     sql_create_agg_temp = """
     drop table if exists {tmp};
-    create temporary table {tmp} as 
+    create temporary table {tmp} as
     select student_lookup, sum({sc}) as {nc} from {ss}.{st}
     where grade={grd}
     group by student_lookup;
-    """.format(tmp=temp_table, sc=source_column, ss=source_schema, st=source_table, 
+    """.format(tmp=temp_table, sc=source_column, ss=source_schema, st=source_table,
                nc=new_column, grd=grade)
     cursor.execute(sql_create_agg_temp)
     sql_create_temp_index = """create index {tmp}_index on {tmp}(student_lookup);""".format(tmp=temp_table);
     cursor.execute(sql_create_temp_index)
     return None
-
-    
-=======
-    set {column}=0
-    where {column} is null;""".format(schema=schema, table=table, column=column)
-    cursor.execute(sqlcmd)
 
 def create_feature_table(cursor, table, schema = 'model', replace = False):
     """ The current feature table is dropped and re-created with a single column
@@ -338,28 +314,19 @@ def main():
             create_feature_table(cursor, table, schema = 'model', replace = True)
 
             # days_absent columns
-<<<<<<< HEAD
             source_table, source_column, new_col_name = tab_snapshots, 'days_absent', 'absence'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
                 create_simple_temp_table(cursor, temp_table, source_table, source_column, column, grade=grd)
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
-=======
-            source_table, source_column = tab_snapshots, 'days_absent'
-            new_col_name = 'absence'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name+'_gr_'+str(grd)
-                update_column_with_join(cursor, table, column=column, source_table=source_table,
-                                source_column = source_column, source_schema = 'clean',
-                                schema='model', grade=grd)
->>>>>>> master
+
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # days_absent_unexecused
             source_table, source_column = tab_snapshots, 'days_absent_unexcused'
             new_col_name = 'absence_unexcused'
-<<<<<<< HEAD
-            for grd in range(gr_min, gr_max+1):                
+
+            for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
                 create_simple_temp_table(cursor, temp_table, source_table, source_column, column, grade=grd)
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
@@ -370,25 +337,25 @@ def main():
             source_table, new_col_name = tab_absence, 'tardy'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
-                create_absence_type_temp_table(cursor, temp_table, source_table, column, 
+                create_absence_type_temp_table(cursor, temp_table, source_table, column,
                                                type_str=new_col_name, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
-            
+
             # tardy_unexecused
             source_table, new_col_name = tab_absence, 'tardy_unexcused'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
-                create_absence_type_temp_table(cursor, temp_table, source_table, column, 
+                create_absence_type_temp_table(cursor, temp_table, source_table, column,
                                                type_str=new_col_name, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
-         
+
             # med
             source_table, new_col_name = tab_absence, 'medical'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
-                create_absence_type_temp_table(cursor, temp_table, source_table, column, 
+                create_absence_type_temp_table(cursor, temp_table, source_table, column,
                                                type_str='med', grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
@@ -398,96 +365,22 @@ def main():
             source_column = new_col_name + '_consec_count'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_consec_gr_' + str(grd)
-                create_consec_absence_temp_table(cursor, temp_table, source_table, source_column, 
+                create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
                                                  column, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
-                    
+
             # consecutive tardy days
             source_table, new_col_name = tab_absence, 'tardy'
             source_column = new_col_name + '_consec_count'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_consec_gr_' + str(grd)
-                create_consec_absence_temp_table(cursor, temp_table, source_table, source_column, 
+                create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
                                                  column, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
-        
-            connection.commit()
-        
-if __name__ =='__main__':
-        main()
-
-=======
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name+'_gr_'+str(grd)
-                update_column_with_join(cursor, table, column=column, source_table=source_table,
-                                source_column = source_column, source_schema = 'clean',
-                                schema='model', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # discipline_incidents
-#            source_table, source_column = tab_snapshots, 'discipline_incidents'
-#            for grd in range(gr_min, gr_max+1):
-#                column = source_column+'_gr_'+str(grd)
-#                update_column_with_join(cursor, table,
-#                   column=column, source_table=source_table,
-#                   source_column = source_column, source_schema = 'clean',
-#                   schema='model', grade=grd)
-#                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # tardy
-            source_table = tab_absence
-            new_col_name = 'tardy'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name + '_gr_' + str(grd)
-                update_join_type_cnt(cursor, table, column=column, source_table=source_table,
-                                source_column = None, source_schema = 'clean',
-                                schema='model', type_str='tardy', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # tardy_unexecused
-            source_table = tab_absence
-            new_col_name = 'tardy_unexcused'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name + '_gr_' + str(grd)
-                update_join_type_cnt(cursor, table, column=column, source_table=source_table,
-                                source_column = None, source_schema = 'clean',
-                                schema='model', type_str='tardy_unexcused', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # med
-            source_table = tab_absence
-            new_col_name = 'medical'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name + '_gr_' + str(grd)
-                update_join_type_cnt(cursor, table, column=column, source_table=source_table,
-                                source_column = None, source_schema = 'clean',
-                                schema='model', type_str='med', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # consequtive absence days
-            source_table = tab_absence
-            new_col_name = 'absence'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name + '_consec_gr_' + str(grd)
-                update_consec(cursor, table, column, source_table,
-                            source_column = None, source_schema = 'clean',
-                            schema='model', type_str = 'absence', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
-
-            # consequtive tardy days
-            source_table = tab_absence
-            new_col_name = 'tardy'
-            for grd in range(gr_min, gr_max+1):
-                column = new_col_name + '_consec_gr_' + str(grd)
-                update_consec(cursor, table, column, source_table,
-                            source_column = None, source_schema = 'clean',
-                            schema='model', type_str = 'tardy', grade=grd)
-                set_null_as_0(cursor, column, schema=schema, table=table)
 
             connection.commit()
 
 if __name__ =='__main__':
         main()
->>>>>>> master
