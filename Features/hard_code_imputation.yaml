@@ -1,0 +1,17 @@
+# YAML file for hard coded snapshot default values for missing
+# every value is a what will be placed into missing cells
+days_absent: 0
+days_absent_excused: 0
+days_absent_unexcused : 0
+days_present: 180
+disability: 'none'
+disadvantagement: 'none'
+discipline_incidents: 0
+district: 'not_recorded'
+gifted: 'N'
+iss: 0
+limited_english: 'N'
+oss: 0
+# section_504_plan: 'none'
+special_ed: '0'
+# status: 'not_recored'

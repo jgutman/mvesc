@@ -19,7 +19,7 @@
 			    "type": "date"},
     "district_withdraw_date": {"name": ["DistrictWithdrawDateFS",
 			       "AttendanceCalendarWithdrawDate"], 
-			       "type": "date"},
+			       "type": "text"},
     "withdraw_reason": {"name":["WithdrawalReason"], "type": "text"},
     "withdrawn_to_irn": {"name": ["WithdrawnToIRN"], "type": "text"},
     "sent_to_1_irn": {"name": ["SentTo1IRN"], "type": "text"},

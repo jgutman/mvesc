@@ -6,6 +6,7 @@
 import pandas as pd
 import os
 import re
+import json
 from sqlalchemy import create_engine
 from csv2postgres_mvesc import postgresql_engine_generator_mvesc
 
@@ -50,6 +51,40 @@ def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
         df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
     return table_name
 
+def add_file2table_jsonfile(excelfile, table_name, jsonfile='file_to_table_name.json'):
+    """ Add file:table to json OR return None to avoid conflict
+    
+    step 1: check whether file and table exist in json file;
+    step 2: if exist, return table_name; 
+    if not exist, add file:table to json, then return table_name
+    
+    :param str excelfile: excel file with sheet name 
+    :param str table_name: table name
+    :param str jsonfile: json file name, default: 'file_to_table_name.json'
+    :return str table_name
+    :rtype str
+    """
+    # load json, keys, values
+    with open(jsonfile, 'r') as f:
+        file_table_names = json.load(f)
+    existing_keys = list(file_table_names.keys())
+    existing_values = list(file_table_names.values())
+    
+    # check datafile in json
+    if excelfile in existing_keys:
+        print("""File "{}" already in json with table name "{}" """.format(excelfile, file_table_names[excelfile]))
+        return(file_table_names[excelfile])
+    else:
+        if table_name in existing_values:
+            print("""Table "{}" already in json for a file """.format(table_name))
+            return(None)
+        else:
+            file_table_names[excelfile] = table_name
+            with open(jsonfile, 'w') as f:
+                json.dump(file_table_names, f, ensure_ascii=True, sort_keys=True, indent=4)
+            print("""file:table "{}":"{}" added to json file """.format(excelfile, file_table_names[excelfile]))
+            return table_name
+    return(None)
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.xls ++++++#
 # -1. produce a `.csv` file with correct column names
@@ -83,11 +118,16 @@ print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
 # -2. upload sheets one by one
 filepath = '/mnt/data/mvesc/PartnerData/MVESC_DistrictRatings.xlsx'
 excel_name = "DistrictRating"
-schema='raw'
+schema1='raw'
+schema2='public'
 print('\n--- processing: ', filepath)
 xl = pd.ExcelFile(filepath)
 for sheet_name in xl.sheet_names:
-    tab_name = excel_name + sheet_name[-4:]
+    table_name = excel_name + sheet_name[-4:]
+    tab_name_json = add_file2table_jsonfile(excel_name+'->'+sheet_name, table_name)
+    if tab_name_json==None:
+        print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(excel_name+'->'+sheet_name, table_name))
+        continue 
     df = xl.parse(sheet_name)
     names = list(df.columns)
     newnames = ['_'.join(re.split('[, _\-#\(\)]+', name)).replace("%", 'pct').lower() for name in names ]
@@ -98,7 +138,8 @@ for sheet_name in xl.sheet_names:
     newnames = [name[:63] for name in newnames]
     newnames_dict={names[i]:newnames[i] for i in range(len(names))}
     df = df.rename(columns=newnames_dict)
-    table_name = df2postgres(df, tab_name, nrows=-1, if_exists='replace', schema=schema)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("sheet-table uploaded to mvesc: ", table_name)
 
 
@@ -106,29 +147,45 @@ for sheet_name in xl.sheet_names:
 # -1. read Excel parser 
 # -2. upload sheets one by one
 filepath='/mnt/data/mvesc/PartnerData/MVESC_Mobility.xlsx'
-schema = 'raw'
+table_name = "Mobility_2010_2015"
+schema1 = 'raw'
+schema2 = 'public'
 print('\n--- processing: ', filepath)
-df_Mobility = pd.read_excel(filepath, skiprows=1)
-df_Mobility2 = pd.read_excel(filepath)
-first3cols = ['district_code', 'district', 'metrics']
-col1=df_Mobility.columns[3:] # only columns which need to be combined
-col2=df_Mobility2.columns[3:]
+tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
+if tab_name_json==None:
+    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+else:
+    df_Mobility = pd.read_excel(filepath, skiprows=1)
+    df_Mobility2 = pd.read_excel(filepath)
+    first3cols = ['district_code', 'district', 'metrics']
+    col1=df_Mobility.columns[3:] # only columns which need to be combined
+    col2=df_Mobility2.columns[3:]
 
-new_colnames = first3cols + [combine_colnames(col1[i], col2[i]) for i in range(len(col1)) ]
-new_colnames_dict = {df_Mobility.columns[i]:new_colnames[i] for i in range(len(new_colnames))}
-df_Mobility=df_Mobility.rename(columns=new_colnames_dict)
-df_Mobility=df_Mobility.drop('metrics', axis=1)
-table_name = df2postgres(df_Mobility, "Mobility_2010_2015", nrows=-1, if_exists='replace', schema=schema)
-print("table uploaded to mvesc: ", table_name)
+    new_colnames = first3cols + [combine_colnames(col1[i], col2[i]) for i in range(len(col1)) ]
+    new_colnames_dict = {df_Mobility.columns[i]:new_colnames[i] for i in range(len(new_colnames))}
+    df_Mobility=df_Mobility.rename(columns=new_colnames_dict)
+    df_Mobility=df_Mobility.drop('metrics', axis=1)
+    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    print("table uploaded to mvesc: ", table_name)
 
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
 # -1. read Excel file 
 # -2. upload the table
+schema1 = 'raw'
+schema2 = 'public'
 jvsd_fn = '/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx'
+table_name = 'JVSD_Contact'
+print('\n--- processing: ', jvsd_fn)
 jvs_df = pd.read_excel(jvsd_fn, sheetname=0)
 newcol_dict = {col:col.lower() for col in jvs_df.columns}
 jvs_df = jvs_df.rename(columns=newcol_dict)
-table_name = 'JVSD_Contact'
-df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema='raw')
-df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema='public')
+tab_name_json = add_file2table_jsonfile(jvsd_fn.split('/')[-1], table_name)
+if tab_name_json==None:
+    print("""File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
+else:
+    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    print("table uploaded to mvesc: ", table_name)
+
