@@ -16,10 +16,10 @@ create table mobility_changes as
     student_lookup, school_year, grade, status, street_clean, district, city,
     district_withdraw_date, district_admit_date from clean.all_snapshots
   order by student_lookup, school_year,
-    # what are these single digit status codes
-    # priority sort by status : active > foster > inactive > other / null
-    # then for identical statuses, grab the most recent district admit
-    # for binary transition variables only, not for mobility counts
+    -- what are these single digit status codes
+    -- priority sort by status : active > foster > inactive > other / null
+    -- then for identical statuses, grab the most recent district admit
+    -- for binary transition variables only, not for mobility counts
     idx(array['active','foster','inactive', '%'], status),
     district_admit_date desc;
 

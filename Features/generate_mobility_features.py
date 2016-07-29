@@ -17,7 +17,6 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
     """.format(t=table)
 
     for max_grade in grade_range:
-        print(max_grade)
         mobility_count_changes = """left join
         (select student_lookup, count(distinct street_clean) n_addresses_to_gr_{gr},
             count(distinct district) n_districts_to_gr_{gr},
@@ -38,7 +37,6 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
         """.format(gr=max_grade)
         query_join_mobility_features += mobility_count_changes
 
-    print(query_join_mobility_features)
     cursor.execute(query_join_mobility_features)
     cursor.execute("select * from {t}".format(t=table))
     col_names = [i[0] for i in cursor.description]
@@ -76,7 +74,7 @@ def generate_mobility(replace = False,
 
         with postgres_pgconnection_generator() as connection:
             with connection.cursor() as cursor:
-                # do something
+                print('code not finished here')
 
 def main():
     generate_mobility(replace=True)
