@@ -114,7 +114,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                 s.student_lookup, s.course_code, s.course_name,
                 case when clean_term = 'final' then mark else avg_mark end 
                 as final_mark,
-            course_length, s.grade
+            course_length, s.grade, s.district
             from standard_grades as s
             left join avg_grades  as a
             on s.student_lookup = a.student_lookup 
