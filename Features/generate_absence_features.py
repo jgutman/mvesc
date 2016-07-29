@@ -1,4 +1,13 @@
 """ Generate Absence related features
+Depends on tables: 
+- clean.all_snapshots
+- clean.all_absences
+
+Depends on code: 
+- generate_absence_features.py (1 min to run)
+- generate_consec_absence_columns.py (30 mins to run)
+
+
 For Each Grade, generate features:
 - absence
 - absence_unexecused
@@ -8,8 +17,10 @@ For Each Grade, generate features:
 - absence_consec
 - tardy_consec
 
-Note: features from top to bottom, there are more and more missing values,
-espeically for some specific grades
+Note: 97% daily absence data are after 2009,
+which means Grade 5+ can have outcome category; 
+So features for Grade 3~5 are very sparse, and not suggested to use
+
 """
 
 
@@ -45,6 +56,14 @@ def create_simple_temp_table(cursor, temp_table, source_table, source_column,
                              new_column, grade, source_schema='clean'):
     """
     Create simple temp table using `create table as select *`
+    :param pg.cursor curosr: postgres pg.cursor
+    :param str temp_table: name of temp table to create
+    :param str source_table: name of source table to create temp table
+    :param str source_column: name of source column in source_table
+    :param str new_column: new column name in temp table
+    :param int grade: the grade to subset
+    :param str source_scheam: name of source schema, default 'clean'
+    :return: None
     """
     sql_tmp_table = """
     drop table if exists {tmp};
@@ -62,6 +81,13 @@ def create_absence_type_temp_table(cursor, temp_table, source_table,
                                    new_column, type_str, grade, source_schema='clean'):
     """
     Create temp table for only certain type of absences
+    :param pg.cursor curosr: postgres pg.cursor
+    :param str temp_table: name of temp table to create
+    :param str source_table: name of source table to create temp table
+    :param str new_column: new column name in temp table
+    :param int grade: the grade to subset
+    :param str source_scheam: name of source schema, default 'clean'
+    :return: None
     """
     sql_create_agg_temp = """
     drop table if exists {tmp};
@@ -79,6 +105,14 @@ def create_consec_absence_temp_table(cursor, temp_table, source_table, source_co
                                      new_column, grade, source_schema='clean'):
     """
     Create temp table for only consecutive absences
+    :param pg.cursor curosr: postgres pg.cursor
+    :param str temp_table: name of temp table to create
+    :param str source_table: name of source table to create temp table
+    :param str source_column: name of source column in source_table
+    :param str new_column: new column name in temp table
+    :param int grade: the grade to subset
+    :param str source_scheam: name of source schema, default 'clean'
+    :return: None
     """
     sql_create_agg_temp = """
     drop table if exists {tmp};
@@ -95,7 +129,7 @@ def create_consec_absence_temp_table(cursor, temp_table, source_table, source_co
 
     
 def main():
-    schema, table = "model" ,"absence_test"
+    schema, table = "model" ,"absence"
     source_schema = "clean"
     tab_snapshots, tab_absence = "all_snapshots", "all_absences"
     gr_min, gr_max = 3, 11
@@ -103,7 +137,7 @@ def main():
         connection.autocommit = True
         with connection.cursor() as cursor:
             create_feature_table(cursor, table, schema = 'model', replace = True)
-            get_table_len(cursor, table)
+
             # days_absent columns
             source_table, source_column, new_col_name = tab_snapshots, 'days_absent', 'absence'
             for grd in range(gr_min, gr_max+1):
@@ -126,7 +160,8 @@ def main():
             source_table, new_col_name = tab_absence, 'tardy'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
-                create_absence_type_temp_table(cursor, temp_table, source_table, column, type_str=new_col_name, grade=grd, source_schema='clean')
+                create_absence_type_temp_table(cursor, temp_table, source_table, column, 
+                                               type_str=new_col_name, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
             
