@@ -13,7 +13,7 @@ drop table if exists mobility_transitions;
 
 create table mobility_changes as
   select distinct on (student_lookup, school_year)
-    student_lookup, school_year, grade, status, street, district, city,
+    student_lookup, school_year, grade, status, street_clean, district, city,
     district_withdraw_date, district_admit_date from clean.all_snapshots
   order by student_lookup, school_year,
     # what are these single digit status codes
@@ -26,7 +26,7 @@ create table mobility_changes as
 create table mobility_transitions as
 select * from
 	(select student_lookup, grade, school_year,
-    street != lag(street) over (partition by student_lookup
+    street_clean != lag(street_clean) over (partition by student_lookup
       order by school_year) as different_street,
     district != lag(district) over (partition by student_lookup
       order by school_year) as different_district,
