@@ -10,11 +10,29 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 def add_id(cursor, table, schema='clean'):
+    """
+    Adds an id column to the given table for easy indexing of individual records
+
+    :param pg cursor object cursor: cursor for psql database
+    :param str table: table name in the database
+    :param str schema: schema name in database
+    """
     cursor.execute("alter table {}.{} add column id serial"\
                    .format(schema,table))
 
-def remove_residents(cursor):
-    cursor.execute("delete from clean.all_snapshots where status = 'resident';")
+def remove_residents(cursor, value, column, table, schema='clean'):
+    """
+    Removes records with the given condition
+
+    :param pg cursor object cursor: cursor for psql database
+    :param str value: value of column to be deleted
+    :param str column: column on which the condition is placed
+    :param str table: table name in the database
+    :param str schema: schema name in database
+    """
+    delete_query = "delete from {schema}.{table} where {col} = %s;"\
+                   .format(schema=schema,table=table,col=column)
+    cursor.execute(delete_query, value)
 
 def remove_duplicates(cursor, cols, table, schema='clean'):
     """
@@ -23,7 +41,7 @@ def remove_duplicates(cursor, cols, table, schema='clean'):
 
     :param pg cursor object cursor: cursor for psql database
     :param list cols: list of strings giving column names that should be unique
-    :param string table: table name in the database
+    :param str table: table name in the database
     :param str schema: schema name in database
     """
     # For identical lookup, district, school, grade, and year there are
@@ -63,19 +81,19 @@ def remove_trails(cursor):
 
     :param pg cursor object cursor: cursor for psql database
     """
+    # counts the number of times a student appears in each grade
     grade_count_query = """
     create temp table grade_counts as
     select student_lookup, """
-
     for g in range(1,13):
         grade_count_query += \
         "sum(case when grade={gr} then 1 else 0 end) as num_{gr}, ".format(gr=g)
 
     grade_count_query = grade_count_query[:-2] + \
                         " from clean.all_snapshots group by student_lookup;"
-
     cursor.execute(grade_count_query)
 
+    # grabs the maximum and the grade level in which that maximum occured
     add_cols_query = """
     alter table grade_counts add column max_num int;
     alter table grade_counts alter column max_num type int using
@@ -93,6 +111,9 @@ def remove_trails(cursor):
     add_cols_query += " end;"
     cursor.execute(add_cols_query)
 
+    # keeps only the first record for a student in a single grade and district
+    # this will only be used for cases where a student appears in that school
+    # and grade for at least 3 years in a row
     cursor.execute("""
     create temp table to_keep as
     select distinct on (student_lookup, grade, district) 
@@ -104,6 +125,7 @@ def remove_trails(cursor):
     order by student_lookup,grade, district, school_year
     """)
 
+    # joining grade counts onto snapshots table
     cursor.execute(""" 
     create temp table joined_grade_counts as select t1.id,max_num,max_num_grade
     from clean.all_snapshots as t1
@@ -112,6 +134,9 @@ def remove_trails(cursor):
     on t1.student_lookup = t2.student_lookup;
     """)
 
+    # keeps all records where 
+    # (a) student is in the same school/grade pair for less than 3 years or
+    # (b) the first record in a long string in the same school/grade
     cursor.execute("""
     delete from clean.all_snapshots as s using joined_grade_counts
     where s.id not in (select id from to_keep)
@@ -133,9 +158,12 @@ def main():
             connection.commit()
             remove_trails(cursor)
             connection.commit()
-    # as of 7/28 this left 4 students with conflicting grade levels -
+
+    # as of 7/28 data this left 4 students with conflicting grade levels 
+    # among the students with outcomes:
     # student lookups 70212 (conflicting electronic school record), 
-    # 37529 (two people merged), and 62594 and 2486 (dealt with manually)
+    # 37529 (two people merged), and 62594 and 2486 (dealt with manually - 
+    # these had some mistaken records)
 
 if __name__ == "__main__":
     main()
