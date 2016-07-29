@@ -3,6 +3,10 @@
 # Generates all possible features we're considering
 import generate_demographic_features
 import generate_snapshot_features
+import generate_mobility_features
+import generate_consec_absence_columns
+import generate_absence_features
+import generate_gpa
 
 ####
 # Pseudo-code Outline
@@ -11,6 +15,8 @@ import generate_snapshot_features
 # Check if `replace_feature_tables` option is T or F
 #	if T, then we re-calculate all features
 #	if F, then we only add new columns
+
+# This option doesn't seem to be in use?
 
 # (1) create various vectors of labeled outcomes, based on
 #	different possible definitions
@@ -23,11 +29,12 @@ import generate_snapshot_features
 print("--- working on generating model.demographics table ... ")
 generate_demographic_features.main()
 print("--- working on generating model.snapshots table ... ")
-generate_snapshot_features.generate_raw_snapshot_features(replace=True)
-
+generate_snapshot_features.main()
 print("--- working on generating model.absence table ... ")
-# call function
+# call functions
+# generate_consec_absence_columns.main() # slow, does not require snapshots
+# generate_absence_features.main()
 print("--- working on generating model.mobility table ... ")
-# call function
+# generate_mobility_features.main() # not fully implemented yet
 print("--- working on generating model.grades table ... ")
-# call function
+generate_gpa.main()
