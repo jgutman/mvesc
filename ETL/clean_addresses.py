@@ -28,7 +28,8 @@ def parse_addresses(addresses, shortened):
     return addresses
 
 def main():
-    with open('clean_addresses.yaml', 'r') as f:
+    with open(os.path.join(base_pathname,
+        'ETL/clean_addresses.yaml'), 'r') as f:
         shortened = yaml.load(f)
 
     with postgres_pgconnection_generator() as connection:
