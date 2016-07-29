@@ -19,12 +19,12 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
     for max_grade in grade_range:
         print(max_grade)
         mobility_count_changes = """left join
-        (select student_lookup, count(distinct street) n_addresses_to_gr_{gr},
+        (select student_lookup, count(distinct street_clean) n_addresses_to_gr_{gr},
             count(distinct district) n_districts_to_gr_{gr},
             count(distinct city) n_cities_to_gr_{gr},
             count(school_year) n_records_to_gr_{gr},
-            (count(distinct street)-1)/
-                greatest(1, count(street))::float
+            (count(distinct street_clean)-1)/
+                greatest(1, count(street_clean))::float
                 avg_address_change_to_gr_{gr},
             (count(distinct district)-1)/
                 greatest(1, count(district))::float
