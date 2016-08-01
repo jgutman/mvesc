@@ -138,7 +138,7 @@ def read_table_to_df(connection, table_name, columns=['*'], schema='public', nro
         sqlcmd = sqlcmd + ';'
     else:
         sqlcmd = sqlcmd + " limit {nrows};".format(nrows=str(nrows))
-    df = pd.read_sql(sqlcmd, connection)
+    df = pd.read_sql(sqlcmd, connection)        
     return df
 
 def get_column_type(cursor, table_name, column_name):
@@ -252,7 +252,11 @@ def df2num(rawdf):
         col_names = dummy_col_df.columns
         col_names = {cat:col+'_'+cat for cat in col_names }
         dummy_col_df = dummy_col_df.rename(columns=col_names)
-        most_class_col = dummy_col_df.sum().idxmax()
+        try:
+            most_class_col = dummy_col_df.sum().idxmax()
+        except ValueError: # hitting a value error when a column was entirely null
+            print ("error in column {}, type {}".format(col, rawdf[col].dtype))
+            exit(1)
         dummy_col_df = dummy_col_df.drop([most_class_col], axis=1)
         numeric_df = numeric_df.join(dummy_col_df)
     return numeric_df
