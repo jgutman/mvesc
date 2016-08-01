@@ -344,7 +344,7 @@ def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
     :rtype str
     """
     # create a postgresql engine to wirte to postgres
-    engine = postgresql_engine_generator_mvesc()
+    engine = postgres_engine_generator()
     
     #write the data frame to postgres
     if nrows==-1:
