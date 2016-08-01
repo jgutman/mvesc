@@ -22,8 +22,8 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
         avg_address_change_to*, avg_district_change_to*, avg_city_change_to*]
 
     :param psycopg2.cursor: cursor to execute queries on the database
-    :param list/range(int): which grades to generate features for (each will be
-        appended to the feature name in standard feature_x_gr_k format)
+    :param list/range(int) grade_range: which grades to generate features for
+        (each will be appended to the feature name in standard feature_x_gr_k format)
     :param string table: name of temporary table where these features are stored
     :param string source_schema: name of schema where address, district, city
         features should be drawn from
@@ -35,8 +35,8 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
     query_join_mobility_features = """create temporary table {t} as
     select * from
         (select distinct(student_lookup)
-        from clean.all_snapshots) student_list
-    """.format(t=table)
+        from {source_schema}.{source_table}) student_list
+    """.format(t=table, source_schema=source_schema, source_table=source_table)
 
     # for each student, get the number of distinct addresses, cities, districts
     # lived in up to the specified max_grade, also store the total number of
@@ -44,7 +44,8 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
     # then compute average as (number_addresses - 1) / number_records
     for max_grade in grade_range:
         mobility_count_changes = """left join
-        (select student_lookup, count(distinct street_clean) n_addresses_to_gr_{gr},
+        (select student_lookup,
+            count(distinct street_clean) n_addresses_to_gr_{gr},
             count(distinct district) n_districts_to_gr_{gr},
             count(distinct city) n_cities_to_gr_{gr},
             count(school_year) n_records_to_gr_{gr},
@@ -57,10 +58,11 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
             (count(distinct city)-1)/
                 greatest(1, count(city))::float
                 avg_city_change_to_gr_{gr}
-        from clean.all_snapshots where grade <= {gr}
+        from {source_schema}.{source_table} where grade <= {gr}
         group by student_lookup) mobility_gr_{gr}
         using(student_lookup)
-        """.format(gr=max_grade)
+        """.format(gr=max_grade,
+            source_schema=source_schema, source_table=source_table)
         query_join_mobility_features += mobility_count_changes
 
     cursor.execute(query_join_mobility_features)
@@ -73,25 +75,44 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
 def join_mobility_transitions(cursor, grade_range,
     table = 'mobility_transitions_wide', source_table = 'transition_counts'):
     """
+    Creates a temporary table containing the second set of mobility features,
+    transition-based grade to grade counts of changes from previous school year
+    for all grades in specified grade range.
+    Draws features from {source_table} and stores them in {table}.
 
+    features: [street_transition_in*, district_transition_in*, city_transition_in*]
+
+    :param psycopg2.cursor: cursor to execute queries on the database
+    :param list/range(int) grade_range: which grades to generate features for
+        (each will be appended to the feature name in standard feature_x_gr_k format)
+    :param string table: name of temporary table where these features are stored
+    :param string source_table: name of temporary table where features to be drawn from
+    :returns list of column names as string in newly created temp table
+    :rtype list[string]
     """
+    # create table with all student_lookups to store features for
     query_join_mobility_features = """create temporary table {t} as
     select * from
         (select distinct(student_lookup)
         from {source_table}) student_list
     """.format(t=table, source_table=source_table)
 
+    # for each student, return 0 or 1 for whether or not their address has
+    # changed at least once since their address from the previous grade
     for grade in grade_range:
         mobility_count_changes = """left join
-        (select student_lookup, num_different_street street_transition_in_gr_{gr},
-            num_different_district district_transition_in_gr_{gr},
-            num_different_city city_transition_in_gr_{gr}
+        (select student_lookup,
+            least(1, num_different_street) street_transition_in_gr_{gr},
+            least(1, num_different_district) district_transition_in_gr_{gr},
+            least(1, num_different_city) city_transition_in_gr_{gr}
         from {source_table} where grade = {gr}) mobility_transition_gr_{gr}
         using(student_lookup)
         """.format(gr=grade, source_table=source_table)
         query_join_mobility_features += mobility_count_changes
 
     cursor.execute(query_join_mobility_features)
+    # get column names in temporary table just created and return all in a list
+    # remove student_lookup from list of column names returned
     cursor.execute("select * from {t}".format(t=table))
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
