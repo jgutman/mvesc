@@ -94,19 +94,11 @@ def clf_loop(clfs, params, train_X, train_y,
         parameter_values = params[model_name]
         with Timer(model_name) as t:
             best_validated_models[model_name] = \
-<<<<<<< HEAD
                 GridSearchCV(clf, parameter_values, scoring=criterion,
                              cv=cv_folds)
             best_validated_models[model_name].fit(train_X, train_y)
             validated_model_times[model_name] = t.time_check()
 
-=======
-                GridSearchCV(clf, parameter_values, scoring=criterion, 
-                             cv=cv_folds)
-            best_validated_models[model_name].fit(train_X, train_y)
-            validated_model_times[model_name] = t.time_check()
-            
->>>>>>> master
         model_cv_score = best_validated_models[model_name].best_score_
         print("model: {model}, best {criterion} score: {score}".format(
             model=model_name, criterion=criterion, score=model_cv_score))
@@ -119,12 +111,9 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     :param pd.DataFrame joint_df: data frame with a cohort, outcome, and features
     :param list[int] cohorts_held_out: a list of years to split test set on
     :param string or list[int] cohorts_training: either the string 'all' or
-        a list of years to include in the training, must all precede the test set
-<<<<<<< HEAD
+        a list of years to include in the training, all years must precede
+        the test set years in cohorts_held_out
     :returns two dataframes consisting of rows from joint_df, one for training
-=======
-    :returns two dataframes consisting of rows from joint_df, one for training 
->>>>>>> master
         and one to be used for testing
     :rtype pd.DataFrame, pd.DataFrame
     """
@@ -146,11 +135,7 @@ def measure_performance(outcomes, predictions):
     :param list[float] predictions:
     """
     performance_objects = {}
-<<<<<<< HEAD
     performance_objects['pr_curve'] = precision_recall_curve(outcomes,
-=======
-    performance_objects['pr_curve'] = precision_recall_curve(outcomes, 
->>>>>>> master
                                                              predictions)
     performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
     return performance_objects
@@ -162,22 +147,14 @@ def build_outcomes_plus_features(model_options):
     Reads in the features and outcomes from database according to the
     specification given in model_options dictionary.
     :param dict model_options: all options read in from yaml file
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> master
     Assumes:
     model.outcome table contains a column (name in cohort_grade_level_begin)
     with int values identifying each student's cohort year
     e.g. 'cohort_9th' contains the year each student is seen in 9th grade
     and contains an outcome column (name given in outcome_name)
     and all feature and outcomes tables contain student_lookup
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> master
     Usage:
     select train, validation, and test based on values in column
     'cohort_grade_level_begin' according to value in 'cohorts_held_out'
@@ -186,11 +163,7 @@ def build_outcomes_plus_features(model_options):
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
             columns = ['student_lookup',
-<<<<<<< HEAD
             model_options['outcome_name'],
-=======
-            model_options['outcome_name'], 
->>>>>>> master
             model_options['cohort_grade_level_begin']])
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset=[colnames] to drop based on NAs in certain columns only
@@ -208,21 +181,12 @@ def build_outcomes_plus_features(model_options):
 
         for table, column_names in model_options['features_included'].items():
             for c in column_names:
-<<<<<<< HEAD
                 try:
                     grade =  int(c.split('_')[-1])
                 except:
                     pass # ignoring features not connected to a grade level
                 else:
                     assert grade < model_options['prediction_grade_level'], \
-=======
-                try: 
-                    grade =  int(c.split('_')[-1])
-                except: 
-                    pass # ignoring features not connected to a grade level
-                else: 
-                    assert grade <= model_options['prediction_grade_level'], \
->>>>>>> master
                            "feature {} after prediction window".format(c)
             features = read_table_to_df(connection, table_name = table,
                 schema = 'model', nrows = -1,
@@ -296,11 +260,8 @@ def scale_features(train, test, strategy):
         return train, test
 
     elif(strategy == 'standard' or strategy == 'robust'):
-<<<<<<< HEAD
+
         non_binary_columns = [k for k, v in num_values_by_column.items()
-=======
-        non_binary_columns = [k for k, v in num_values_by_column.items() 
->>>>>>> master
                               if v > 2]
         if (len(non_binary_columns) > 0):
             scaler = StandardScaler() if strategy == 'standard' else RobustScaler()
@@ -421,14 +382,8 @@ def run_all_models(model_options, clfs, params, save_location):
     assert (all(train_X.columns == test_X.columns)),\
         "train and test have different columns"
 
-    ####
-<<<<<<< HEAD
     # From now on, we IGNORE the `test`, `test_X`, `test_y` data
-=======
-    # From now on, we IGNORE the `test`, `test_X`, `test_y` data 
->>>>>>> master
     # until we evaluate the model
-    ####
 
     ## (4B) Fit on Training ##
     # if we require cross-validation of parameters, we can either
@@ -456,13 +411,7 @@ def run_all_models(model_options, clfs, params, save_location):
     else:
         print('unknown cross-validation strategy. try "{}", "{}", or "{}"'\
               .format('leave_cohort_out', 'k_fold', 'none'))
-<<<<<<< HEAD
 
-
-=======
-
-    
->>>>>>> master
     criterion = parse_criterion_string(
             model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
