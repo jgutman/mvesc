@@ -19,33 +19,33 @@ expand features and grade range
 
 ### Features Used
 * absence
-	 * tardy_gr_9
-	 * absence_consec_gr_9
-	 * medical_gr_9
-	 * tardy_consec_gr_9
 	 * tardy_unexcused_gr_9
-* mobility
-	 * n_cities_to_gr_9
-	 * n_addresses_to_gr_9
-	 * n_districts_to_gr_9
+	 * absence_consec_gr_9
+	 * tardy_consec_gr_9
+	 * medical_gr_9
+	 * tardy_gr_9
 * snapshots
+	 * discipline_incidents_gr_9
 	 * district_gr_9
-	 * gifted_gr_9
 	 * disability_gr_9
 	 * status_gr_9
-	 * iss_gr_9
-	 * disadvantagement_gr_9
-	 * limited_english_gr_9
-	 * special_ed_gr_9
-	 * discipline_incidents_gr_9
-	 * days_absent_gr_9
-	 * days_absent_unexcused_gr_9
 	 * oss_gr_9
+	 * gifted_gr_9
+	 * iss_gr_9
+	 * days_absent_gr_9
+	 * special_ed_gr_9
+	 * days_absent_unexcused_gr_9
+	 * limited_english_gr_9
+	 * disadvantagement_gr_9
+* mobility
+	 * n_addresses_to_gr_9
+	 * n_cities_to_gr_9
+	 * n_districts_to_gr_9
 * grades
 	 * gpa_gr_9
 
 ### Performance Metrics
-on average, model run in 2.67 seconds (1 times) <br/>precision on top 10%: 0.0963 <br/>precision on top 5%: 0.0984 <br/>top features: disability_gr_9_other major (1.0), status_gr_9_mrdd (1.0), tardy_unexcused_gr_9 (0.00097)
+on average, model run in 2.65 seconds (1 times) <br/>precision on top 15%: 0.087 <br/>precision on top 10%: 0.0963 <br/>precision on top 5%: 0.0984 <br/>recall on top 15%: 0.224 <br/>recall on top 10%: 0.168 <br/>recall on top 5%: 0.112 <br/>AUC value is: 0.524 <br/>top features: disability_gr_9_other major (1.0), status_gr_9_mrdd (1.0), tardy_unexcused_gr_9 (0.00097)
 ![auto_expand_features_test_xc_SVM_score_dist.png](auto_expand_features_test_xc_SVM_score_dist.png)
 ![auto_expand_features_test_xc_SVM_confusion_mat_0.3.png](auto_expand_features_test_xc_SVM_confusion_mat_0.3.png)
 ![auto_expand_features_test_xc_SVM_pr_vs_threshold.png](auto_expand_features_test_xc_SVM_pr_vs_threshold.png)

@@ -205,7 +205,7 @@ def markdown_report(f, save_location, saved_outputs):
     prec_15 = precision_at_k(test_y, test_set_scores, .15)
     prec_10 = precision_at_k(test_y, test_set_scores, .1)
     prec_5 = precision_at_k(test_y, test_set_scores, .05)
-    recall_10 = recall_at_k(test_y, test_set_scores, 0.15)
+    recall_15 = recall_at_k(test_y, test_set_scores, 0.15)
     recall_10 = recall_at_k(test_y, test_set_scores, 0.1)
     recall_5 = recall_at_k(test_y, test_set_scores, 0.05)
     f.write("precision on top 15%: {:0.3} <br/>".format(prec_15))
