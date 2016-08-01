@@ -9,16 +9,39 @@ sys.path.insert(0,parentdir)
 
 from mvesc_utility_functions import *
 
-def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
+def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
+    source_schema = 'clean', source_table = 'all_snapshots'):
     """
+    Creates a temporary table containing the first set of mobility features,
+    count-based cumulative counts and averages for number of distinct addresses,
+    districts, and cities (ignoring alternations) up to and including grade x,
+    for all grades in specified grade range.
+    Draws features from {source_schema}.{source_table} and stores them in {table}.
 
+    features: [n_addresses_to*, n_districts_to*, n_cities_to*, n_records_to*,
+        avg_address_change_to*, avg_district_change_to*, avg_city_change_to*]
+
+    :param psycopg2.cursor: cursor to execute queries on the database
+    :param list/range(int): which grades to generate features for (each will be
+        appended to the feature name in standard feature_x_gr_k format)
+    :param string table: name of temporary table where these features are stored
+    :param string source_schema: name of schema where address, district, city
+        features should be drawn from
+    :param string source_table: name of table where features to be drawn from
+    :returns list of column names as string in newly created temp table
+    :rtype list[string]
     """
+    # create table with all student_lookups to store features for
     query_join_mobility_features = """create temporary table {t} as
     select * from
         (select distinct(student_lookup)
         from clean.all_snapshots) student_list
     """.format(t=table)
 
+    # for each student, get the number of distinct addresses, cities, districts
+    # lived in up to the specified max_grade, also store the total number of
+    # non-null records going into that count (how long they've been in data)
+    # then compute average as (number_addresses - 1) / number_records
     for max_grade in grade_range:
         mobility_count_changes = """left join
         (select student_lookup, count(distinct street_clean) n_addresses_to_gr_{gr},
@@ -41,6 +64,8 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
         query_join_mobility_features += mobility_count_changes
 
     cursor.execute(query_join_mobility_features)
+    # get column names in temporary table just created and return all in a list
+    # remove student_lookup from list of column names returned
     cursor.execute("select * from {t}".format(t=table))
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
