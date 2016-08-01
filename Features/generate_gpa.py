@@ -128,12 +128,14 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             from standard_grades
             group by student_lookup, course_code;
             
+            drop table if exists clean.final_grades;
             create table clean.final_grades as 
             select distinct on (s.student_lookup, s.course_code) 
             s.student_lookup, s.course_code, s.course_name,  
             case when clean_term = 'final' then mark else avg_mark end       
             as final_mark,                          
-            coalesce(course_length,1) as course_length, s.grade, s.district
+            coalesce(nullif(course_length,0),1) as course_length,
+            s.grade, s.district
             from standard_grades as s                               
             left join avg_grades  as a 
             on s.student_lookup = a.student_lookup               
@@ -179,7 +181,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             # adding subjects to final grades table
             clean_column(cursor, 'class_subjects.json', 'course_name',
                          'final_grades', new_column_name = 'subject',
-                         replace = 0)
+                         replace = 0, exact = 0)
 
             # yearly gpa
             gpa_query = """
@@ -322,7 +324,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             print('subject gpa calculated')
 
 
-            cursor.execute("drop table clean.final_grades;")
+            #cursor.execute("drop table clean.final_grades;")
 
             update_column_with_join(cursor,table, 
                                     column_list=subject_gpa_counts_cols,
