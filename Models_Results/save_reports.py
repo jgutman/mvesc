@@ -17,19 +17,19 @@ class Top_features():
     def DT(model, columns, k):
         imp = model.best_estimator_.feature_importances_
         top_feat = sorted(zip(columns,imp.tolist()),
-                           key=lambda x: x[1], reverse=True)
+                           key=lambda x: abs(x[1]), reverse=True)
         return top_feat[:k]
 
     def logit(model, columns, k):
         coefs = model.best_estimator_.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
-                           key=lambda x: x[1], reverse=True)
+                           key=lambda x: abs(x[1]), reverse=True)
         return top_coefs[:k]
 
     def SVM(model, columns, k):
         coefs = model.best_estimator_.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
-                           key=lambda x: x[1], reverse=True)
+                           key=lambda x: abs(x[1]), reverse=True)
         return top_coefs[:k]
 
     
