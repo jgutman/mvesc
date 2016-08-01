@@ -11,7 +11,7 @@ from estimate_prediction_model import read_in_yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
-    confusion_matrix, precision_score
+    confusion_matrix, precision_score, recall_score, roc_auc_score
 
 class Top_features():
     def DT(model, columns, k):
@@ -64,7 +64,13 @@ def precision_at_k(y_true, y_scores, k):
     # from Rayid's magicloops code
     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
-    return precision_score(y_true, y_pred)    
+    return precision_score(y_true, y_pred)
+
+def recall_at_k(y_true, y_scores, k):
+    # from Rayid's magicloops code
+    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
+    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    return recall_score(y_true, y_pred)  
 
 
 def plot_score_distribution(soft_predictions, save_location, 
@@ -196,10 +202,23 @@ def markdown_report(f, save_location, saved_outputs):
     f.write("\n### Performance Metrics\n")
     f.write("on average, model run in {:0.2f} seconds ({} times) <br/>"\
             .format(saved_outputs['time']/float(n_models),n_models))
+    prec_15 = precision_at_k(test_y, test_set_scores, .15)
     prec_10 = precision_at_k(test_y, test_set_scores, .1)
     prec_5 = precision_at_k(test_y, test_set_scores, .05)
+    recall_10 = recall_at_k(test_y, test_set_scores, 0.15)
+    recall_10 = recall_at_k(test_y, test_set_scores, 0.1)
+    recall_5 = recall_at_k(test_y, test_set_scores, 0.05)
+    f.write("precision on top 15%: {:0.3} <br/>".format(prec_15))
     f.write("precision on top 10%: {:0.3} <br/>".format(prec_10))
     f.write("precision on top 5%: {:0.3} <br/>".format(prec_5))
+    f.write("recall on top 15%: {:0.3} <br/>".format(recall_15))
+    f.write("recall on top 10%: {:0.3} <br/>".format(recall_10))
+    f.write("recall on top 5%: {:0.3} <br/>".format(recall_5))
+
+    # write auc
+    auc_val = roc_auc_score(test_y, test_set_scores)
+    f.write("AUC value is: {:0.3} <br/>".format(auc_val))
+
     try:
         get_top_features = getattr(Top_features, model_name)
     except AttributeError:
