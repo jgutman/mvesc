@@ -109,6 +109,7 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
 
     # record test names to use later
     list_of_year_test_types = uniqueColNames[6:]
+    print("List of Tests to Include")
     print(list_of_year_test_types)
 
     # mapping for converting the non-numeric values
@@ -178,15 +179,16 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_t
         'seventh' : 'was_in_grade_7',
         'eighth' : 'was_in_grade_8'}
 
+    # SKIP. Because KRAL is missing for ~99% of our students with samples.
     # append kral placement and kral score info (un-normalized)
     #   FUTURE: normalize KRAL.
-    kindergarten_info = oaa_with_grade_year[['kral', 'kral_pl']]
-    oaa_normalized = pd.concat([oaa_normalized, kindergarten_info], axis = 1)
+    # kindergarten_info = oaa_with_grade_year[['kral', 'kral_pl']]
+    # oaa_normalized = pd.concat([oaa_normalized, kindergarten_info], axis = 1)
 
     for test in list_of_year_test_types:
         # get the corresponding grade_year column for the test
         corresponding_year = corresponding_grade_dict[test.split('_')[0]]
-        print(corresponding_year)
+        # print(corresponding_year)
 
         # fill in with 3000 for observations with missing years (LOTS OF THESE)
         #   this allows for normalizing on unknown years
