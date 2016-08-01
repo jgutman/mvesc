@@ -333,3 +333,22 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
         tab_name = csv2postgres_file(filepath, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
         table_names.append(tab_name)
     return table_names
+
+# copied directly from excel2postgres python file
+def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
+    """ dump dataframe object to postgres database
+    
+    :param pandas.DataFrame df: dataframe
+    :param int nrows: number of rows to write to table;
+    :return str table_name: table name of the sql table
+    :rtype str
+    """
+    # create a postgresql engine to wirte to postgres
+    engine = postgresql_engine_generator_mvesc()
+    
+    #write the data frame to postgres
+    if nrows==-1:
+        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    else:
+        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    return table_name
