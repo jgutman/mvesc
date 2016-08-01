@@ -128,7 +128,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_confusion_mat_{}.png'.format(threshold),
                 bbox_inches='tight')
     
