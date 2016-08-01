@@ -1,0 +1,9 @@
+{
+"language": ["german","spanish","french", "mandarin","asl"],
+"stem": ["robot","zoo","vet","stem","ocean","forensic","graphic","web","tech","engine","data","comput","keyboard","java","elect","programming","cyber","digital","math","geometry","al%ebra","account","calc","alg","financ","stat","field","env","eco","sci","chem","bio","ag","energy","fuel","animal","botany","auto","anat","const"],
+"humanities": ["west","culture","war","wwii","anth","us","eng","lang","book","novel","la","lit","writ","read","myth","comp","humn","micro","soc","diversity","com","hist","geo","current ev","econ","civic","psy","human","gov","media","world","develop","global","amer","holocaust"],
+"art": ["create","solo","ensemble","glee","3d","theat","photo","vis","voc","design","jazz","craft","film","draft","color","concept","drama","art","music","painting","choir","chor","band","sing","guitar","ceramic","journ","draw","orchestra","scuplt","dance","archit","woodwork","video"],
+"health": ["outdoor","wellness","rec","football","p.e.","pe ","nutr","food","jog","fit","gym","phys","health","liv","life","athlet","first aid","condition","wt","wgt","weight","sport","aerobic","parent","teen","family","strong","strength","home"],
+"future_prep": ["occup","production","quick","org","wrk","aid","time","skill","prep","service","office","manf","manuf","on your own","bus","pub","freshman","freshmen","market","vct","job","work","library","leader","advis","entre","capstone","career","cbi","college","mgmt","conduct"],
+"intervention": ["inte%vention","online","esl","assistance","nova","excel","esc","resource","tutor","study"]
+}
