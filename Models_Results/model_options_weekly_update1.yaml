@@ -16,7 +16,7 @@
 model_classes_selected: [logit, DT, SVM, RF] # [SVM] # must be a list of strings!
 user_description: expand features and grade range
 # model name and extension appended automatically
-file_save_name: auto_expand_features_test_xc
+file_save_name: test_xc
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort

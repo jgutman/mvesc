@@ -57,7 +57,7 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     ax2.plot(pct_above_per_thresh, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
 
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
 
 def precision_at_k(y_true, y_scores, k):
@@ -83,7 +83,7 @@ def plot_score_distribution(soft_predictions, save_location,
     plt.xlabel("soft prediction score")
     plt.xlim([min_x,max_x])
     plt.ylabel("number of students")
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
 
 
@@ -95,7 +95,7 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
     plt.title("precision vs. recall")
     plt.xlabel("recall")
     plt.ylabel("precision")
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
 
 
@@ -110,7 +110,7 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     plt.title("precision and recall vs threshold")
     plt.xlabel("threshold")
     plt.legend(["precision", "recall"])
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall.png', bbox_inches='tight')
 
 
@@ -233,8 +233,9 @@ def markdown_report(f, save_location, saved_outputs):
                         top_features[2][0],top_features[2][1]))
     images = [a for a in os.listdir(save_location) if 
               ('png' in a and model_name in a and run_name in a)]
+    fig_dir='./figs/'
     for fn in images:
-        f.write("![{fn}]({fn})\n".format(fn=fn))
+        f.write("![{fig_dir}{fn}]({fn})\n".format(fig_dir=fig_dir, fn=fn))
         
 
 def write_model_report(save_location, saved_outputs):
