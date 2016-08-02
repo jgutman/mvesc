@@ -231,11 +231,11 @@ def markdown_report(f, save_location, saved_outputs):
                 .format(top_features[0][0],top_features[0][1],
                         top_features[1][0],top_features[1][1],
                         top_features[2][0],top_features[2][1]))
-    images = [a for a in os.listdir(save_location) if 
+    fig_dir='figs/'
+    images = [a for a in os.listdir(os.path.join(save_location, fig_dir)) if 
               ('png' in a and model_name in a and run_name in a)]
-    fig_dir='./figs/'
     for fn in images:
-        f.write("![{fig_dir}{fn}]({fn})\n".format(fig_dir=fig_dir, fn=fn))
+        f.write("![{fn}]({fig_dir}{fn})\n".format(fig_dir=fig_dir, fn=fn))
         
 
 def write_model_report(save_location, saved_outputs):
