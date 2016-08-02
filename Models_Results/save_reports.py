@@ -32,6 +32,11 @@ class Top_features():
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
+    def RF(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
     
 def plot_precision_recall_n(y_true, y_prob, save_location, 
                             run_name, model_name):

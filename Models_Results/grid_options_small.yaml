@@ -10,9 +10,9 @@ DT:
     min_samples_split: [2, 5, 10]
 RF:
     n_estimators: [ 500]
-    max_depth: [10, 50]
+    max_depth: [50]
     max_features: [sqrt]
-    min_samples_split: [5, 10]
+    min_samples_split: [3, 5]
 SGD:
     loss: [hinge, log, perceptron]
     penalty: [l2, l1, elasticnet]
