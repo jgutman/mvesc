@@ -211,7 +211,7 @@ def generate_mobility(replace = False,
         # i.e. [n_addresses_to*, n_districts_to*, n_cities_to*, n_records_to*,
         # avg_address_change_to*, avg_district_change_to*, avg_city_change_to*]
         connection.commit()
-        print('{}.{} updated with mobility_counts'.format(schema, table))
+        print("{}.{} updated with mobility_counts".format(schema, table))
 
     # generate intermediate tables mobility_changes and mobility_transitions
     # to use in generating transition based mobility features
@@ -245,21 +245,21 @@ def generate_mobility(replace = False,
             # and join into feature table with student_lookup index
             update_column_with_join(cursor, table, column_list,
                 'mobility_transitions_wide')
-            print('{}.{} updated with mobility_transitions_wide'.\
-                format(schema, table))
+            print("{}.{} updated with mobility_transitions_wide".format(
+                schema, table))
 
             # model.mobility now contains second set of mobility features
             # i.e. [street_transition_in*, district_transition_in*,
             # city_transition_in*]
 
             column_list = find_midyear_withdrawals(cursor,
-                grade_range=range(3,13), table='midyear_withdrawals_wide',
+                grade_range=range(3,13), table='midyear_withdrawals_wide')
             # take all columns from temporary midyear_withdrawals_wide table
             # and join into feature table with student_lookup index
             update_column_with_join(cursor, table, column_list,
                 'midyear_withdrawals_wide')
-            print('{}.{} updated with midyear_withdrawals_wide'.\
-                format(schema, table))
+            print("{}.{} updated with midyear_withdrawals_wide".format(
+                schema, table))
 
         connection.commit()
 
