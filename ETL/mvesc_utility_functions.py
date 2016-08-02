@@ -245,11 +245,12 @@ def df2num(rawdf):
     rawdf.dropna(axis='columns', how='all', inplace=True)
     numeric_df = rawdf.select_dtypes(include=[np.number])
     str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
-    dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
-    numeric_df = numeric_df.join(dummy_col_df)
-    most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
-    reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
-    numeric_df.drop(reference_cols, axis=1, inplace=True)
+    if len(str_columns) > 0:
+        dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
+        numeric_df = numeric_df.join(dummy_col_df)
+        most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
+        reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
+        numeric_df.drop(reference_cols, axis=1, inplace=True)
     return numeric_df
 
 ############ Upload file or directory to postgres (not useful in most cases)###############
