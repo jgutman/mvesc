@@ -138,7 +138,7 @@ def read_table_to_df(connection, table_name, columns=['*'], schema='public', nro
         sqlcmd = sqlcmd + ';'
     else:
         sqlcmd = sqlcmd + " limit {nrows};".format(nrows=str(nrows))
-    df = pd.read_sql(sqlcmd, connection)        
+    df = pd.read_sql(sqlcmd, connection)
     return df
 
 def get_column_type(cursor, table_name, column_name):
@@ -156,7 +156,7 @@ def get_column_type(cursor, table_name, column_name):
     return column_type
 
 def clean_column(cursor, values, old_column_name, table_name,
-                 new_column_name=None, schema_name='clean', replace = 1):
+                 new_column_name=None, schema_name='clean', replace = True):
     """
     Cleans the given column by replacing values according to the given
     json file, which should be in the form:
@@ -168,7 +168,7 @@ def clean_column(cursor, values, old_column_name, table_name,
 
     Any existing name not in the json file is left unchanged.
     By default, replaces the current column with the cleaned values.
-    If replace=0, should provide a distinct new_column_name to avoid duplicates.
+    If replace=False, should provide a distinct new_column_name to avoid duplicates.
     In the json all values should be lowercase.
 
     :param pg object cursor: cursor in psql database
@@ -183,12 +183,12 @@ def clean_column(cursor, values, old_column_name, table_name,
     if not col_type:
         print("old column does not exist")
         return
-    if new_column_name is None:
+    if not new_column_name:
         new_column_name = old_column_name
 
-    clean_col_query = "alter table {0}.\"{1}\" ".format(schema_name,table_name)
+    clean_col_query = "alter table {0}.{1} ".format(schema_name,table_name)
     if replace:
-        clean_col_query += "alter column \"{old}\" type {type} using case "\
+        clean_col_query += "alter column {old} type {type} using case "\
             .format_map({'old': old_column_name, 'type': col_type})
     else:
         clean_col_query += """
@@ -209,9 +209,9 @@ def clean_column(cursor, values, old_column_name, table_name,
         for old_name in old_name_list:
             clean_col_query += """
             lower({old}) like %(item{n})s
-            """.format_map({'old':old_column_name, 'n':count})
+            """.format(old=old_column_name, n=count)
             clean_col_query += or_clause
-            params['item{0}'.format(count)] = str(old_name)
+            params['item{0}'.format(count)] = '%'+str(old_name)+'%'
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
         clean_col_query += "then  %(item{0})s \n".format(count)
@@ -222,12 +222,10 @@ def clean_column(cursor, values, old_column_name, table_name,
 
     if replace and (old_column_name != new_column_name):
         clean_col_query += """
-        alter table {schema}."{table}" rename column "{old}" to "{new}"
-        """.format_map({'schema':schema_name,'table':table_name,
-                        'old':old_column_name, 'new':new_column_name})
-#    print(clean_col_query)
-#    print(params)
-    cursor.execute(clean_col_query,params)
+        alter table {schema}.{table} rename column {old} to {new}
+        """.format(schema=schema_name, table=table_name,
+                    old=old_column_name, new=new_column_name)
+    cursor.execute(clean_col_query, params)
 
 ############ Functions to data frame processing ###################
 def df2num(rawdf):

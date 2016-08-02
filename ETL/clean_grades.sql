@@ -50,7 +50,7 @@ alter table clean.all_grades alter column grade type int using
       when grade like 'PS%' or grade like '-2%' then -1
       when grade like 'KG' then 0
       when grade like 'IN' or grade like 'DR' then null -- inactive students
-      else grade::int   
+      else grade::int
       end;
 
 -- output distinct values to assess
@@ -98,7 +98,7 @@ alter table clean.all_grades alter column grade type int using
 --alter table clean.all_grades
 --	alter column school_year type int using cast(left(nullif(school_year, ''),
 --				strpos(nullif(school_year, ''), '-') - 1) as integer) ;
-				
+
 --		Missing? There are 99,455 records with a null year field, why?
 --			We need to see what information we can fill in from other sources
 --select year, count(*) from clean.all_grades group by year;
@@ -106,9 +106,9 @@ alter table clean.all_grades alter column grade type int using
 alter table clean.all_grades alter column school_year type int using
 substring(school_year,1,4)::int;
 
--- **** -- **** -- 
--- DISTRICT field -- 
-select distinct district from clean.all_grades;
+-- **** -- **** --
+-- DISTRICT field --
+-- select distinct district from clean.all_grades;
 alter table clean.all_grades alter column district type text using
 case when district like 'Maysville%' then 'Maysville'
      when district like 'Ridgewood%' then 'Ridgewood'
