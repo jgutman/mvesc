@@ -9,7 +9,7 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
-from save_reports import *
+from save_reports import write_model_report
 from optparse import OptionParser
 
 # all model import statements
