@@ -105,10 +105,7 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
     uniqueColNames = pd.Series(pd.Series([x[:-3] for x in oaa_raw.columns]).unique())
     # ignore these handful of tests
     #   fourth_write has weird values that are difficult to parse
-    uniqueColNames = uniqueColNames[uniqueColNames.str.contains('fourth_write', 'fourth_ctz',
-                                                                'fourth_science', 'sixth_write',
-                                                                'sixth_ctz', 'sixth_science',
-                                                                'seventh_write', 'eighth_socstudies') == False]
+    uniqueColNames = uniqueColNames[uniqueColNames.str.contains('fourth_write|fourth_ctz|fourth_science|sixth_write|sixth_ctz|sixth_science|seventh_write|eighth_socstudies') == False]
 
     # record test names to use later
     list_of_year_test_types = uniqueColNames[6:]
