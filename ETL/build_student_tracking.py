@@ -1,12 +1,16 @@
-#from mvesc_utility_functions import postgres_pgconnection_generator
-import psycopg2 as pg
-from contextlib import contextmanager
 from mvesc_utility_functions import *
+import os, sys
+
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
 
 '''
 Joint note from JG and ZZ:
 This python file generates a SQL query to build a table tracking
-students over time. Each column represents a year and the grade the 
+students over time. Each column represents a year and the grade the
 student was in that year.
 
 No students are lost in the process
@@ -14,19 +18,20 @@ No students are lost in the process
     These pre-K students are all
     students from Riverview district that seemed to enter and leave district in
     same year and are not useful for our analysis.
-   
+
 This problem is tricky because students can have multiple observations
 per year (multiple grades).
     Left in duplicate records because of grade level errors, we will need to clean
-these later. 
+these later.
 
 As for conflicting withdrawals for a student,
     we retained only the most recent withdrawal Date
     and reason. Each of 37,914 students is in table at least once. (JG)
 '''
 
-def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
-    schema = 'clean', snapshots = 'all_snapshots'):
+def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
+    schema = 'clean', snapshots = 'all_snapshots',
+    tracking = 'wrk_tracking_students'):
 
     """ Gets the range of school years covered by the data in the snapshots
     table, and generates the appropriate sql query to track all students in
@@ -48,14 +53,24 @@ def build_wide_format(cursor, grade_begin, year_begin=0, year_end=3000,
 
     # generate SQL query based on min/max_year
     query_build_wide_table = sql_gen_tracking_students(min_year, max_year,
-            schema = schema, snapshots = snapshots)
+            schema = schema, snapshots = snapshots, table = tracking)
+
     query_survival = cohort_survival_analysis(max(min_year, year_begin),
-        min(max_year, year_end), grade_begin = grade_begin, schema = schema)
+        min(max_year, year_end), grade_begin = grade_begin, schema = schema,
+        table = tracking)
     cursor.execute(query_build_wide_table)
     cursor.execute(query_survival)
     col_names = [desc[0] for desc in cursor.description]
     print(col_names)
     cohort_results = cursor.fetchall()
+    cohort_results = None
+
+    sql_query_add_columns = """
+    alter table {schema}.{tracking} add column outcome_bucket varchar(30);
+    alter table {schema}.{tracking} add column outcome_category varchar(30);
+    """.format(schema = schema, tracking = tracking)
+
+    cursor.execute(sql_query_add_columns)
     return(cohort_results)
 
 def sql_gen_tracking_students(year_begin, year_end,
@@ -113,7 +128,7 @@ def sql_gen_tracking_students(year_begin, year_end,
     #   reason for each student
     # Adds this via left-join of a large subquery
     #   which creates the 'latest_withdrawal' and 'latest_reason' subtables
-    #   The latest_withdrawal subtable is created by a subquery getting unique 
+    #   The latest_withdrawal subtable is created by a subquery getting unique
     #       distinct student / withdraw reason / withdraw date
     #       where withdraw_reason is not null (empty withdrawal code)
     #       and not 'did not withdraw'
@@ -156,19 +171,22 @@ def sql_gen_tracking_students(year_begin, year_end,
 def cohort_survival_analysis(year_begin, year_end, grade_begin,
     schema = 'clean', table = 'wrk_tracking_students'):
     """
-    no docstring yet
+    Returns a sql query to count the number of students in a particular cohort that advance to the next grade level and stay in the system each year,
+    returning for each year the grade level, school year, and number of students
+    remaining on-track with the cohort.
     """
     joined_query = ''
     next_grade = grade_begin
     for year in range(year_begin, year_end+1):
         if (year != year_begin):
-            next_grade = '%02d' % (int(next_grade)+1)
-        if (next_grade == '13'):
+            #next_grade = '%02d' % (int(next_grade)+1)
+            next_grade = next_grade +1
+        if (next_grade > 12):
             break
         subquery_get_count = """
         (select {next_grade} as grade, {year} as school_year, count(*) from
             (select distinct(student_lookup)
-                from {schema}.{table} where "{year_begin}" = '{grade_begin}')
+                from {schema}.{table} where "{year_begin}" = {grade_begin})
                 as grade_{grade_begin}_in_{year_begin}
         """.format(schema=schema, table=table, year_begin=year_begin,
                     grade_begin=grade_begin, year=year, next_grade=next_grade)
@@ -178,7 +196,7 @@ def cohort_survival_analysis(year_begin, year_end, grade_begin,
         else:
             subquery_next_year = """
             where student_lookup in (select distinct(student_lookup)
-                from {schema}.{table} where "{year}" = '{next_grade}'))
+                from {schema}.{table} where "{year}" = {next_grade}))
             """.format(schema=schema, table=table, year_begin=year_begin,
                 grade_begin=grade_begin, year=year, next_grade=next_grade)
 
@@ -200,10 +218,13 @@ def main():
     """
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            # print(sql_gen_tracking_students(2006, 2015))
-            # print(cohort_survival_analysis(2006, 2015, '04'))
+            #print(sql_gen_tracking_students(2006, 2015))
+            #print(cohort_survival_analysis(2006, 2015, 6))
             print(build_wide_format(cursor))
         connection.commit()
+    execute_sql_script(os.path.join(parentdir,
+        'remove_duplicate_withdrawals_from_tracking.sql'))
+    
     print('done!')
 
 if __name__ == "__main__":

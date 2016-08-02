@@ -5,3 +5,6 @@ pgpass
 */.ipynb_checkpoints/*
 Descriptives/*/.ipynb_checkpoints/*
 Descriptives/*/.cache/*
+*/__pycache__/*
+Reports/*npy*
+Reports/*pkl*
