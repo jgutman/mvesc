@@ -43,7 +43,7 @@ initial results to use in the deep dive 6/26, only using 9th grade data
 
 ### Performance Metrics
 on average, model run in 0.04 seconds (1 times) <br/>precision on top 10%: 0.0927 <br/>precision on top 5%: 0.0927 <br/>top features: gpa_gr_9 (0.43), days_absent_gr_9 (0.19), gpa_gr_9_isnull (0.093)
-![deep_dive_1_year_DT_precision_recall_at_k.png](deep_dive_1_year_DT_precision_recall_at_k.png)
-![deep_dive_1_year_DT_confusion_mat_0.3.png](deep_dive_1_year_DT_confusion_mat_0.3.png)
-![deep_dive_1_year_DT_score_dist.png](deep_dive_1_year_DT_score_dist.png)
-![deep_dive_1_year_DT_pr_vs_threshold.png](deep_dive_1_year_DT_pr_vs_threshold.png)
+![./figs/deep_dive_1_year_DT_precision_recall_at_k.png](deep_dive_1_year_DT_precision_recall_at_k.png)
+![./figs/deep_dive_1_year_DT_confusion_mat_0.3.png](deep_dive_1_year_DT_confusion_mat_0.3.png)
+![./figs/deep_dive_1_year_DT_score_dist.png](deep_dive_1_year_DT_score_dist.png)
+![./figs/deep_dive_1_year_DT_pr_vs_threshold.png](deep_dive_1_year_DT_pr_vs_threshold.png)

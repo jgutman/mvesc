@@ -35,8 +35,8 @@ testing the reporting functions
 	 * gpa_gr_9
 
 ### Performance Metrics
-![test_reporting_DT_precision_recall.png](test_reporting_DT_precision_recall.png)
-![test_reporting_DT_pr_vs_threshold.png](test_reporting_DT_pr_vs_threshold.png)
-![test_reporting_DT_score_dist.png](test_reporting_DT_score_dist.png)
-![test_reporting_DT_confusion_mat_0.3.png](test_reporting_DT_confusion_mat_0.3.png)
-![test_reporting_DT_confusion_mat_0.5.png](test_reporting_DT_confusion_mat_0.5.png)
+![./figs/test_reporting_DT_precision_recall.png](test_reporting_DT_precision_recall.png)
+![./figs/test_reporting_DT_pr_vs_threshold.png](test_reporting_DT_pr_vs_threshold.png)
+![./figs/test_reporting_DT_score_dist.png](test_reporting_DT_score_dist.png)
+![./figs/test_reporting_DT_confusion_mat_0.3.png](test_reporting_DT_confusion_mat_0.3.png)
+![./figs/test_reporting_DT_confusion_mat_0.5.png](test_reporting_DT_confusion_mat_0.5.png)

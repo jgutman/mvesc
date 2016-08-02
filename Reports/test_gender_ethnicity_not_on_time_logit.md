@@ -24,7 +24,7 @@ initial_skeleton_pipeline_test
 
 ### Performance Metrics
 on average, model run in 0.15 seconds (1 times) <br/>precision on top 10%: 0.448 <br/>precision on top 5%: 0.424 <br/>top features: ethnicity_B (1.1), ethnicity_M (0.96), ethnicity_H (0.89)
-![test_gender_ethnicity_not_on_time_logit_confusion_mat_0.3.png](test_gender_ethnicity_not_on_time_logit_confusion_mat_0.3.png)
-![test_gender_ethnicity_not_on_time_logit_pr_vs_threshold.png](test_gender_ethnicity_not_on_time_logit_pr_vs_threshold.png)
-![test_gender_ethnicity_not_on_time_logit_precision_recall_at_k.png](test_gender_ethnicity_not_on_time_logit_precision_recall_at_k.png)
-![test_gender_ethnicity_not_on_time_logit_score_dist.png](test_gender_ethnicity_not_on_time_logit_score_dist.png)
+![./figs/test_gender_ethnicity_not_on_time_logit_confusion_mat_0.3.png](test_gender_ethnicity_not_on_time_logit_confusion_mat_0.3.png)
+![./figs/test_gender_ethnicity_not_on_time_logit_pr_vs_threshold.png](test_gender_ethnicity_not_on_time_logit_pr_vs_threshold.png)
+![./figs/test_gender_ethnicity_not_on_time_logit_precision_recall_at_k.png](test_gender_ethnicity_not_on_time_logit_precision_recall_at_k.png)
+![./figs/test_gender_ethnicity_not_on_time_logit_score_dist.png](test_gender_ethnicity_not_on_time_logit_score_dist.png)

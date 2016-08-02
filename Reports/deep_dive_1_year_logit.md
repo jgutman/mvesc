@@ -43,7 +43,7 @@ initial results to use in the deep dive 6/26, only using 9th grade data
 
 ### Performance Metrics
 on average, model run in 0.06 seconds (1 times) <br/>precision on top 10%: 0.221 <br/>precision on top 5%: 0.269 <br/>top features: disability_gr_9_multiple (2.2), gpa_gr_9_isnull (1.8), disability_gr_9_emotional disturbance (1.4)
-![deep_dive_1_year_logit_score_dist.png](deep_dive_1_year_logit_score_dist.png)
-![deep_dive_1_year_logit_precision_recall_at_k.png](deep_dive_1_year_logit_precision_recall_at_k.png)
-![deep_dive_1_year_logit_pr_vs_threshold.png](deep_dive_1_year_logit_pr_vs_threshold.png)
-![deep_dive_1_year_logit_confusion_mat_0.3.png](deep_dive_1_year_logit_confusion_mat_0.3.png)
+![./figs/deep_dive_1_year_logit_score_dist.png](deep_dive_1_year_logit_score_dist.png)
+![./figs/deep_dive_1_year_logit_precision_recall_at_k.png](deep_dive_1_year_logit_precision_recall_at_k.png)
+![./figs/deep_dive_1_year_logit_pr_vs_threshold.png](deep_dive_1_year_logit_pr_vs_threshold.png)
+![./figs/deep_dive_1_year_logit_confusion_mat_0.3.png](deep_dive_1_year_logit_confusion_mat_0.3.png)

@@ -208,16 +208,16 @@ def markdown_report(f, save_location, saved_outputs):
     recall_15 = recall_at_k(test_y, test_set_scores, 0.15)
     recall_10 = recall_at_k(test_y, test_set_scores, 0.1)
     recall_5 = recall_at_k(test_y, test_set_scores, 0.05)
-    f.write("precision on top 15%: {:0.3} <br/>".format(prec_15))
-    f.write("precision on top 10%: {:0.3} <br/>".format(prec_10))
-    f.write("precision on top 5%: {:0.3} <br/>".format(prec_5))
-    f.write("recall on top 15%: {:0.3} <br/>".format(recall_15))
-    f.write("recall on top 10%: {:0.3} <br/>".format(recall_10))
-    f.write("recall on top 5%: {:0.3} <br/>".format(recall_5))
+    f.write("precision on top 15%: {:0.4} <br/>".format(prec_15))
+    f.write("precision on top 10%: {:0.4} <br/>".format(prec_10))
+    f.write("precision on top 5%: {:0.4} <br/>".format(prec_5))
+    f.write("recall on top 15%: {:0.4} <br/>".format(recall_15))
+    f.write("recall on top 10%: {:0.4} <br/>".format(recall_10))
+    f.write("recall on top 5%: {:0.4} <br/>".format(recall_5))
 
     # write auc
     auc_val = roc_auc_score(test_y, test_set_scores)
-    f.write("AUC value is: {:0.3} <br/>".format(auc_val))
+    f.write("AUC value is: {:0.4} <br/>".format(auc_val))
 
     try:
         get_top_features = getattr(Top_features, model_name)
