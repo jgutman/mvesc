@@ -288,10 +288,20 @@ def scale_features(train, test, strategy):
               .format('standard', 'robust', 'none'))
         return train, test
 
-def add_null_dummies(data):
+def add_null_dummies_train_test(train, test):
     """
     """
-    data_null_columns = data[data.columns[data.isnull().sum() > 0]]
+    train_null_columns = train.columns[train.isnull().sum() > 0]
+    test_null_columns = test.columns[test.isnull().sum() > 0]
+    null_column_set = set(train_null_columns).union(set(test_null_columns))
+    null_columns = pd.indexes.base.Index(null_column_set)
+
+    train_nullified = add_null_dummies(train, null_columns)
+    test_nullified = add_null_dummies(test, null_columns)
+    return train_nullified, test_nullified
+
+def add_null_dummies(data, null_columns):
+    data_null_columns = data[null_columns]
     data_null_dummies = data_null_columns.isnull()*1.0
     data_null_dummies.rename(columns=lambda x: x + '_isnull', inplace=True)
     data_plus_dummies = data.merge(data_null_dummies,
@@ -305,9 +315,8 @@ def impute_missing_values(train, test, strategy):
         return train, test
 
     elif(strategy == 'mean_plus_dummies' or strategy == 'median_plus_dummies'):
-        train = add_null_dummies(train) # add feature_isnull columns 0 or 1
-        test = add_null_dummies(test)
-
+         # add feature_isnull columns 0 or 1
+        train, test = add_null_dummies_train_test(train, test)
         imputer = Imputer(strategy=strategy.split("_")[0])
         imputer.fit(train) # fit the imputer on the training mean/median
         train = pd.DataFrame(imputer.transform(train), # returns a numpy array
