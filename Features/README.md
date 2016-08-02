@@ -18,10 +18,11 @@ absence:
   * medical*
   * absence_consec*
   * tardy_consec*
-  * 
+  
 demographics: 
   * ethnicity 
   * gender
+ 
 grades: 
   * gpa*
   * language_gpa*
@@ -43,6 +44,7 @@ grades:
   * percent_passed_pf_classes*
   * num_pf_classes*
   * gpa_district*
+
 mobility
   * n_addresses_to*
   * n_districts_to*
@@ -55,6 +57,7 @@ mobility
   * district_transition_in*
   * city_transition_in*
   * mid_year_withdraw*
+
 oaa_normalized:
   * third_read_normalized
   * third_read_percentile
@@ -100,6 +103,7 @@ oaa_normalized:
   * eighth_science_normalized
   * eighth_science_percentile
   * eighth_science_p
+
 snapshots: 
   * disadvantagement*
   * disability*
