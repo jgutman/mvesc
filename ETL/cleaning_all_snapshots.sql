@@ -56,6 +56,7 @@ when lower(disability_desc) like '%other%(minor)%' or disability_code like '15' 
 when lower(disability_desc) like '%delay%' or disability_code like '16' then 'developmental delay'
 when lower(disability_desc) like '**' or disability_code like '**' then 'none'
 else lower(disability_desc) end;
+
 alter table clean.all_snapshots rename column disability_desc to disability;
 alter table clean.all_snapshots drop column disability_code;
 
@@ -81,13 +82,13 @@ alter table clean.all_snapshots drop column disadvantagement_code;
 
 -- district withdrawal
 --select date_part('year', district_withdraw_date) as d, count(*) from clean.all_snapshots group by d order by d;
-alter table clean.all_snapshots alter column district_withdraw_date type date using district_withdraw_date::date
+alter table clean.all_snapshots alter column district_withdraw_date type date using district_withdraw_date::date;
 
 -- ethnicity
 --select ethnicity as d, count(*) from clean.all_snapshots group by d order by d;
-UPDATE ONLY clean.all_snapshots
-            SET ethnicity =
-            case
+update clean.all_snapshots
+    set ethnicity =
+      case
             when trim(ethnicity)='*' then 'M' --'Multiracial'
             when trim(ethnicity)='1' then 'I' --'American Indian'
             when trim(ethnicity)='2' then 'A' --'Asian/Pacific Islander'
@@ -105,7 +106,6 @@ UPDATE ONLY clean.all_snapshots
             when lower(trim(ethnicity))='p' then 'A' --'Asian/Pacific Islander'
             when lower(trim(ethnicity)) like '%american_ind%' then 'I' -- 'American Indian'
             when lower(trim(ethnicity)) like '%am_indian%' then 'I' -- 'American Indian'
-            when lower(trim(ethnicity)) like '%hispanic%' then 'H' -- 'Hispanic'
             when lower(trim(ethnicity)) like '%indian%' then 'I' -- 'Hispanic'
             when lower(trim(ethnicity)) like '%alaskan%' then 'I' -- 'American Indian or Alaskan Native'
             when lower(trim(ethnicity)) like '%asian%' then 'A' -- 'Asian/Pacific Islander'
@@ -114,8 +114,9 @@ UPDATE ONLY clean.all_snapshots
             when lower(trim(ethnicity)) like '%african%' then 'B' -- 'Black'
             when lower(trim(ethnicity)) like '%multi%' then 'M' -- 'Multiracial'
             when lower(trim(ethnicity)) like '%white%' then 'W' -- 'White'
+            when lower(trim(ethnicity)) like '%hispanic%' then 'H' -- 'Hispanic'
             else trim(ethnicity)
-            end;
+      end;
 
 -- flags
 --select coalesce(flag1,flag2) as d, count(*) from clean.all_snapshots group by d order by d;
@@ -141,79 +142,27 @@ update clean.all_snapshots set ethnicity='M' where student_lookup in
     group by student_lookup
     having count(distinct ethnicity) > 1);
 
--- gifted
---select gifted as d, count(*) from clean.all_snapshots group by d order by d;
-
--- grades
---select distinct grade from clean.all_snapshots order by grade;
---select count(student_lookup), school_year from clean.all_snapshots where grade = 'GR' group by school_year ;
---select count(*) from clean.wrk_tracking_students where "2015" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2014" = 'GR'; -- 153
---select count(*) from clean.wrk_tracking_students where "2013" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2012" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2011" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2010" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2009" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2008" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2007" = 'GR';
---select count(*) from clean.wrk_tracking_students where "2006" = 'GR'; -- 524
-
 -- dealing with graduate 'GR' codes using function in clean_and_consolidate
 -- dealing with other codes
 update clean.all_snapshots set grade =
-	case when grade like '**' then null
-		 when grade like '13' or grade like '14' then '23'
-		 when grade like 'PS%' or grade like '-2' then '-1'
-		 when grade like 'KG' then '0'
-		 when grade like 'IN' or grade like 'DR' then null -- inactive students
-		 when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
-		 when grade like 'UG' then null -- means ungraded
-		 else grade
-	end;
-
+  case when grade like '**' then null
+    when grade like '13' or grade like '14' then '23'
+    when grade like 'PS%' or grade like '-2' then '-1'
+    when grade like 'KG' then '0'
+    when grade like 'IN' or grade like 'DR' then null -- inactive students
+    when grade like 'GR' and school_year = 2006 then '12 '-- don't know what grade they were in before, but don't care about people graduating in 2006
+    when grade like 'UG' then null -- means ungraded
+    else grade
+  end;
 
 alter table clean.all_snapshots alter column grade type text using nullif(grade, '**');
 
--- graduation date
---select date_part('year', graduation_date) as d, count(distinct "StudentLookup") from clean.all_snapshots group by d order by d;
-
--- iss
---select iss as d, count(*) from clean.all_snapshots group by d order by d;
-
--- limited english
---select limited_english as d, count(*) from clean.all_snapshots group by d order by d;
-
--- oss
---select oss as d, count(*) from clean.all_snapshots group by d order by d;
-
--- school
---select school_code, lower(school_name), count(*) from clean.all_snapshots group by school_code, school_name order by school_code, school_name;
-	-- names not very consistent, just use code?
-
--- section 504
---select section_504_plan as d, count(*) from clean.all_snapshots group by d order by d;
-
--- IRNs
---select coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn) as d, count(*) from clean.all_snapshots group by d order by d;
 alter table clean.all_snapshots alter column withdrawn_to_irn type text using
 coalesce(sent_to_1_irn, sent_to_2_irn, withdrawn_to_irn);
 alter table clean.all_snapshots alter column withdrawn_to_irn type text using
 nullif(withdrawn_to_irn, '******');
 alter table clean.all_snapshots drop column sent_to_1_irn;
 alter table clean.all_snapshots drop column sent_to_2_irn;
-
--- special_ed
---select cast(special_ed as int) as d, count(*) from clean.all_snapshots group by d order by d;
-
--- state
---select state as d, count(*) from clean.all_snapshots group by d order by d;
-
--- status
---select status_code, lower(status_desc), count(*) from clean.all_snapshots group by status_code, status_desc order by count(*) desc;
-
---select status as d, count(*) from clean.all_snapshots group by d order by d;
--- cleaned using a json file in cleaning_student_status.py
-
 
 -- withdrawal codes
 --select distinct withdraw_reason from clean.all_snapshots;

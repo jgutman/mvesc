@@ -17,22 +17,21 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 from feature_utilities import update_column_with_join
 
-def create_temp_gender_table(cursor, schema='clean', table='all_snapshots',
-    temp='single_gender'):
+def create_temp_table(cursor, schema='clean', table='all_snapshots',
+    temp='single_gender', feature='gender'):
 
-    query_rank_gender_by_count = """create temporary table {temp} as
-    (select student_lookup, gender, count(gender),
+    query_rank_feature_by_count = """create temporary table {temp} as
+    (select student_lookup, {feature}, count({feature}),
         rank() over (
             partition by student_lookup
-            order by count(gender) desc)
+            order by count({feature}) desc)
     from {schema}.{table}
-    group by student_lookup, gender);
-    """.format(schema=schema, table=table, temp=temp)
-
+    group by student_lookup, {feature});
+    """.format(schema=schema, table=table, temp=temp, feature=feature)
     query_drop_rows = """delete from {temp}
     where rank > 1;""".format(temp=temp)
 
-    cursor.execute(query_rank_gender_by_count)
+    cursor.execute(query_rank_feature_by_count)
     cursor.execute(query_drop_rows)
 
 def main():
@@ -53,23 +52,27 @@ def main():
             cursor.execute(sql_drop)
             cursor.execute(sql_create)
 
-            print(""" - Table "{schema}"."{table}" created!""".format(schema=schema, table=table))
+            print(""" - Table {schema}.{table} created!""".format(schema=schema, table=table))
 
             source_schema, source_table = 'clean', 'all_snapshots'
 
             # add ethnicity - all multiples have already been converted to
             # M for Multiracial in cleaning_all_snapshots.sql
-            column_list = ['ethnicity']
-            update_column_with_join(cursor, table, column_list, source_table,
-                                        source_schema, schema)
+
+            feature = 'ethnicity'
+            temp_table = 'single_'+feature
+            create_temp_table(cursor, schema=source_schema,
+                table=source_table, temp=temp_table, feature=feature)
+            column_list = [feature]
+            update_column_with_join(cursor, table, column_list, temp_table)
 
             # add gender - if multiple genders select the most frequent
-            temp_table = 'single_gender'
-            create_temp_gender_table(cursor, schema=source_schema,
-                table=source_table, temp=temp_table)
-            column_list = ['gender']
-            update_column_with_join(cursor, table, column_list, temp_table,
-                                        None, schema)
+            feature = 'gender'
+            temp_table = 'single_'+feature
+            create_temp_table(cursor, schema=source_schema,
+                table=source_table, temp=temp_table, feature=feature)
+            column_list = [feature]
+            update_column_with_join(cursor, table, column_list, temp_table)
 
             connection.commit()
 

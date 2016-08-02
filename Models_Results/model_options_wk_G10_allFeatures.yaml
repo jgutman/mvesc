@@ -13,17 +13,17 @@
 #   ```
 ##  Then you can use it as a dictionary
 ##  Loaded dict is in alphabetical order; but no content is changed
-model_classes_selected: [logit, DT, SVM, RF, GB, KNN] # [SVM] # must be a list of strings!
+model_classes_selected: [logit, DT, SVM] # [SVM] # must be a list of strings!
 user_description: weekly update Grade 10 model (xc)
 # model name and extension appended automatically
-file_save_name: wk_G10_allFeatures
+file_save_name: wk_G10_pkltest
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k_fold
 cohort_grade_level_begin: cohort_9th
 prediction_grade_level: 10 # predicting at the beginning of this grade
-feature_grade_range: [9]
+feature_grade_range: [8, 9]
 n_folds: 10
 cohorts_held_out: [2011] # [2012 is ultimate test set not to be used here]
 

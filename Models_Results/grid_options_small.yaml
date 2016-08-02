@@ -1,7 +1,7 @@
 # grid search options, extensive version
 logit:
     penalty: [l1, l2]
-    C: [.001, 0.01, 0.1, 1.0, 10.0, 100, 1000]
+    C: [0.01, 0.1, 1.0, 10.0, 100, 1000]
 LR_no_penalty: {}
 DT:
     criterion: [gini, entropy]
@@ -32,7 +32,7 @@ GB:
     max_depth: [ 30]
 NB: {}
 SVM:
-    C: [ 0.0001, 0.001, 0.01, 0.1, 1, 10]
+    C: [ 0.01, 0.1, 1, 10]
     kernel: [linear]
 KNN:
     n_neighbors: [1,5,10,25,50]
