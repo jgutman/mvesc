@@ -34,10 +34,10 @@ generate_snapshot_features.main()
 print("--- working on generating model.absence table ... ")
 # call functions
 # generate_consec_absence_columns.main() # slow, does not require snapshots
-# generate_absence_features.main()
+generate_absence_features.main()
 
 print("--- working on generating model.mobility table ... ")
-# generate_mobility_features.main() # not fully implemented yet
+generate_mobility_features.main()
 print("--- working on generating model.grades table ... ")
 generate_gpa.main()
 print("--- working on generating model.oaa_normalized table ... ")
