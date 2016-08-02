@@ -10,7 +10,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import write_model_report
-from write_to_database import summary_to_db
+from write_to_database import summary_to_db, write_scores_to_db
 from optparse import OptionParser
 
 # all model import statements

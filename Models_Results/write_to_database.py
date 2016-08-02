@@ -1,3 +1,4 @@
+import pandas as pd
 from mvesc_utility_functions import postgres_pgconnection_generator, \
 postgres_engine_generator
 from save_reports import precision_at_k, Top_features
@@ -17,7 +18,7 @@ def build_results_table(cursor,columns,replace=False):
     """)
     table_exists = cursor.fetchall()[0][0]
     if not table_exists or replace:
-        cursor.execute("drop table model.reports")
+        cursor.execute("drop table if exists model.reports")
         results_table_query = "create table model.reports ("         
         for c, c_type in columns:
             results_table_query += "{0} {1}, ".format(c, c_type)
@@ -128,16 +129,37 @@ def write_scores_to_db(saved_outputs):
     """
     doc string!
     """
-    df = 
+    # scores and predictions for each student
+    test_label = pd.Series('test', index=saved_outputs['test_y'].index)
+    train_label = pd.Series('train', index=saved_outputs['train_y'].index)
+    test = saved_outputs['test_y'].to_frame('true_label')
+    test['predicted_score'] = saved_outputs['test_set_soft_preds']
+    test['predicted_label'] = saved_outputs['test_set_preds']
+    test['split'] = test_label
+    train = saved_outputs['train_y'].to_frame('true_label')
+    train['predicted_score'] = saved_outputs['train_set_soft_preds']
+    train['predicted_label'] = saved_outputs['train_set_preds']
+    train['split'] = train_label
+    results = pd.concat([test,train])
+
     filename = saved_outputs['model_options']['file_save_name']
     engine = postgres_engine_generator()
-    df.to_sql(filename, engine, schema='scores')
+    results.to_sql(filename+"_students", engine, schema='scores', 
+                   if_exists = 'replace')
+    print('student predictions written to database')
 
-    # with postgres_pgconnection_generator() as connection: 
-    #     with connection.cursor() as cursor:    
-    #         cursor.execute("drop table if exists scores.{}".format(filename))
-    #         create_table_query = """create table scores.{} 
-    #         (student_lookup int, split text, score float, confusion text);
-    #         """.format(filename))
-    #         cursor.execute(create_table_query)
+    # importance scores for each feature
+    model_name = saved_outputs['model_name']
+    try:
+        get_top_features = getattr(Top_features, model_name)
+    except AttributeError:
+        print('top features not implemented for {}'.format(model_name))
+        pass
+    else:                                                                  
+        top_features = get_top_features(saved_outputs['estimator'],        
+                                        saved_outputs['features'], -1)
+        features = pd.DataFrame(top_features, columns=['feature','importance'])
+        features.to_sql(filename+"_features", engine, schema='scores',
+                        if_exists = 'replace')
+        print('feature importances written to database')
             
