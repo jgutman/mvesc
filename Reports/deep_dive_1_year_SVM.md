@@ -42,7 +42,7 @@ initial results to use in the deep dive 6/26, only using 9th grade data
 	 * n_districts_to_gr_9
 
 ### Performance Metrics
-on average, model run in 0.26 seconds (1 times) <br/>precision on top 10%: 0.106 <br/>precision on top 5%: 0.115 <br/>![deep_dive_1_year_SVM_precision_recall_at_k.png](deep_dive_1_year_SVM_precision_recall_at_k.png)
-![deep_dive_1_year_SVM_confusion_mat_0.3.png](deep_dive_1_year_SVM_confusion_mat_0.3.png)
-![deep_dive_1_year_SVM_pr_vs_threshold.png](deep_dive_1_year_SVM_pr_vs_threshold.png)
-![deep_dive_1_year_SVM_score_dist.png](deep_dive_1_year_SVM_score_dist.png)
+on average, model run in 0.26 seconds (1 times) <br/>precision on top 10%: 0.106 <br/>precision on top 5%: 0.115 <br/>![./figs/deep_dive_1_year_SVM_precision_recall_at_k.png](deep_dive_1_year_SVM_precision_recall_at_k.png)
+![./figs/deep_dive_1_year_SVM_confusion_mat_0.3.png](deep_dive_1_year_SVM_confusion_mat_0.3.png)
+![./figs/deep_dive_1_year_SVM_pr_vs_threshold.png](deep_dive_1_year_SVM_pr_vs_threshold.png)
+![./figs/deep_dive_1_year_SVM_score_dist.png](deep_dive_1_year_SVM_score_dist.png)

@@ -94,8 +94,8 @@ expand features and grade range
 	 * gpa_gr_8
 
 ### Performance Metrics
-![auto_expand_features_test_DT_precision_recall.png](auto_expand_features_test_DT_precision_recall.png)
-![auto_expand_features_test_DT_pr_vs_threshold.png](auto_expand_features_test_DT_pr_vs_threshold.png)
-![auto_expand_features_test_DT_score_dist.png](auto_expand_features_test_DT_score_dist.png)
-![auto_expand_features_test_DT_confusion_mat_0.3.png](auto_expand_features_test_DT_confusion_mat_0.3.png)
-![auto_expand_features_test_DT_confusion_mat_0.5.png](auto_expand_features_test_DT_confusion_mat_0.5.png)
+![./figs/auto_expand_features_test_DT_precision_recall.png](auto_expand_features_test_DT_precision_recall.png)
+![./figs/auto_expand_features_test_DT_pr_vs_threshold.png](auto_expand_features_test_DT_pr_vs_threshold.png)
+![./figs/auto_expand_features_test_DT_score_dist.png](auto_expand_features_test_DT_score_dist.png)
+![./figs/auto_expand_features_test_DT_confusion_mat_0.3.png](auto_expand_features_test_DT_confusion_mat_0.3.png)
+![./figs/auto_expand_features_test_DT_confusion_mat_0.5.png](auto_expand_features_test_DT_confusion_mat_0.5.png)

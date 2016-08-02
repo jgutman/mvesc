@@ -91,7 +91,7 @@ initial results to use in the deep dive 6/26
 
 ### Performance Metrics
 on average, model run in 0.19 seconds (18 times) <br/>precision on top 10%: 0.266 <br/>precision on top 5%: 0.404 <br/>top features: status_gr_9_esc (1.5), gpa_gr_7_isnull (1.4), n_cities_to_gr_9 (1.3)
-![deep_dive_logit_confusion_mat_0.3.png](deep_dive_logit_confusion_mat_0.3.png)
-![deep_dive_logit_pr_vs_threshold.png](deep_dive_logit_pr_vs_threshold.png)
-![deep_dive_logit_precision_recall_at_k.png](deep_dive_logit_precision_recall_at_k.png)
-![deep_dive_logit_score_dist.png](deep_dive_logit_score_dist.png)
+![./figs/deep_dive_logit_confusion_mat_0.3.png](deep_dive_logit_confusion_mat_0.3.png)
+![./figs/deep_dive_logit_pr_vs_threshold.png](deep_dive_logit_pr_vs_threshold.png)
+![./figs/deep_dive_logit_precision_recall_at_k.png](deep_dive_logit_precision_recall_at_k.png)
+![./figs/deep_dive_logit_score_dist.png](deep_dive_logit_score_dist.png)
