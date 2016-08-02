@@ -11,26 +11,29 @@ weekly update Grade 10 model (xc)
 * cross-validation scheme: leave cohort out
 	 * searching kernel in linear
 	 * chose kernel = linear
-	 * searching C in 1.0
-	 * chose C = 1.0
+	 * searching C in 0.0001, 0.001, 0.01, 0.1, 1, 10
+	 * chose C = 0.0001
 	 * using custom_recall_15
 * imputation strategy: median plus dummies
 * scaling strategy: robust
 
 ### Features Used
+* demographics
+	 * ethnicity
+	 * gender
 * snapshots
 	 * discipline_incidents_gr_9
-	 * days_absent_unexcused_gr_9
-	 * iss_gr_9
-	 * special_ed_gr_9
-	 * disability_gr_9
-	 * days_absent_gr_9
-	 * gifted_gr_9
-	 * status_gr_9
-	 * district_gr_9
-	 * oss_gr_9
-	 * limited_english_gr_9
 	 * disadvantagement_gr_9
+	 * days_absent_unexcused_gr_9
+	 * district_gr_9
+	 * iss_gr_9
+	 * disability_gr_9
+	 * special_ed_gr_9
+	 * status_gr_9
+	 * limited_english_gr_9
+	 * oss_gr_9
+	 * gifted_gr_9
+	 * days_absent_gr_9
 
 ### Performance Metrics
-on average, model run in 0.58 seconds (1 times) <br/>precision on top 15%: 0.1457 <br/>precision on top 10%: 0.1891 <br/>precision on top 5%: 0.2871 <br/>recall on top 15%: 0.3438 <br/>recall on top 10%: 0.2969 <br/>recall on top 5%: 0.2266 <br/>AUC value is: 0.6607 <br/>top features: disability_gr_9_other major (1.0), status_gr_9_esc (0.00038), status_gr_9_excel (0.00021)
+on average, model run in 0.95 seconds (6 times) <br/>precision on top 15%: 0.1623 <br/>precision on top 10%: 0.1923 <br/>precision on top 5%: 0.2673 <br/>recall on top 15%: 0.3828 <br/>recall on top 10%: 0.3125 <br/>recall on top 5%: 0.2109 <br/>AUC value is: 0.6547 <br/>top features: status_gr_9_esc (0.00013), disadvantagement_gr_9_academic (0.0001), disability_gr_9_other major (0.0001)
