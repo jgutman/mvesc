@@ -1,7 +1,7 @@
 # grid search options, extensive version
 logit:
     penalty: [l1, l2]
-    C: [.00001, .0001, .001, 0.01, 0.1, 1.0, 10.0, 100, 1000]
+    C: [.001, 0.01, 0.1, 1.0, 10.0, 100, 1000]
 LR_no_penalty: {}
 DT:
     criterion: [gini, entropy]

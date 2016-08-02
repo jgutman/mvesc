@@ -41,7 +41,7 @@ features_included:
         street_transition_in*, district_transition_in*, city_transition_in*,
         mid_year_withdraw*]
   snapshots: [disadvantagement*, disability*, district*, gifted*,
-        iss*, oss*, limited_english*, special_ed*, status*,
+        iss*, oss*, limited_english*, special_ed*,
         days_absent*, days_absent_unexcused*, discipline_incidents*]
 #  absence: [absence_consec*, tardy_consec*]
   oaa_normalized: [eighth_read_normalized,  eighth_math_normalized, eighth_science_normalized]
