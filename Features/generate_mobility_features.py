@@ -117,6 +117,60 @@ def join_mobility_transitions(cursor, grade_range,
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
 
+def find_midyear_withdrawals(cursor, grade_range, table,
+        source_schema='clean', source_table='all_snapshots'):
+    """
+
+    """
+    query_multiple_records_per_year = """
+    create temporary table withdrawals_by_month as
+    select student_lookup, school_year, grade, status, street_clean, district,
+        city, district_withdraw_date, district_admit_date,
+        extract(month from district_withdraw_date) withdraw_month
+    from {source_schema}.{source_table}
+    where (student_lookup, school_year) in
+    (select student_lookup, school_year from {source_schema}.{source_table}
+    group by student_lookup, school_year
+    having count(*) > 1)
+    order by student_lookup, school_year, district_withdraw_date;
+    """.format(source_schema=source_schema, source_table=source_table)
+
+    query_temp_midyear_withdrawals_long_format = """
+    create temporary table midyear_withdrawals_long as
+    select student_lookup, grade,
+    count(case when withdraw_month < {summer_start} or
+        withdraw_month > {summer_end} then 1 end) as mid_year_withdraw
+    from withdrawals_by_month
+    group by student_lookup, grade
+    """.format(summer_start = 5, summer_end = 9)
+
+    cursor.execute(query_multiple_records_per_year)
+    cursor.execute(query_temp_midyear_withdrawals_long_format)
+
+    # create table with all student_lookups to store features for
+    query_join_mobility_features = """create temporary table {t} as
+    select * from
+        (select distinct(student_lookup)
+        from {source_schema}.{source_table}) student_list
+    """.format(t=table, source_schema=source_schema, source_table=source_table)
+
+    for grade in grade_range:
+        mobility_changes_midyear = """left join
+        (select student_lookup,
+            (mid_year_withdraw > 0) as mid_year_withdraw_gr_{gr}
+        from midyear_withdrawals_long where grade = {gr})
+        mid_year_withdraw_gr_{gr}
+        using(student_lookup)
+        """.format(gr=grade)
+        query_join_mobility_features += mobility_changes_midyear
+
+    cursor.execute(query_join_mobility_features)
+    # get column names in temporary table just created and return all in a list
+    # remove student_lookup from list of column names returned
+    cursor.execute("select * from {t}".format(t=table))
+    col_names = [i[0] for i in cursor.description]
+    return(col_names[1:])
+
 def generate_mobility(replace = False,
         sql_script = 'mobility_changes_inprogress.sql',
         schema = 'model', table = 'mobility'):
@@ -191,11 +245,24 @@ def generate_mobility(replace = False,
             # and join into feature table with student_lookup index
             update_column_with_join(cursor, table, column_list,
                 'mobility_transitions_wide')
+            print('{}.{} updated with mobility_transitions_wide'.\
+                format(schema, table))
 
-        # model.mobility now contains second set of mobility features
-        # i.e. [street_transition_in*, district_transition_in*, city_transition_in*]
+            # model.mobility now contains second set of mobility features
+            # i.e. [street_transition_in*, district_transition_in*,
+            # city_transition_in*]
+
+            column_list = find_midyear_withdrawals(cursor,
+                grade_range=range(3,13), table='midyear_withdrawals_wide',
+            # take all columns from temporary midyear_withdrawals_wide table
+            # and join into feature table with student_lookup index
+            update_column_with_join(cursor, table, column_list,
+                'midyear_withdrawals_wide')
+            print('{}.{} updated with midyear_withdrawals_wide'.\
+                format(schema, table))
+
         connection.commit()
-        print('{}.{} updated with mobility_transitions_wide'.format(schema, table))
+
 
 def main():
     generate_mobility(replace=True)
