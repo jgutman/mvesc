@@ -138,7 +138,7 @@ def read_table_to_df(connection, table_name, columns=['*'], schema='public', nro
         sqlcmd = sqlcmd + ';'
     else:
         sqlcmd = sqlcmd + " limit {nrows};".format(nrows=str(nrows))
-    df = pd.read_sql(sqlcmd, connection)        
+    df = pd.read_sql(sqlcmd, connection)
     return df
 
 def get_column_type(cursor, table_name, column_name):
@@ -156,7 +156,7 @@ def get_column_type(cursor, table_name, column_name):
     return column_type
 
 def clean_column(cursor, values, old_column_name, table_name,
-                 new_column_name=None, schema_name='clean', replace = 1):
+                 new_column_name=None, schema_name='clean', replace = True):
     """
     Cleans the given column by replacing values according to the given
     json file, which should be in the form:
@@ -168,7 +168,7 @@ def clean_column(cursor, values, old_column_name, table_name,
 
     Any existing name not in the json file is left unchanged.
     By default, replaces the current column with the cleaned values.
-    If replace=0, should provide a distinct new_column_name to avoid duplicates.
+    If replace=False, should provide a distinct new_column_name to avoid duplicates.
     In the json all values should be lowercase.
 
     :param pg object cursor: cursor in psql database
@@ -183,12 +183,12 @@ def clean_column(cursor, values, old_column_name, table_name,
     if not col_type:
         print("old column does not exist")
         return
-    if new_column_name is None:
+    if not new_column_name:
         new_column_name = old_column_name
 
-    clean_col_query = "alter table {0}.\"{1}\" ".format(schema_name,table_name)
+    clean_col_query = "alter table {0}.{1} ".format(schema_name,table_name)
     if replace:
-        clean_col_query += "alter column \"{old}\" type {type} using case "\
+        clean_col_query += "alter column {old} type {type} using case "\
             .format_map({'old': old_column_name, 'type': col_type})
     else:
         clean_col_query += """
@@ -209,9 +209,9 @@ def clean_column(cursor, values, old_column_name, table_name,
         for old_name in old_name_list:
             clean_col_query += """
             lower({old}) like %(item{n})s
-            """.format_map({'old':old_column_name, 'n':count})
+            """.format(old=old_column_name, n=count)
             clean_col_query += or_clause
-            params['item{0}'.format(count)] = str(old_name)
+            params['item{0}'.format(count)] = '%'+str(old_name)+'%'
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
         clean_col_query += "then  %(item{0})s \n".format(count)
@@ -222,12 +222,10 @@ def clean_column(cursor, values, old_column_name, table_name,
 
     if replace and (old_column_name != new_column_name):
         clean_col_query += """
-        alter table {schema}."{table}" rename column "{old}" to "{new}"
-        """.format_map({'schema':schema_name,'table':table_name,
-                        'old':old_column_name, 'new':new_column_name})
-#    print(clean_col_query)
-#    print(params)
-    cursor.execute(clean_col_query,params)
+        alter table {schema}.{table} rename column {old} to {new}
+        """.format(schema=schema_name, table=table_name,
+                    old=old_column_name, new=new_column_name)
+    cursor.execute(clean_col_query, params)
 
 ############ Functions to data frame processing ###################
 def df2num(rawdf):
@@ -239,26 +237,19 @@ def df2num(rawdf):
     Rules:
     - 1. numeric columns unchanged;
     - 2. strings converted to dummeis;
-    - 3. the most frequenct string is taken as reference
+    - 3. the most frequent string is taken as reference
     - 4. new column name is: "ColumnName_Category"
     (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
 
     """
-    numeric_types = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    numeric_df = rawdf.select_dtypes(include=numeric_types)
-    str_columns = list(filter(lambda x: x not in numeric_df.columns, rawdf.columns))
-    for col in str_columns:
-        dummy_col_df = pd.get_dummies(rawdf[col])
-        col_names = dummy_col_df.columns
-        col_names = {cat:col+'_'+cat for cat in col_names }
-        dummy_col_df = dummy_col_df.rename(columns=col_names)
-        try:
-            most_class_col = dummy_col_df.sum().idxmax()
-        except ValueError: # hitting a value error when a column was entirely null
-            print ("error in column {}, type {}".format(col, rawdf[col].dtype))
-            exit(1)
-        dummy_col_df = dummy_col_df.drop([most_class_col], axis=1)
-        numeric_df = numeric_df.join(dummy_col_df)
+    rawdf.dropna(axis='columns', how='all', inplace=True)
+    numeric_df = rawdf.select_dtypes(include=[np.number])
+    str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
+    dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
+    numeric_df = numeric_df.join(dummy_col_df)
+    most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
+    reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
+    numeric_df.drop(reference_cols, axis=1, inplace=True)
     return numeric_df
 
 ############ Upload file or directory to postgres (not useful in most cases)###############
@@ -333,3 +324,22 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
         tab_name = csv2postgres_file(filepath, header=header, nrows=nrows, if_exists=if_exists, schema=schema)
         table_names.append(tab_name)
     return table_names
+
+# copied directly from excel2postgres python file
+def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
+    """ dump dataframe object to postgres database
+
+    :param pandas.DataFrame df: dataframe
+    :param int nrows: number of rows to write to table;
+    :return str table_name: table name of the sql table
+    :rtype str
+    """
+    # create a postgresql engine to wirte to postgres
+    engine = postgres_engine_generator()
+
+    #write the data frame to postgres
+    if nrows==-1:
+        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    else:
+        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    return table_name
