@@ -453,7 +453,8 @@ def run_all_models(model_options, clfs, params, save_location):
 
         # save outputs
         file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
-        with open(os.path.join(save_location, file_name), 'wb') as f:
+        pkl_dir = 'pkls'
+        with open(os.path.join(save_location, pkl_dir, file_name), 'wb') as f:
             pickle.dump(saved_outputs, f)
 
         # write output summary to a database

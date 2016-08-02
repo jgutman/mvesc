@@ -9,10 +9,10 @@ weekly update Grade 10 model (xc)
 * train cohorts: 2008, 2009, 2010
 	 * 96 postive examples, 3046 negative examples
 * cross-validation scheme: leave cohort out
-	 * searching C in 0.0001, 0.001, 0.01, 0.1, 1, 10
-	 * chose C = 0.0001
 	 * searching kernel in linear
 	 * chose kernel = linear
+	 * searching C in 0.0001, 0.001, 0.01, 0.1, 1, 10
+	 * chose C = 0.0001
 	 * using custom_precision_10
 * imputation strategy: median plus dummies
 * scaling strategy: robust
@@ -20,40 +20,63 @@ weekly update Grade 10 model (xc)
 ### Features Used
 * grades
 	 * gpa_gr_9
-* snapshots
-	 * gifted_gr_9
-	 * oss_gr_9
-	 * disability_gr_9
-	 * limited_english_gr_9
-	 * discipline_incidents_gr_9
-	 * district_gr_9
-	 * special_ed_gr_9
-	 * days_absent_gr_9
-	 * iss_gr_9
-	 * days_absent_unexcused_gr_9
-	 * disadvantagement_gr_9
+	 * gpa_gr_8
 * oaa_normalized
 	 * eighth_science_normalized
-	 * eighth_math_normalized
 	 * eighth_read_normalized
+	 * eighth_math_normalized
+* mobility
+	 * mid_year_withdraw_gr_9
+	 * mid_year_withdraw_gr_8
+	 * street_transition_in_gr_8
+	 * district_transition_in_gr_8
+	 * city_transition_in_gr_8
+	 * n_addresses_to_gr_9
+	 * street_transition_in_gr_9
+	 * district_transition_in_gr_9
+	 * avg_address_change_to_gr_8
+	 * n_districts_to_gr_9
+	 * avg_city_change_to_gr_8
+	 * avg_district_change_to_gr_8
+	 * n_districts_to_gr_8
+	 * avg_address_change_to_gr_9
+	 * n_records_to_gr_9
+	 * n_cities_to_gr_9
+	 * avg_district_change_to_gr_9
+	 * city_transition_in_gr_9
+	 * avg_city_change_to_gr_9
+	 * n_records_to_gr_8
+	 * n_addresses_to_gr_8
+	 * n_cities_to_gr_8
+* snapshots
+	 * iss_gr_8
+	 * limited_english_gr_8
+	 * discipline_incidents_gr_8
+	 * limited_english_gr_9
+	 * days_absent_gr_8
+	 * days_absent_unexcused_gr_9
+	 * disadvantagement_gr_9
+	 * special_ed_gr_8
+	 * oss_gr_8
+	 * iss_gr_9
+	 * discipline_incidents_gr_9
+	 * days_absent_unexcused_gr_8
+	 * disadvantagement_gr_8
+	 * district_gr_9
+	 * gifted_gr_9
+	 * disability_gr_9
+	 * days_absent_gr_9
+	 * district_gr_8
+	 * disability_gr_8
+	 * special_ed_gr_9
+	 * oss_gr_9
+	 * gifted_gr_8
 * demographics
 	 * ethnicity
 	 * gender
-* mobility
-	 * n_cities_to_gr_9
-	 * street_transition_in_gr_9
-	 * avg_city_change_to_gr_9
-	 * n_districts_to_gr_9
-	 * city_transition_in_gr_9
-	 * avg_address_change_to_gr_9
-	 * n_records_to_gr_9
-	 * n_addresses_to_gr_9
-	 * avg_district_change_to_gr_9
-	 * district_transition_in_gr_9
-	 * mid_year_withdraw_gr_9
 
 ### Performance Metrics
-on average, model run in 4.04 seconds (6 times) <br/>precision on top 15%: 0.1424 <br/>precision on top 10%: 0.1692 <br/>precision on top 5%: 0.2178 <br/>recall on top 15%: 0.3359 <br/>recall on top 10%: 0.2656 <br/>recall on top 5%: 0.1719 <br/>AUC value is: 0.6511 <br/>top features: mid_year_withdraw_gr_9_True (0.0002), gpa_gr_9_isnull (0.00011), disability_gr_9_other major (0.0001)
+on average, model run in 3.71 seconds (6 times) <br/>precision on top 15%: 0.1689 <br/>precision on top 10%: 0.204 <br/>precision on top 5%: 0.297 <br/>recall on top 15%: 0.3984 <br/>recall on top 10%: 0.3203 <br/>recall on top 5%: 0.2344 <br/>AUC value is: 0.7781 <br/>top features: n_records_to_gr_9 (0.00018), district_gr_9_Crooksville (0.00014), gpa_gr_9_isnull (0.00011)
 ![wk_G10_allFeatures_3_SVM_score_dist.png](figs/wk_G10_allFeatures_3_SVM_score_dist.png)
 ![wk_G10_allFeatures_3_SVM_pr_vs_threshold.png](figs/wk_G10_allFeatures_3_SVM_pr_vs_threshold.png)
 ![wk_G10_allFeatures_SVM_precision_recall_at_k.png](figs/wk_G10_allFeatures_SVM_precision_recall_at_k.png)
