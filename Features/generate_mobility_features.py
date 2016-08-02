@@ -15,13 +15,13 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts'):
             count(school_year) n_records_to_gr_{gr},
             (count(distinct street)-1)/
                 greatest(1, count(street))::float
-                avg_address_change_to_gr_{},
+                avg_address_change_to_gr_{gr},
             (count(distinct district)-1)/
                 greatest(1, count(district))::float
-                avg_district_change_to_gr_{},
+                avg_district_change_to_gr_{gr},
             (count(distinct city)-1)/
                 greatest(1, count(city))::float
-                avg_city_change_to_gr_{}
+                avg_city_change_to_gr_{gr}
         from clean.all_snapshots where grade <= {gr}
         group by student_lookup) mobility_gr_{gr}
         using(student_lookup)
