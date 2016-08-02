@@ -7,6 +7,7 @@ import generate_mobility_features
 import generate_consec_absence_columns
 import generate_absence_features
 import generate_gpa
+import generate_normalized_oaa_pandas
 
 ####
 # Pseudo-code Outline
@@ -34,7 +35,10 @@ print("--- working on generating model.absence table ... ")
 # call functions
 # generate_consec_absence_columns.main() # slow, does not require snapshots
 # generate_absence_features.main()
+
 print("--- working on generating model.mobility table ... ")
 # generate_mobility_features.main() # not fully implemented yet
 print("--- working on generating model.grades table ... ")
 generate_gpa.main()
+print("--- working on generating model.oaa_normalized table ... ")
+generate_normalized_oaa_pandas.main() # a bit slow due to for loop and writing to postgres from pandas
