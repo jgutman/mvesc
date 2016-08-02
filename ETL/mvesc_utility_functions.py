@@ -237,26 +237,19 @@ def df2num(rawdf):
     Rules:
     - 1. numeric columns unchanged;
     - 2. strings converted to dummeis;
-    - 3. the most frequenct string is taken as reference
+    - 3. the most frequent string is taken as reference
     - 4. new column name is: "ColumnName_Category"
     (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
 
     """
-    numeric_types = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    numeric_df = rawdf.select_dtypes(include=numeric_types)
-    str_columns = list(filter(lambda x: x not in numeric_df.columns, rawdf.columns))
-    for col in str_columns:
-        dummy_col_df = pd.get_dummies(rawdf[col])
-        col_names = dummy_col_df.columns
-        col_names = {cat:col+'_'+cat for cat in col_names }
-        dummy_col_df = dummy_col_df.rename(columns=col_names)
-        try:
-            most_class_col = dummy_col_df.sum().idxmax()
-        except ValueError: # hitting a value error when a column was entirely null
-            print ("error in column {}, type {}".format(col, rawdf[col].dtype))
-            exit(1)
-        dummy_col_df = dummy_col_df.drop([most_class_col], axis=1)
-        numeric_df = numeric_df.join(dummy_col_df)
+    rawdf.dropna(axis='columns', how='all', inplace=True)
+    numeric_df = rawdf.select_dtypes(include=[np.number])
+    str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
+    dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
+    numeric_df = numeric_df.join(dummy_col_df)
+    most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
+    reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
+    numeric_df.drop(reference_cols, axis=1, inplace=True)
     return numeric_df
 
 ############ Upload file or directory to postgres (not useful in most cases)###############
@@ -335,7 +328,7 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
 # copied directly from excel2postgres python file
 def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
     """ dump dataframe object to postgres database
-    
+
     :param pandas.DataFrame df: dataframe
     :param int nrows: number of rows to write to table;
     :return str table_name: table name of the sql table
@@ -343,7 +336,7 @@ def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
     """
     # create a postgresql engine to wirte to postgres
     engine = postgres_engine_generator()
-    
+
     #write the data frame to postgres
     if nrows==-1:
         df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
