@@ -97,14 +97,14 @@ def join_mobility_transitions(cursor, grade_range,
         from {source_table}) student_list
     """.format(t=table, source_table=source_table)
 
-    # for each student, return 0 or 1 for whether or not their address has
-    # changed at least once since their address from the previous grade
+    # for each student, return true or false for whether or not their address
+    # has changed at least once since their address from the previous grade
     for grade in grade_range:
         mobility_count_changes = """left join
         (select student_lookup,
-            least(1, num_different_street) street_transition_in_gr_{gr},
-            least(1, num_different_district) district_transition_in_gr_{gr},
-            least(1, num_different_city) city_transition_in_gr_{gr}
+            (num_different_street >=1) street_transition_in_gr_{gr},
+            (num_different_district >=1) district_transition_in_gr_{gr},
+            (num_different_city >=1) city_transition_in_gr_{gr}
         from {source_table} where grade = {gr}) mobility_transition_gr_{gr}
         using(student_lookup)
         """.format(gr=grade, source_table=source_table)
