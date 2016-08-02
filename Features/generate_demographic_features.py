@@ -17,6 +17,7 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 from feature_utilities import update_column_with_join
 
+<<<<<<< HEAD
 def create_temp_table(cursor, schema='clean', table='all_snapshots',
     temp='single_gender', feature='gender'):
 
@@ -28,11 +29,10 @@ def create_temp_table(cursor, schema='clean', table='all_snapshots',
     from {schema}.{table}
     group by student_lookup, {feature});
     """.format(schema=schema, table=table, temp=temp, feature=feature)
-
     query_drop_rows = """delete from {temp}
     where rank > 1;""".format(temp=temp)
 
-    cursor.execute(query_rank_gender_by_count)
+    cursor.execute(query_rank_feature_by_count)
     cursor.execute(query_drop_rows)
 
 def main():
@@ -59,6 +59,7 @@ def main():
 
             # add ethnicity - all multiples have already been converted to
             # M for Multiracial in cleaning_all_snapshots.sql
+
             feature = 'ethnicity'
             temp_table = 'single_'+feature
             create_temp_table(cursor, schema=source_schema,

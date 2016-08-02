@@ -111,7 +111,8 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     :param pd.DataFrame joint_df: data frame with a cohort, outcome, and features
     :param list[int] cohorts_held_out: a list of years to split test set on
     :param string or list[int] cohorts_training: either the string 'all' or
-        a list of years to include in the training, must all precede the test set
+        a list of years to include in the training, all years must precede
+        the test set years in cohorts_held_out
     :returns two dataframes consisting of rows from joint_df, one for training
         and one to be used for testing
     :rtype pd.DataFrame, pd.DataFrame
@@ -259,6 +260,7 @@ def scale_features(train, test, strategy):
         return train, test
 
     elif(strategy == 'standard' or strategy == 'robust'):
+
         non_binary_columns = [k for k, v in num_values_by_column.items()
                               if v > 2]
         if (len(non_binary_columns) > 0):
@@ -380,10 +382,8 @@ def run_all_models(model_options, clfs, params, save_location):
     assert (all(train_X.columns == test_X.columns)),\
         "train and test have different columns"
 
-    ####
     # From now on, we IGNORE the `test`, `test_X`, `test_y` data
     # until we evaluate the model
-    ####
 
     ## (4B) Fit on Training ##
     # if we require cross-validation of parameters, we can either
@@ -411,7 +411,6 @@ def run_all_models(model_options, clfs, params, save_location):
     else:
         print('unknown cross-validation strategy. try "{}", "{}", or "{}"'\
               .format('leave_cohort_out', 'k_fold', 'none'))
-
 
     criterion = parse_criterion_string(
             model_options['validation_criterion'])

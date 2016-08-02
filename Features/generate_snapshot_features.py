@@ -1,11 +1,11 @@
 import os, sys
 parentdir = os.path.abspath('/home/zzhang/mvesc/ETL')
 sys.path.insert(0,parentdir)
-from feature_utilities import *()
-
+from feature_utilities import *
 import yaml
 
-def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,10)):
+def create_temp_table_of_raw_data_from_snapshots(cursor,
+    grade_range = range(1,13)):
     """ Contains a manually made list of raw features from the snapshots
     to create a column for each grade level. It collapses the raw data from
     snapshots on student_lookup. The choice of aggregation/collapse is given to
@@ -19,7 +19,7 @@ def create_temp_table_of_raw_data_from_snapshots(cursor, grade_range = range(1,1
     """
 
     # list of the features we will just take the raw values from (for now)
-    list_of_raw_time_snapshot_features = ['days_absent', 'days_absent_excused', 
+    list_of_raw_time_snapshot_features = ['days_absent', 'days_absent_excused',
                         'days_absent_unexcused',
                         'days_present', 'disability', 'disadvantagement',
                         'discipline_incidents', 'district', 'gifted',
@@ -102,13 +102,13 @@ def generate_raw_snapshot_features(replace=False):
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             create_feature_table(cursor, table, replace=replace)
-            
+
             # generate temp table for raw snapshot features
             list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor)
-            
+
             # merge in with snapshots
-            update_column_with_join(cursor, table, 
-                                    column_list = list_of_temp_cols, 
+            update_column_with_join(cursor, table,
+                                    column_list = list_of_temp_cols,
                                     source_table = 'temp_snapshot_table')
             print('Finished adding raw features from snapshots')
 
@@ -117,11 +117,16 @@ def generate_raw_snapshot_features(replace=False):
             # # generate temp table for age-based snapshot features
             # list_of_temp_cols = blank(cursor)
             # # merge in with snapshots
-            # update_column_with_join(cursor, table, 
-            #                         column = list_of_temp_cols, 
+            # update_column_with_join(cursor, table,
+            #                         column = list_of_temp_cols,
             #                         source_table = 'temp_snapshot_table')
             # print 'Finished adding age-based features from snapshots'
 
             # optional parameters:
             #    source_column - if the source has a different name than desired
             #    source_schema - if the source is not a temporary table
+def main():
+    generate_raw_snapshot_features(replace=True)
+
+if __name__ == '__main__':
+    main()
