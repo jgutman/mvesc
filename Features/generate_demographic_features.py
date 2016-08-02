@@ -17,7 +17,6 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 from feature_utilities import update_column_with_join
 
-<<<<<<< HEAD
 def create_temp_table(cursor, schema='clean', table='all_snapshots',
     temp='single_gender', feature='gender'):
 
