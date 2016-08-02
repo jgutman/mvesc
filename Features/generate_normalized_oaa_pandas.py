@@ -9,24 +9,6 @@ import yaml
 ## Makes normalization and corrections in Pandas and writes it to Postgres
 ## Note: This is relatively slow because of (1) for loop and (2) writing to Postgres
 
-def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
-    """ dump dataframe object to postgres database
-    
-    :param pandas.DataFrame df: dataframe
-    :param int nrows: number of rows to write to table;
-    :return str table_name: table name of the sql table
-    :rtype str: the name of the created table name
-    """
-    # create a postgresql engine to wirte to postgres
-    engine = postgres_engine_generator()
-    
-    #write the data frame to postgres
-    if nrows==-1:
-        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    else:
-        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    return table_name
-
 def get_table_of_student_in_grade_which_year(students_with_outcomes):
     """ Looks at clean.all_snapshots and gets which year each student was in a grade.
     There are ~14 columns, one for each grade level.
