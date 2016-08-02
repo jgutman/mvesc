@@ -9,7 +9,8 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
-from save_reports import *
+from save_reports import write_model_report
+from write_to_database import summary_to_db
 from optparse import OptionParser
 
 # all model import statements
@@ -426,8 +427,10 @@ def run_all_models(model_options, clfs, params, save_location):
         clf = model.best_estimator_
         if hasattr(clf, "predict_proba"):
             test_set_scores = clf.predict_proba(test_X)[:,1]
+            train_set_scores = clf.predict_proba(train_X)[:,1]
         else:
             test_set_scores = clf.decision_function(test_X)
+            train_set_scores = clf.decision_function(train_X)
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
@@ -443,6 +446,10 @@ def run_all_models(model_options, clfs, params, save_location):
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
             'test_set_soft_preds' : test_set_scores,
+            'test_set_preds' : model.predict(test_X),
+            'train_y' : train_y,
+            'train_set_soft_preds' : train_set_scores,
+            'train_set_preds' : model.predict(train_X),
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
             'parameter_grid' : params[model_name],
@@ -459,7 +466,10 @@ def run_all_models(model_options, clfs, params, save_location):
         #    - (B) write to and update an HTML/Markdown file
         #    to create visual tables and graphics for results
 
+        if model_options['write_predictions_to_database']:
+            write_scores_to_db(saved_outputs)
         write_model_report(save_location, saved_outputs)
+        summary_to_db(saved_outputs)
 
 def main():
 # Create options file used to generate features

@@ -6,12 +6,12 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import * 
-from estimate_prediction_model import read_in_yaml
+#from estimate_prediction_model import read_in_yaml
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
-    confusion_matrix, precision_score
+    confusion_matrix, precision_score, average_precision_score
 
 class Top_features():
     def DT(model, columns, k):
@@ -51,11 +51,15 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     fig, ax1 = plt.subplots()
     ax1.plot(pct_above_per_thresh, precision_curve, 'b')
     ax1.set_xlabel('percent of population')
-
+    ax1.set_ylim([0,1])
+    ax1.set_xlim([0,1])
     ax1.set_ylabel('precision', color='b')
+
     ax2 = ax1.twinx()
     ax2.plot(pct_above_per_thresh, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
+    ax2.set_ylim([0,1])
+    ax2.set_xlim([0,1])
 
     base = save_location + "/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
@@ -90,7 +94,7 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
     plt.xlabel("recall")
     plt.ylabel("precision")
     base = save_location + "/" + run_name + "_" + model_name
-    plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
+    plt.savefig(base+'_pr.png', bbox_inches='tight')
 
 
 def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
