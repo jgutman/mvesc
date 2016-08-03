@@ -5,6 +5,30 @@ from save_reports import precision_at_k, Top_features
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     confusion_matrix, precision_score, average_precision_score, accuracy_score
 
+def next_id(user):
+    """
+    returns the next id number for a particualar user by query
+
+    :param str user: initials of the user for a particular run
+    :rtype int:
+    """
+    with postgres_pgconnection_generator() as connection: 
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            select count(*) from information_schema.tables
+            where table_schema = 'model' and table_name = 'reports'
+            """)
+            table_exists = cursor.fetchall()[0][0] 
+            if table_exists:
+                cursor.execute("""
+                select max(substring(filename from '{user}_(\d+)$')::int) 
+                from model.reports;""".format(user=user))
+                last_id = cursor.fetchall()[0][0]
+            else:
+                last_id = -1
+        connection.commit()  
+    return last_id + 1
+
 def build_results_table(cursor,columns,replace=False):
     """                                                                        
     builds the results table if it does not already exist
@@ -44,6 +68,8 @@ def add_row(cursor, columns, values):
 def summary_to_db(saved_outputs):
     """
     doc string!
+    Note: if you add more values, make sure to add it both to the values 
+    dictionary and to the list of column names and types
     """
     model_options = saved_outputs['model_options']
     test_y = saved_outputs['test_y']
@@ -80,8 +106,9 @@ def summary_to_db(saved_outputs):
     values['test_precision_5'] = precision_at_k(test_y, test_scores, .05)
     values['test_precision_10'] = precision_at_k(test_y, test_scores, .1)
     values['average_precision'] = average_precision_score(test_y, test_scores)
+    model_name = values['model_name']
     try:
-        get_top_features = getattr(Top_features, values['model_name'])
+        get_top_features = getattr(Top_features, 'model_name')
     except AttributeError:
         top_features = [['NULL', 0],['NULL', 0],['NULL', 0]]
         print('top features not implemented for {}'.format(model_name))
@@ -95,7 +122,7 @@ def summary_to_db(saved_outputs):
     values['feature_1_weight'] = top_features[0][1]
     values['feature_2_weight'] = top_features[1][1]
     values['feature_3_weight'] = top_features[2][1]
-    values['filename'] = model_options['file_save_name']
+    values['filename'] = saved_outputs['file_name']
     columns = [('model_name', 'text'),
                ('label', 'text'),
                ('feature_categories', 'text'),
@@ -142,15 +169,19 @@ def write_scores_to_db(saved_outputs):
     train['split'] = train_label
     results = pd.concat([test,train])
 
-    filename = saved_outputs['model_options']['file_save_name']
+    filename = saved_outputs['file_name']
+
     engine = postgres_engine_generator()
-    results.to_sql(filename+"_students", engine, schema='scores', 
-                   if_exists = 'replace')
+    results.to_sql("students_"+filename,  engine, 
+                   schema='scores', if_exists = 'replace')
     print('student predictions written to database')
 
     # importance scores for each feature
     model_name = saved_outputs['model_name']
     try:
+        # print("attributes of top_features:")
+        # print(dir(Top_features))
+        # print(model_name)
         get_top_features = getattr(Top_features, model_name)
     except AttributeError:
         print('top features not implemented for {}'.format(model_name))
@@ -159,7 +190,8 @@ def write_scores_to_db(saved_outputs):
         top_features = get_top_features(saved_outputs['estimator'],        
                                         saved_outputs['features'], -1)
         features = pd.DataFrame(top_features, columns=['feature','importance'])
-        features.to_sql(filename+"_features", engine, schema='scores',
+        features.to_sql('features_' + filename, engine, schema='scores',
                         if_exists = 'replace')
         print('feature importances written to database')
             
+

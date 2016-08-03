@@ -10,7 +10,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import write_model_report
-from write_to_database import summary_to_db, write_scores_to_db
+from write_to_database import summary_to_db, write_scores_to_db, next_id
 from optparse import OptionParser
 
 # all model import statements
@@ -440,8 +440,15 @@ def run_all_models(model_options, clfs, params, save_location):
         # store option inputs (random_seed, train/test split rules, features)
         # store time to completion [missing]
 
+        count = next_id(model_options['user'])
+
         saved_outputs = {
             'model_name' : model_name,
+            'file_name' : "{filename}_{model}_{user}_{number}"\
+            .format(filename = model_options['file_save_name'], 
+                    model = model_name, 
+                    user = model_options['user'],
+                    number = count),
             'estimator' : model,
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'test_y' : test_y,
@@ -458,8 +465,7 @@ def run_all_models(model_options, clfs, params, save_location):
         }
 
         # save outputs
-        file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
-        joblib.dump(saved_outputs, os.path.join(save_location, file_name))
+        joblib.dump(saved_outputs, os.path.join(save_location, saved_outputs['file_name'] + '.pkl'))
 
         # write output summary to a database
         #    - (A) write to a database table to store summary
