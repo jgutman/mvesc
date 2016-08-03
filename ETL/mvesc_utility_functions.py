@@ -156,7 +156,8 @@ def get_column_type(cursor, table_name, column_name):
     return column_type
 
 def clean_column(cursor, values, old_column_name, table_name,
-                 new_column_name=None, schema_name='clean', replace = True):
+                 new_column_name=None, schema_name='clean',
+                 replace = 1, exact = 1):
     """
     Cleans the given column by replacing values according to the given
     json file, which should be in the form:
@@ -178,6 +179,8 @@ def clean_column(cursor, values, old_column_name, table_name,
     :param string table_name:
     :param string schema_name:
     :param bool replace: if yes, replaces the old_column_name and re-names it, if no makes a new column called new_column_name
+    :param bool exact: if yes, pattern matching will require exact matches to values in json
+         if no, will append % to each side, allowing wildcards on each side
     """
     col_type = get_column_type(cursor, table_name, old_column_name)
     if not col_type:
@@ -186,17 +189,17 @@ def clean_column(cursor, values, old_column_name, table_name,
     if not new_column_name:
         new_column_name = old_column_name
 
-    clean_col_query = "alter table {0}.{1} ".format(schema_name,table_name)
+    clean_col_query = """alter table {0}."{1}" """.format(schema_name, table_name)
     if replace:
-        clean_col_query += "alter column {old} type {type} using case "\
-            .format_map({'old': old_column_name, 'type': col_type})
+        clean_col_query += """alter column "{old}" type {type} using case """\
+            .format(old=old_column_name, type=col_type)
     else:
         clean_col_query += """
         add column "{new_name}" {type};
         alter table {schema}."{table}"
-        alter column {new_name} type {type} using case
-        """.format_map({'new_name':new_column_name, 'type': col_type,
-                    'schema': schema_name, 'table':table_name})
+        alter column "{new_name}" type {type} using case
+        """.format(new_name=new_column_name, type=col_type,
+                    schema=schema_name, table=table_name)
 
     params = {} # dictionary to hold parameters for cursor.execute()
     with open(values, 'r') as f:
@@ -211,18 +214,20 @@ def clean_column(cursor, values, old_column_name, table_name,
             lower({old}) like %(item{n})s
             """.format(old=old_column_name, n=count)
             clean_col_query += or_clause
-            params['item{0}'.format(count)] = '%'+str(old_name)+'%'
+            if exact:
+                params['item{0}'.format(count)] = '{}'.format(old_name)
+            else:
+                params['item{0}'.format(count)] = '%{}%'.format(old_name)
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
         clean_col_query += "then  %(item{0})s \n".format(count)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
-#    clean_col_query = clean_col_query[:-20]
     clean_col_query += "else {0} end; ".format(old_column_name)
 
-    if replace and (old_column_name != new_column_name):
+    if replace:
         clean_col_query += """
-        alter table {schema}.{table} rename column {old} to {new}
+        alter table {schema}.{table} rename column "{old}" to "{new}"
         """.format(schema=schema_name, table=table_name,
                     old=old_column_name, new=new_column_name)
     cursor.execute(clean_col_query, params)

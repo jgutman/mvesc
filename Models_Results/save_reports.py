@@ -5,8 +5,8 @@ split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
-from mvesc_utility_functions import * 
-from estimate_prediction_model import read_in_yaml
+from mvesc_utility_functions import *
+import estimate_prediction_model
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,8 +32,8 @@ class Top_features():
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
-    
-def plot_precision_recall_n(y_true, y_prob, save_location, 
+
+def plot_precision_recall_n(y_true, y_prob, save_location,
                             run_name, model_name):
     # from Rayid's magicloops code
     y_score = y_prob
@@ -70,10 +70,10 @@ def recall_at_k(y_true, y_scores, k):
     # from Rayid's magicloops code
     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
-    return recall_score(y_true, y_pred)  
+    return recall_score(y_true, y_pred)
 
 
-def plot_score_distribution(soft_predictions, save_location, 
+def plot_score_distribution(soft_predictions, save_location,
                             run_name, model_name):
     min_x = min(min(soft_predictions), 0)
     max_x = max(max(soft_predictions), 1)
@@ -122,7 +122,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("confusion matrix at probability {} threshold".format(threshold))
     plt.colorbar()
-    # tick_marks = np.arange(len(class_names)) 
+    # tick_marks = np.arange(len(class_names))
     # plt.xticks(tick_marks, class_names, rotation=45)
     # plt.yticks(tick_marks, class_names)
     plt.tight_layout()
@@ -131,7 +131,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_confusion_mat_{}.png'.format(threshold),
                 bbox_inches='tight')
-    
+
 
 def markdown_report(f, save_location, saved_outputs):
     model_options = saved_outputs['model_options']
@@ -144,7 +144,7 @@ def markdown_report(f, save_location, saved_outputs):
     f.write("# Report for {}\n".format(" ".join(run_name.split('_'))
                                        + " " + model_name))
     f.write(model_options['user_description']+'\n')
-    
+
     # model options used
     f.write("\n### Model Options\n")
 
@@ -154,7 +154,7 @@ def markdown_report(f, save_location, saved_outputs):
             .format(model_options['cohort_grade_level_begin'][-3:-2]))
 
     f.write("* test cohorts: {}\n"\
-            .format(", ".join([str(a) for a in 
+            .format(", ".join([str(a) for a in
                                model_options['cohorts_held_out']])))
 
     f.write("\t * {0} positive examples, {1} negative examples\n"\
@@ -190,8 +190,8 @@ def markdown_report(f, save_location, saved_outputs):
 
     scaling = model_options['feature_scaling']
     f.write("* scaling strategy: {}\n".format(scaling))
-    
-    # features used 
+
+    # features used
     f.write("\n### Features Used\n")
     for key, features in model_options['features_included'].items():
         f.write("* {}\n".format(key))
@@ -232,11 +232,11 @@ def markdown_report(f, save_location, saved_outputs):
                         top_features[1][0],top_features[1][1],
                         top_features[2][0],top_features[2][1]))
     fig_dir='figs/'
-    images = [a for a in os.listdir(os.path.join(save_location, fig_dir)) if 
+    images = [a for a in os.listdir(os.path.join(save_location, fig_dir)) if
               ('png' in a and model_name in a and run_name in a)]
     for fn in images:
         f.write("![{fn}]({fig_dir}{fn})\n".format(fig_dir=fig_dir, fn=fn))
-        
+
 
 def write_model_report(save_location, saved_outputs):
     model_options = saved_outputs['model_options']
@@ -245,15 +245,16 @@ def write_model_report(save_location, saved_outputs):
     test_y = saved_outputs['test_y']
     test_set_scores = saved_outputs['test_set_soft_preds']
 
-    plot_score_distribution(test_set_scores, save_location, run_name, 
+    plot_score_distribution(test_set_scores, save_location, run_name,
                             model_name)
-    #plot_precision_recall_threshold(test_set_scores, test_y, save_location, 
+
+    #plot_precision_recall_threshold(test_set_scores, test_y, save_location,
     #                                run_name, model_name)
-    plot_precision_recall(test_set_scores, test_y, save_location, 
+    plot_precision_recall(test_set_scores, test_y, save_location,
                           run_name, model_name)
-    plot_precision_recall_n(test_y, test_set_scores,save_location, 
+    plot_precision_recall_n(test_y, test_set_scores,save_location,
                             run_name, model_name)
-    #plot_confusion_matrix(test_set_scores, test_y, .5, save_location, 
+    #plot_confusion_matrix(test_set_scores, test_y, .5, save_location,
     #                      run_name, model_name)
     plot_confusion_matrix(test_set_scores, test_y, .3, save_location, 
                           run_name, model_name)
@@ -272,7 +273,7 @@ def main():
               "<location of model options file>")
         sys.exit(1)
 
-    model_options = read_in_yaml(options_location)
+    model_options = estimate_prediction_model.read_in_yaml(options_location)
     model_name = 'logit'
     test_y = np.concatenate((np.ones(50),np.zeros(50)))
     test_set_scores = test_y + np.random.randn(test_y.size)
