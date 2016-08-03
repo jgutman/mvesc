@@ -13,10 +13,10 @@
 #   ```
 ##  Then you can use it as a dictionary
 ##  Loaded dict is in alphabetical order; but no content is changed
-model_classes_selected: [logit, DT, RF] # [SVM] # must be a list of strings!
-user_description: predict at end of 9th for weekly update ZZ
+model_classes_selected: [LR_no_penalty] # [SVM] # must be a list of strings!
+user_description: test RF top features
 # model name and extension appended automatically
-file_save_name: predict9_0802_demo_snap
+file_save_name: RF_topFeatures
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort

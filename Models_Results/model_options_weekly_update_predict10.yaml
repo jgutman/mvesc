@@ -14,16 +14,16 @@
 ##  Then you can use it as a dictionary
 ##  Loaded dict is in alphabetical order; but no content is changed
 model_classes_selected: [logit, DT, RF] # [SVM] # must be a list of strings!
-user_description: predict at end of 9th for weekly update ZZ
+user_description: predict at begin of 10th for weekly update ZZ
 # model name and extension appended automatically
-file_save_name: predict9_0802_demo_snap
+file_save_name: predict10_0802_demo_snap
 write_predictions_to_database: False
 
 model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #leave_cohort_out #k_fold
 cohort_grade_level_begin: cohort_9th # keep cohort 9th even though we're predicting at end of 8th
-prediction_grade_level: 9 # predicting at the beginning of this grade
-feature_grade_range: [8, 7]
+prediction_grade_level: 10 # predicting at the beginning of this grade
+feature_grade_range: [9, 8, 7]
 n_folds: 10
 cohorts_held_out: [2011] # [2012 is ultimate test set not to be used here]
 
