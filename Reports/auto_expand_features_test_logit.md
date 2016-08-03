@@ -90,8 +90,8 @@ expand features and grade range
 	 * gpa_gr_8
 
 ### Performance Metrics
-top features: n_cities_to_gr_8 (0.0), n_cities_to_gr_7 (0.0), n_cities_to_gr_6 (0.0)![auto_expand_features_test_logit_confusion_mat_0.3.png](auto_expand_features_test_logit_confusion_mat_0.3.png)
-![auto_expand_features_test_logit_precision_recall.png](auto_expand_features_test_logit_precision_recall.png)
-![auto_expand_features_test_logit_confusion_mat_0.5.png](auto_expand_features_test_logit_confusion_mat_0.5.png)
-![auto_expand_features_test_logit_score_dist.png](auto_expand_features_test_logit_score_dist.png)
-![auto_expand_features_test_logit_pr_vs_threshold.png](auto_expand_features_test_logit_pr_vs_threshold.png)
+top features: n_cities_to_gr_8 (0.0), n_cities_to_gr_7 (0.0), n_cities_to_gr_6 (0.0)![./figs/auto_expand_features_test_logit_confusion_mat_0.3.png](auto_expand_features_test_logit_confusion_mat_0.3.png)
+![./figs/auto_expand_features_test_logit_precision_recall.png](auto_expand_features_test_logit_precision_recall.png)
+![./figs/auto_expand_features_test_logit_confusion_mat_0.5.png](auto_expand_features_test_logit_confusion_mat_0.5.png)
+![./figs/auto_expand_features_test_logit_score_dist.png](auto_expand_features_test_logit_score_dist.png)
+![./figs/auto_expand_features_test_logit_pr_vs_threshold.png](auto_expand_features_test_logit_pr_vs_threshold.png)

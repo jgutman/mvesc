@@ -3,12 +3,18 @@
 - each section marked by '#++++++' is for one excel file
 - procedure is commented briefly in script and more in ETL_README (coming after Jul 8)
 """ 
+import os, sys
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
+sys.path.insert(0, parentdir)
+from mvesc_utility_functions import *
 import pandas as pd
 import os
 import re
 import json
-from sqlalchemy import create_engine
-from csv2postgres_mvesc import postgresql_engine_generator_mvesc
 
 #++++++ Functions only for the Excel files ++++++#
 def combine_colnames(col1, col2):
@@ -32,24 +38,6 @@ def combine_colnames(col1, col2):
     new_col = new_col+dist_school+more_less+'a_year_'+schoolyear  
     return new_col
 
-
-def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
-    """ dump dataframe object to postgres database
-    
-    :param pandas.DataFrame df: dataframe
-    :param int nrows: number of rows to write to table;
-    :return str table_name: table name of the sql table
-    :rtype str
-    """
-    # create a postgresql engine to wirte to postgres
-    engine = postgresql_engine_generator_mvesc()
-    
-    #write the data frame to postgres
-    if nrows==-1:
-        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    else:
-        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    return table_name
 
 def add_file2table_jsonfile(excelfile, table_name, jsonfile='file_to_table_name.json'):
     """ Add file:table to json OR return None to avoid conflict

@@ -35,7 +35,7 @@ insert into clean.all_graduates(student_lookup, graduation_date)
 		from clean.all_snapshots where student_lookup not in
 		(select student_lookup from clean.all_graduates)
 		and withdraw_reason = 'graduate'
-		and (grade='12' or grade='23');
+		and (grade=12 or grade=23);
 -- get non-duplicated rows
 --	select student_lookup, max(graduation_date) as graduation_date
 --		from clean.all_graduates

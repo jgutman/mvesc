@@ -1,5 +1,6 @@
 from mvesc_utility_functions import *
 import cleaning_grad_grades
+import clean_addresses
 
 def main():
     execute_sql_script("cleaning_all_snapshots.sql")
@@ -20,6 +21,10 @@ def main():
             alter table clean.all_snapshots drop column status_code;
             alter table clean.all_snapshots drop column status_desc;
             """)
-    connection.commit()
+        connection.commit()
     cleaning_grad_grades.main()
     execute_sql_script("update_all_snapshots_with_missing_graduates.sql")
+    clean_addresses.main()
+
+if __name__ == '__main__':
+    main()

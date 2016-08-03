@@ -11,18 +11,66 @@ import estimate_prediction_model
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
-    confusion_matrix
+    confusion_matrix, precision_score, recall_score, roc_auc_score
 
-def DT_top_features(model, columns):
-    # placeholder
-    pass
+class Top_features():
+    def DT(model, columns, k):
+        imp = model.best_estimator_.feature_importances_
+        top_feat = sorted(zip(columns,imp.tolist()),
+                           key=lambda x: x[1], reverse=True)
+        return top_feat[:k]
 
-def logit_top_features(model, columns):
-    coefs = model.best_estimator_.coef_
-    top_coefs = sorted(zip(columns,coefs.tolist()[0]),
-                       key=lambda x: x[1], reverse=True)
-    return top_coefs[:3]
+    def logit(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
 
+    def SVM(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
+
+
+def plot_precision_recall_n(y_true, y_prob, save_location,
+                            run_name, model_name):
+    # from Rayid's magicloops code
+    y_score = y_prob
+    precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
+    precision_curve = precision_curve[:-1]
+    recall_curve = recall_curve[:-1]
+    pct_above_per_thresh = []
+    number_scored = len(y_score)
+    for value in pr_thresholds:
+        num_above_thresh = len(y_score[y_score>=value])
+        pct_above_thresh = num_above_thresh / float(number_scored)
+        pct_above_per_thresh.append(pct_above_thresh)
+    pct_above_per_thresh = np.array(pct_above_per_thresh)
+    plt.clf()
+    fig, ax1 = plt.subplots()
+    ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+    ax1.set_xlabel('percent of population')
+
+    ax1.set_ylabel('precision', color='b')
+    ax2 = ax1.twinx()
+    ax2.plot(pct_above_per_thresh, recall_curve, 'r')
+    ax2.set_ylabel('recall', color='r')
+
+    base = save_location + "/figs/" + run_name + "_" + model_name
+    plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
+
+def precision_at_k(y_true, y_scores, k):
+    # from Rayid's magicloops code
+    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
+    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    return precision_score(y_true, y_pred)
+
+def recall_at_k(y_true, y_scores, k):
+    # from Rayid's magicloops code
+    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
+    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    return recall_score(y_true, y_pred)
 
 
 def plot_score_distribution(soft_predictions, save_location,
@@ -35,7 +83,7 @@ def plot_score_distribution(soft_predictions, save_location,
     plt.xlabel("soft prediction score")
     plt.xlim([min_x,max_x])
     plt.ylabel("number of students")
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
 
 
@@ -47,7 +95,7 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
     plt.title("precision vs. recall")
     plt.xlabel("recall")
     plt.ylabel("precision")
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
 
 
@@ -62,7 +110,7 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     plt.title("precision and recall vs threshold")
     plt.xlabel("threshold")
     plt.legend(["precision", "recall"])
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall.png', bbox_inches='tight')
 
 
@@ -80,7 +128,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    base = save_location + "/" + run_name + "_" + model_name
+    base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_confusion_mat_{}.png'.format(threshold),
                 bbox_inches='tight')
 
@@ -118,7 +166,6 @@ def markdown_report(f, save_location, saved_outputs):
     else:
         train_set = ", ".join([str(a) for a in train_set])
     f.write("* train cohorts: {}\n".format(train_set))
-
     f.write("\t * {0} postive examples, {1} negative examples\n"\
             .format(saved_outputs['train_set_balance'][1],
                     saved_outputs['train_set_balance'][0]))
@@ -130,10 +177,12 @@ def markdown_report(f, save_location, saved_outputs):
     f.write("* cross-validation scheme: {}\n".format(cv_scheme))
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator'].best_estimator_
+    n_models = 1;
     for param, options in params.items():
         option_str = ", ".join([str(a) for a in options])
         f.write("\t * searching {} in {}\n".format(param, option_str))
         f.write("\t * chose {} = {}\n".format(param, getattr(model,param)))
+        n_models *= len(options)
     f.write("\t * using {}\n".format(model_options['validation_criterion']))
 
     imputation = " ".join(model_options['missing_impute_strategy'].split('_'))
@@ -151,17 +200,42 @@ def markdown_report(f, save_location, saved_outputs):
 
     # performance metrics (must have first generated these images)
     f.write("\n### Performance Metrics\n")
-    if model_name == 'logit':
-        top_features = logit_top_features(saved_outputs['estimator'],
-                                          saved_outputs['features'])
-        f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})"\
+    f.write("on average, model run in {:0.2f} seconds ({} times) <br/>"\
+            .format(saved_outputs['time']/float(n_models),n_models))
+    prec_15 = precision_at_k(test_y, test_set_scores, .15)
+    prec_10 = precision_at_k(test_y, test_set_scores, .1)
+    prec_5 = precision_at_k(test_y, test_set_scores, .05)
+    recall_15 = recall_at_k(test_y, test_set_scores, 0.15)
+    recall_10 = recall_at_k(test_y, test_set_scores, 0.1)
+    recall_5 = recall_at_k(test_y, test_set_scores, 0.05)
+    f.write("precision on top 15%: {:0.4} <br/>".format(prec_15))
+    f.write("precision on top 10%: {:0.4} <br/>".format(prec_10))
+    f.write("precision on top 5%: {:0.4} <br/>".format(prec_5))
+    f.write("recall on top 15%: {:0.4} <br/>".format(recall_15))
+    f.write("recall on top 10%: {:0.4} <br/>".format(recall_10))
+    f.write("recall on top 5%: {:0.4} <br/>".format(recall_5))
+
+    # write auc
+    auc_val = roc_auc_score(test_y, test_set_scores)
+    f.write("AUC value is: {:0.4} <br/>".format(auc_val))
+
+    try:
+        get_top_features = getattr(Top_features, model_name)
+    except AttributeError:
+        print('top features not implemented for {}'.format(model_name))
+        pass
+    else:
+        top_features = get_top_features(saved_outputs['estimator'],
+                                        saved_outputs['features'], 3)
+        f.write("top features: {} ({:0.2}), {} ({:0.2}), {} ({:0.2})\n"\
                 .format(top_features[0][0],top_features[0][1],
                         top_features[1][0],top_features[1][1],
                         top_features[2][0],top_features[2][1]))
-    images = [a for a in os.listdir(save_location) if
+    fig_dir='figs/'
+    images = [a for a in os.listdir(os.path.join(save_location, fig_dir)) if
               ('png' in a and model_name in a and run_name in a)]
     for fn in images:
-        f.write("![{fn}]({fn})\n".format(fn=fn))
+        f.write("![{fn}]({fig_dir}{fn})\n".format(fig_dir=fig_dir, fn=fn))
 
 
 def write_model_report(save_location, saved_outputs):
@@ -173,13 +247,16 @@ def write_model_report(save_location, saved_outputs):
 
     plot_score_distribution(test_set_scores, save_location, run_name,
                             model_name)
-    plot_precision_recall_threshold(test_set_scores, test_y, save_location,
-                                    run_name, model_name)
+
+    #plot_precision_recall_threshold(test_set_scores, test_y, save_location,
+    #                                run_name, model_name)
     plot_precision_recall(test_set_scores, test_y, save_location,
                           run_name, model_name)
-    plot_confusion_matrix(test_set_scores, test_y, .5, save_location,
-                          run_name, model_name)
-    plot_confusion_matrix(test_set_scores, test_y, .3, save_location,
+    plot_precision_recall_n(test_y, test_set_scores,save_location,
+                            run_name, model_name)
+    #plot_confusion_matrix(test_set_scores, test_y, .5, save_location,
+    #                      run_name, model_name)
+    plot_confusion_matrix(test_set_scores, test_y, .3, save_location, 
                           run_name, model_name)
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
                 markdown_report(f,save_location, saved_outputs)
@@ -187,6 +264,7 @@ def write_model_report(save_location, saved_outputs):
 
 
 def main():
+    # note: this testing is outdated
     try:
         save_location = sys.argv[1]
         options_location = sys.argv[2]

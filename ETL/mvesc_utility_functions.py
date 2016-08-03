@@ -169,7 +169,7 @@ def clean_column(cursor, values, old_column_name, table_name,
 
     Any existing name not in the json file is left unchanged.
     By default, replaces the current column with the cleaned values.
-    If replace=0, should provide a distinct new_column_name to avoid duplicates.
+    If replace=False, should provide a distinct new_column_name to avoid duplicates.
     In the json all values should be lowercase.
 
     :param pg object cursor: cursor in psql database
@@ -192,14 +192,14 @@ def clean_column(cursor, values, old_column_name, table_name,
     clean_col_query = """alter table {0}."{1}" """.format(schema_name, table_name)
     if replace:
         clean_col_query += """alter column "{old}" type {type} using case """\
-            .format_map({'old': old_column_name, 'type': col_type})
+            .format(old=old_column_name, type=col_type)
     else:
         clean_col_query += """
         add column "{new_name}" {type};
         alter table {schema}."{table}"
         alter column "{new_name}" type {type} using case
-        """.format_map({'new_name':new_column_name, 'type': col_type,
-                    'schema': schema_name, 'table':table_name})
+        """.format(new_name=new_column_name, type=col_type,
+                    schema=schema_name, table=table_name)
 
     params = {} # dictionary to hold parameters for cursor.execute()
     with open(values, 'r') as f:

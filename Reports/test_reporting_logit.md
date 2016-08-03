@@ -31,8 +31,8 @@ testing the reporting functions
 	 * gpa_gr_9
 
 ### Performance Metrics
-top features: days_absent_gr_9 (0.0), days_absent_unexcused_gr_9 (0.0), discipline_incidents_gr_9 (0.0)![test_reporting_logit_precision_recall.png](test_reporting_logit_precision_recall.png)
-![test_reporting_logit_score_dist.png](test_reporting_logit_score_dist.png)
-![test_reporting_logit_confusion_mat_0.5.png](test_reporting_logit_confusion_mat_0.5.png)
-![test_reporting_logit_pr_vs_threshold.png](test_reporting_logit_pr_vs_threshold.png)
-![test_reporting_logit_confusion_mat_0.3.png](test_reporting_logit_confusion_mat_0.3.png)
+top features: days_absent_gr_9 (0.0), days_absent_unexcused_gr_9 (0.0), discipline_incidents_gr_9 (0.0)![./figs/test_reporting_logit_precision_recall.png](test_reporting_logit_precision_recall.png)
+![./figs/test_reporting_logit_score_dist.png](test_reporting_logit_score_dist.png)
+![./figs/test_reporting_logit_confusion_mat_0.5.png](test_reporting_logit_confusion_mat_0.5.png)
+![./figs/test_reporting_logit_pr_vs_threshold.png](test_reporting_logit_pr_vs_threshold.png)
+![./figs/test_reporting_logit_confusion_mat_0.3.png](test_reporting_logit_confusion_mat_0.3.png)

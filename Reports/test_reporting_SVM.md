@@ -20,8 +20,8 @@ testing the reporting functions
 	 * gender
 
 ### Performance Metrics
-![test_reporting_SVM_pr_vs_threshold.png](test_reporting_SVM_pr_vs_threshold.png)
-![test_reporting_SVM_confusion_mat_0.5.png](test_reporting_SVM_confusion_mat_0.5.png)
-![test_reporting_SVM_precision_recall.png](test_reporting_SVM_precision_recall.png)
-![test_reporting_SVM_confusion_mat_0.3.png](test_reporting_SVM_confusion_mat_0.3.png)
-![test_reporting_SVM_score_dist.png](test_reporting_SVM_score_dist.png)
+![./figs/test_reporting_SVM_pr_vs_threshold.png](test_reporting_SVM_pr_vs_threshold.png)
+![./figs/test_reporting_SVM_confusion_mat_0.5.png](test_reporting_SVM_confusion_mat_0.5.png)
+![./figs/test_reporting_SVM_precision_recall.png](test_reporting_SVM_precision_recall.png)
+![./figs/test_reporting_SVM_confusion_mat_0.3.png](test_reporting_SVM_confusion_mat_0.3.png)
+![./figs/test_reporting_SVM_score_dist.png](test_reporting_SVM_score_dist.png)
