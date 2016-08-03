@@ -4,9 +4,9 @@ This folder contains the code to choose specific features to include in the mode
 
 ## Running Instructions
 
-Provide a model options file (see required attributes in `model_options.yaml`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Run these models as
+Provide a model options file (see required attributes in `model_options.yaml`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as
 
-`python estimate_prediction_model.py -m model_options.yaml -g grid_search_full.yaml`.
+`python estimate_prediction_model.py -m model_options.yaml -g grid_search_full.yaml -o ../Reports`.
 
 ### Choosing Features to Include
 

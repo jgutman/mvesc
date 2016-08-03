@@ -14,6 +14,13 @@
 ALTER TABLE clean.all_absences
 	ALTER COLUMN date type date using to_date(date, 'YYYY-MM-DD');
 
+update clean.all_absences
+set date = case
+    when extract(year from "date") < 100 
+    then ("date" + interval '2000 years')::date
+    else "date"
+end;
+
 -- Absence Length -- These only take on 3 distinct and sensible values, so don't need any changes
 --		this is a quick visual check
 --select distinct absence_length from clean.all_absences;
