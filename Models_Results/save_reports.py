@@ -26,11 +26,48 @@ class Top_features():
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
+    def LR_no_penalty(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
+
     def SVM(model, columns, k):
         coefs = model.best_estimator_.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
+
+    def RF(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def GB(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def ET(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def AB(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def SGD(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: x[1], reverse=True)
+        return top_coefs[:k]
+
 
 
 def plot_precision_recall_n(y_true, y_prob, save_location,
