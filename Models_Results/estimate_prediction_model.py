@@ -4,7 +4,7 @@
 import os, sys
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
-split_pathname = full_pathname.split(sep="mvesc")
+split_pathname = full_pathname.split("mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
@@ -155,21 +155,21 @@ def write_out_predictions(model_options, model_name, clf, run_time,
         'time': run_time
         }
 
-        # save outputs
-        file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
-        pkl_dir = 'pkls'
-        with open(os.path.join(save_location, pkl_dir, file_name), 'wb') as f:
-            pickle.dump(saved_outputs, f)
+    # save outputs
+    file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
+    pkl_dir = 'pkls'
+    with open(os.path.join(save_location, pkl_dir, file_name), 'wb') as f:
+        pickle.dump(saved_outputs, f)
 
-        # write output summary to a database
-        #    - (A) write to a database table to store summary
-        #    - (B) write to and update an HTML/Markdown file
-        #    to create visual tables and graphics for results
+    # write output summary to a database
+    #    - (A) write to a database table to store summary
+    #    - (B) write to and update an HTML/Markdown file
+    #    to create visual tables and graphics for results
 
-        if model_options['write_predictions_to_database']:
-            write_scores_to_db(saved_outputs)
-        write_model_report(save_location, saved_outputs)
-        summary_to_db(saved_outputs)
+    if model_options['write_predictions_to_database']:
+        write_scores_to_db(saved_outputs)
+    write_model_report(save_location, saved_outputs)
+    summary_to_db(saved_outputs)
 
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
