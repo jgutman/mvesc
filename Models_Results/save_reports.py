@@ -6,6 +6,7 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
+import yaml
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -272,7 +273,8 @@ def main():
               "<location of model options file>")
         sys.exit(1)
 
-    # model_options = estimate_prediction_model.read_in_yaml(options_location)
+    with open(options_location, 'r') as f:
+        model_options = yaml.load(f)
     model_name = 'logit'
     test_y = np.concatenate((np.ones(50),np.zeros(50)))
     test_set_scores = test_y + np.random.randn(test_y.size)
