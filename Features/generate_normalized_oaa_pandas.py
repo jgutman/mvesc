@@ -9,6 +9,24 @@ import yaml
 ## Makes normalization and corrections in Pandas and writes it to Postgres
 ## Note: This is relatively slow because of (1) for loop and (2) writing to Postgres
 
+def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
+    """ dump dataframe object to postgres database
+    
+    :param pandas.DataFrame df: dataframe
+    :param int nrows: number of rows to write to table;
+    :return str table_name: table name of the sql table
+    :rtype str: the name of the created table name
+    """
+    # create a postgresql engine to wirte to postgres
+    engine = postgres_engine_generator()
+    
+    #write the data frame to postgres
+    if nrows==-1:
+        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    else:
+        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
+    return table_name
+
 def get_table_of_student_in_grade_which_year(students_with_outcomes):
     """ Looks at clean.all_snapshots and gets which year each student was in a grade.
     There are ~14 columns, one for each grade level.
@@ -133,9 +151,37 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
     # return list of columns
     return oaa_raw, list_of_year_test_types
 
-def generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_test_types,
+def aggregate_rows_of_df_on_index(df, measure_col):
+    # assume grouping by index
+    idx = df.groupby(df.index)[measure_col].transform(max) == df[measure_col]
+    return(df[idx])
+
+def get_max_aggregate_oaa(oaa_numeric, list_of_year_test_types):
+    """ Takes in cleaned oaa_numeric.
+    Loops over tests to keep only one distinct for each student.
+    :param oaa_numeric DataFrame:
+    :param list_of_year_test_types list:
+    :rtype DataFrame: only distinct
+    """
+    # start by getting distinct lookups only, indexed on lookup
+    max_agg_oaa = pd.DataFrame({'student_lookup': pd.unique(oaa_numeric.index)}).set_index('student_lookup')
+    
+    for test in list_of_year_test_types:
+        # grab the test and placement info
+        test_only_and_pl = oaa_numeric[[test+'_ss', test+'_pl']]
+        max_agg_test_only = aggregate_rows_of_df_on_index(test_only_and_pl, test+'_ss')
+        max_agg_test_only.reset_index('student_lookup', inplace = True)
+        max_agg_test_only = max_agg_test_only.drop_duplicates()
+        max_agg_test_only.set_index('student_lookup', inplace = True)
+        # concat with lookup_only
+        max_agg_oaa = pd.concat([max_agg_oaa, max_agg_test_only], axis = 1, join_axes = [max_agg_oaa.index])
+    
+    # return the dataframe with only unique student lookups
+    return(max_agg_oaa)
+
+def generate_normalized_oaa_scores(grade_year_pairs, oaa_df, list_of_year_test_types,
                                    table_name):
-    """ Takes in grade_year_pairs and cleaned oaa_numeric.
+    """ 
     Merges these two and then uses the grade_year_pairs info to group students together
     by year and get a year-normalized z-scores and percentile ranks for each year.
     These are recorded in a `oaa_normalized` column to write to postgres.
@@ -144,7 +190,9 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_t
     """
 
     # join these two tables to assign group memberships
-    oaa_with_grade_year = oaa_numeric.merge(grade_year_pairs, on = 'student_lookup', how = 'left')
+    oaa_with_grade_year = oaa_df.merge(grade_year_pairs, left_index = 'student_lookup',
+                                        right_on = 'student_lookup', how = 'left')
+    
     # get `oaa_normalized`, the outcome table
     oaa_normalized = oaa_with_grade_year[['student_lookup']]
 
@@ -184,10 +232,10 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_t
         oaa_normalized = pd.concat([oaa_normalized, normalized_column], axis = 1)
 
         # get and store percentile column
-        percentile_column = oaa_with_grade_year[[test+'_ss', corresponding_year]]\
-                .groupby(corresponding_year).transform(lambda x: x.rank() / len(x))
+        just_test_year = oaa_with_grade_year[[test+'_ss', corresponding_year]].dropna()
+        percentile_column = just_test_year.groupby(corresponding_year).transform(lambda x: x.rank(pct = True))
         percentile_column.columns = [test+"_percentile"]
-        oaa_normalized = pd.concat([oaa_normalized, percentile_column], axis = 1)
+        oaa_normalized = pd.concat([oaa_normalized, percentile_column], axis = 1, join_axes=[oaa_normalized.index])
         
         # copy over the string rank assignment for each student
         test_score_categorical = oaa_with_grade_year[[test+'_pl']]
@@ -199,38 +247,39 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_t
     print("OAA Normalized and Placement Table Made")
     df2postgres(oaa_normalized, table_name, schema = 'model', if_exists = 'replace')
     print("OAA Normalized Uploaded to Postgres")
+    return(oaa_normalized)
 
-def aggregate_duplicate_normalized_oaa_scores(cursor, table_name, schema = 'model',
-                                              agg_function = 'max'):
-    """ Takes the earlier created normalized oaa scores table
-    and collapses on student_lookup for all columns using the max function.
-    First creates a temp table and then renames it to the original table_name.
+# def aggregate_duplicate_normalized_oaa_scores(cursor, table_name, schema = 'model',
+#                                               agg_function = 'max'):
+#     """ Takes the earlier created normalized oaa scores table
+#     and collapses on student_lookup for all columns using the max function.
+#     First creates a temp table and then renames it to the original table_name.
 
-    :rtype None: prints a success statement
-    """
-    list_of_columns = get_column_names(cursor, table_name, schema)
-    list_of_data_columns = [x for x in list_of_columns if x != 'student_lookup']
+#     :rtype None: prints a success statement
+#     """
+#     list_of_columns = get_column_names(cursor, table_name, schema)
+#     list_of_data_columns = [x for x in list_of_columns if x != 'student_lookup']
 
-    sql_individual_columns = """select student_lookup, """
-    for column in list_of_data_columns:
-        sql_individual_columns += """
-        {agg_func}({data_feature}) as {data_feature},""".format(agg_func = agg_function,
-                                                                data_feature = column)
+#     sql_individual_columns = """select student_lookup, """
+#     for column in list_of_data_columns:
+#         sql_individual_columns += """
+#         {agg_func}({data_feature}) as {data_feature},""".format(agg_func = agg_function,
+#                                                                 data_feature = column)
 
-    sql_collapse = """create temp table temp_collapsed as 
-    ({sql_individual_columns} 
-    from {schema}.{table_name} group by student_lookup);"""\
-    .format(sql_individual_columns = sql_individual_columns[:-2],
-            schema = schema, table_name = table_name)
+#     sql_collapse = """create temp table temp_collapsed as 
+#     ({sql_individual_columns} 
+#     from {schema}.{table_name} group by student_lookup);"""\
+#     .format(sql_individual_columns = sql_individual_columns[:-2],
+#             schema = schema, table_name = table_name)
 
-    cursor.execute(sql_collapse)
+#     cursor.execute(sql_collapse)
 
-    sql_rename = """drop table if exists model.oaa_normalized;
-    create table model.oaa_normalized as (select * from temp_collapsed);"""
+#     sql_rename = """drop table if exists model.oaa_normalized;
+#     create table model.oaa_normalized as (select * from temp_collapsed);"""
 
-    cursor.execute(sql_rename)
+#     cursor.execute(sql_rename)
 
-    print("Finished collapsing duplicate student_lookups in normalized oaa scores")
+#     print("Finished collapsing duplicate student_lookups in normalized oaa scores")
 
 
 def main():
@@ -246,17 +295,22 @@ def main():
     # get the necessary data frames
     grade_year_pairs = get_table_of_student_in_grade_which_year(students_with_outcomes)
     oaa_numeric, list_of_year_test_types = convert_oaa_ogt_to_numeric(students_with_outcomes)
+    
+    # reduce duplicate student lookup scores
+    oaa_numeric_no_dup = get_max_aggregate_oaa(oaa_numeric, list_of_year_test_types)
 
     # generate and upload table
-    generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric, list_of_year_test_types,
-                                   table_name = 'oaa_normalized')
-    
-    # fix the duplicate rows in SQL
-    with postgres_pgconnection_generator() as connection:
-        with connection.cursor() as cursor:
-            aggregate_duplicate_normalized_oaa_scores(cursor,
-                                                      table_name = 'oaa_normalized', schema = 'model')
-            connection.commit()
+    oaa_normalized = generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric_no_dup, 
+                                                    list_of_year_test_types,
+                                                    table_name = 'oaa_normalized')
+
+    # no longer neeed because we implemented aggregation in pandas
+#     # fix the duplicate rows in SQL
+#     with postgres_pgconnection_generator() as connection:
+#         with connection.cursor() as cursor:
+#             aggregate_duplicate_normalized_oaa_scores(cursor,
+#                                                       table_name = 'oaa_normalized', schema = 'model')
+#             connection.commit()
 
 if __name__ == '__main__':
     main()
