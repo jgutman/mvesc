@@ -50,13 +50,13 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
             count(distinct city) n_cities_to_gr_{gr},
             count(school_year) n_records_to_gr_{gr},
             (count(distinct street_clean)-1)/
-                greatest(1, count(street_clean))::float
+                greatest(1, count(distinct grade))::float
                 avg_address_change_to_gr_{gr},
             (count(distinct district)-1)/
-                greatest(1, count(district))::float
+                greatest(1, count(distinct grade))::float
                 avg_district_change_to_gr_{gr},
             (count(distinct city)-1)/
-                greatest(1, count(city))::float
+                greatest(1, count(distinct grade))::float
                 avg_city_change_to_gr_{gr}
         from {source_schema}.{source_table} where grade <= {gr}
         group by student_lookup) mobility_gr_{gr}
@@ -263,9 +263,37 @@ def generate_mobility(replace = False,
 
         connection.commit()
 
+def set_table_negative_null(table='mobility', schema='model'):
+    """
+    Set negative data points to NULL in a table
+   
+    :param str table: table name
+    :param str schema: schema name
+    :return None:
+    """
+
+    with postgres_pgconnection_generator() as connection:
+        connection.autocommit = True
+        with connection.cursor() as cursor:
+            table_df = pd.read_sql_query("select * from {schema}.{table} limit 1000;".format(
+                    schema=schema, table=table), connection)
+            table_df = table_df.select_dtypes(include=[np.number])
+            numeric_columns = table_df.columns
+            for column in numeric_columns:
+                sql_set_null_0 = """
+                update only {schema}.{table}
+                set {column}=NULL
+                where {column}<0.0;
+                """.format(schema=schema, table=table, column=column)
+                cursor.execute(sql_set_null_0)
+            connection.commit()
+    return None
+
+
 
 def main():
     generate_mobility(replace=True)
+    set_table_negative_null(table='mobility', schema='model');
 
 if __name__ == '__main__':
     main()
