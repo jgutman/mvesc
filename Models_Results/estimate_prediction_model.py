@@ -21,7 +21,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 
 #from sklearn.grid_search import ParameterGrid
-from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
@@ -87,13 +87,22 @@ def clf_loop(clfs, params, train_X, train_y,
         given in train_X and train_y (a list of lists of student_lookups)
     :rtype dict(string: GridSearchCV)
     """
-    best_validated_models = dict()
+    all_validated_models = dict()
     validated_model_times = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
         print(model_name)
         parameter_values = params[model_name]
         with Timer(model_name) as t:
+            for p in ParameterGrid(parameter_values):
+                try:
+                    clf.set_params(**p)
+                    for train_list, val_list in cv_folds:
+                        clf.fit(train_X[train_list],
+                                train_y[train_list])
+                        criterion(clf, X = train_X[val_list],
+                            y = train_y[val_list])
+
             best_validated_models[model_name] = \
                 GridSearchCV(clf, parameter_values,
                              scoring=criterion,

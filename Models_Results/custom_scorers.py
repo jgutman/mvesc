@@ -1,4 +1,5 @@
-from sklearn.metrics import make_scorer, precision_score, recall_score
+from sklearn.metrics import make_scorer, get_scorer, precision_score,
+    recall_score, f1_score, roc_auc_score
 import numpy as np
 
 def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
@@ -38,7 +39,12 @@ def parse_criterion_string(criterion):
         custom_scorer = scorer_at_top_k(k, metric)
         return custom_scorer
     else:
-        return criterion
+        try:
+            scorer_from_string = get_scorer(criterion)
+            return scorer_from_string
+        except ValueError:
+            print('could not parse criterion')
+
 
 def main():
     print('testing custom scorer')
