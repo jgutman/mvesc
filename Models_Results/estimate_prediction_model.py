@@ -71,8 +71,8 @@ def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
         criterion_list, models_to_run, cv_folds, save_location):
     """
     Returns a dictionary where the keys are model nicknames (strings)
-    and the values are GridSearchCV objects containing attributes like
-    model.best_score_ and model.best_estimator_
+    and the values are classifiers with methods predict and fit and
+    either predict_proba or decision_function
 
     :param dict(str:estimator) clfs: clfs as returned by define_clfs_params
     :param dict(str:dict) params: grid of classifier hyperparameter options
@@ -87,31 +87,29 @@ def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
         from model_options (e.g. ['logit', 'DT'])
     :param sklearn.KFolds cv_folds: a KFolds generator object over the index
         given in train_X and train_y (a list of lists of student_lookups)
-    :rtype dict(string: GridSearchCV)
     """
     tuple_score = build_tuple_scorer(criterion_list)
     n_criteria = len(criterion_list)
-    all_validated_models = dict()
-    validated_model_times = dict()
-    validated_model_cv_scores = dict()
-    for index,clf in enumerate([clfs[x] for x in models_to_run]):
-        model_name=models_to_run[index]
-        parameter_values = params[model_name]
-        for p in ParameterGrid(parameter_values):
-            with Timer(model_name) as t:
-                clf.set_params(**p)
-                cv_scores_avg = np.empty((len(cv_folds), n_criteria))
-                for i, (train_list, val_list) in enumerate(cv_folds):
-                    clf.fit(train_X.iloc[train_list], train_y.iloc[train_list])
-                    cv_score = tuple_score(clf,
-                        train_X.iloc[val_list], train_y.iloc[val_list])
-                    cv_scores_avg[i] = list(cv_score)
-                cv_scores_avg = np.mean(cv_scores_avg, axis=0)
-                clf.fit(train_X, train_y)
-                run_time = t.time_check()
-            write_out_predictions(model_options, model_name, clf, run_time,
-                cv_scores_avg, parameter_values, save_location,
-                train_X, train_y, test_X, test_y)
+    with Timer('clf_loop') as qq:
+        for index,clf in enumerate([clfs[x] for x in models_to_run]):
+            model_name=models_to_run[index]
+            parameter_values = params[model_name]
+            for p in ParameterGrid(parameter_values):
+                with Timer(model_name) as t:
+                    clf.set_params(**p)
+                    cv_scores_avg = np.empty((len(cv_folds), n_criteria))
+                    for i, (train_list, val_list) in enumerate(cv_folds):
+                        clf.fit(train_X.iloc[train_list], train_y.iloc[train_list])
+                        cv_score = tuple_score(clf,
+                            train_X.iloc[val_list], train_y.iloc[val_list])
+                        cv_scores_avg[i] = list(cv_score)
+                    cv_scores_avg = np.mean(cv_scores_avg, axis=0)
+                    clf.fit(train_X, train_y)
+                    run_time = t.time_check()
+                write_out_predictions(model_options, model_name, clf, run_time,
+                    cv_scores_avg, parameter_values, save_location,
+                    train_X, train_y, test_X, test_y)
+    return qq.time_check()
 
 
 def write_out_predictions(model_options, model_name, clf, run_time,
