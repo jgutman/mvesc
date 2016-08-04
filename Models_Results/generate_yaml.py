@@ -27,6 +27,9 @@ def generate_yaml(template_options, yaml_location=None):
                     feature_list.remove(f)
                     template_options['features'][table] = feature_list
     
+    if type(template_options['cv_criterions']) != list:
+        template_options['cv_criterions'] = [template_options['cv_criterions']]
+
     env = jnj.Environment(loader=jnj.FileSystemLoader(path_name))
     env.trim_blocks = True
     temp = env.get_template('model_options.jinja')
@@ -52,7 +55,7 @@ def main():
         'cohorts_held_out': [2011,2012],
         'cohorts_training': [2009,2010],
         'random_seed': 2851,
-        'cv_criterion': 'custom_precision_10',
+        'cv_criterions': ['custom_precision_10','custom_recall_10']
         'features': {'grades':
                      {'except':['gpa*']},
                      'demographics': 'all',
@@ -61,7 +64,8 @@ def main():
         'outcome': 'definite',
         'imputation': 'median_plus_dummies',
         'scaling': 'robust',
-        'debug': True
+        'debug': True,
+        'sample_n': 500
     }    
     
     time_scales = zip([range(2009,2011),range(2008,2011),range(2007,2011),

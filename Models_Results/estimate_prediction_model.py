@@ -143,7 +143,7 @@ def measure_performance(outcomes, predictions):
     performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
     return performance_objects
 
-def build_outcomes_plus_features(model_options):
+def build_outcomes_plus_features(model_options, subset_n=None):
     """
     Returns a pandas dataframe containing the student_lookup, cohort identifier,
     outcome variable, and all numerical or binarized features.
@@ -171,6 +171,8 @@ def build_outcomes_plus_features(model_options):
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset=[colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
+        if subset_n:
+            outcomes_with_student_lookup = outcomes_with_student_lookup.sample(n=subset_n)
         joint_label_features = outcomes_with_student_lookup.copy()
 
         # get all requested input features
@@ -338,8 +340,9 @@ def run_all_models(model_options, clfs, params, save_location):
     # labeled outcome column (outcome_name)
     # cohort identification column (cohort_grade_level_begin)
     # subset of various feature columns from various tables (features_included)
-
-    outcome_plus_features = build_outcomes_plus_features(model_options)
+    
+    subset_n = model_options['subset_n']
+    outcome_plus_features = build_outcomes_plus_features(model_options, subset_n)
     # no null in the categorical values because we have feature_nan dummies
     # there may be null values in the cohort or outcome label columns
     # just drop these students from the data

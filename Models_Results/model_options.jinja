@@ -31,6 +31,9 @@ cohorts_training:
 
 random_seed: {{random_seed}}
 validation_criterion: {{cv_criterion}}
+  {% for c in cv_criterions %}- {{c}}
+  {% endfor %}
+
 features_included:
   {% for t in features %}{{t}}: 
     {% for f in features[t] %}- {{f}}
@@ -41,3 +44,5 @@ features_included:
 outcome_name: {{outcome}}
 missing_impute_strategy: {{imputation}}
 feature_scaling: {{scaling}}
+
+sample_n: {% if sample_n %} sample_n {% else %} None {% endif %}
