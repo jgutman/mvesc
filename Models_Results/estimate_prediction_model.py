@@ -477,7 +477,7 @@ def run_all_models(model_options, clfs, params, save_location):
         write_model_report(save_location, saved_outputs)
         summary_to_db(saved_outputs)
 
-def main():
+def main(args=None):
 # Create options file used to generate features
 # OR Read in an existing human-created options file
 
@@ -493,7 +493,7 @@ def main():
     parser.add_option('-o', '--outputpath', dest='save_location',
         help="location for saving output reports; default 'Reports/' ")
 
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
 
     ### Parameters to entered from the options or use default####
     model_options_file = os.path.join(base_pathname, 'Models_Results',

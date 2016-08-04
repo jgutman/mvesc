@@ -1,0 +1,39 @@
+model_classes_selected: 
+  {% for c in model_classes %}- {{c}} 
+  {% endfor %}
+
+user_description: {{description}}
+file_save_name: {{name}}
+write_predictions_to_database: {{write_to_database}}
+user: {{user}}
+model_test_holdout: {{test_set_type}}
+parameter_cross_validation_scheme: {{cv_scheme}}
+cohort_grade_level_begin: {{cohort}}
+prediction_grade_level: {{prediction_grade}}
+feature_grade_range: 
+  {% for g in feature_grade_range %}- {{g}}
+  {% endfor %}
+
+{% if cv_scheme == "n_folds" %} n_folds: {{n_folds}}
+{% endif %}
+
+cohorts_held_out: 
+  {% for c in cohorts_held_out %}- {{c}}
+  {% endfor %}
+
+cohorts_training:
+  {% for c in cohorts_training %}- {{c}}
+  {% endfor %}
+
+random_seed: {{random_seed}}
+validation_criterion: {{cv_criterion}}
+features_included:
+  {% for t in features %}{{t}}: 
+    {% for f in features[t] %}- {{f}}
+    {% endfor %}
+
+  {% endfor %}
+
+outcome_name: {{outcome}}
+missing_impute_strategy: {{imputation}}
+feature_scaling: {{scaling}}

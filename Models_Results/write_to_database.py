@@ -123,7 +123,9 @@ def summary_to_db(saved_outputs):
     values['feature_2_weight'] = top_features[1][1]
     values['feature_3_weight'] = top_features[2][1]
     values['filename'] = saved_outputs['file_name']
+    values['random_seed'] = model_options['random_seed']
     columns = [('model_name', 'text'),
+               ('random_seed', 'int'),
                ('label', 'text'),
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
