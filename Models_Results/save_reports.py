@@ -11,16 +11,29 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
-    confusion_matrix, precision_score, recall_score, roc_auc_score
+    confusion_matrix, precision_score, recall_score, roc_auc_score, \
+    average_precision_score
 
 class Top_features():
     def DT(model, columns, k):
         imp = model.best_estimator_.feature_importances_
         top_feat = sorted(zip(columns,imp.tolist()),
-                           key=lambda x: x[1], reverse=True)
-        return top_feat[:k]
+                           key=lambda x: abs(x[1]), reverse=True)
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def logit(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: abs(x[1]), reverse=True)
+        if k == -1:
+            return top_coefs
+        else:
+            return top_coefs[:k]
+
+    def LR_no_penalty(model, columns, k):
         coefs = model.best_estimator_.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
@@ -29,8 +42,42 @@ class Top_features():
     def SVM(model, columns, k):
         coefs = model.best_estimator_.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
+                           key=lambda x: abs(x[1]), reverse=True)
+        if k == -1:
+            return top_coefs
+        else:
+            return top_coefs[:k]
+
+    def RF(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def GB(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def ET(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def AB(model, columns, k):
+        importances = model.best_estimator_.feature_importances_
+        top_importances = sorted(zip(columns, importances),
+                                 key=lambda x: x[1], reverse=True)
+        return top_importances[:k]
+
+    def SGD(model, columns, k):
+        coefs = model.best_estimator_.coef_
+        top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
+
 
 
 def plot_precision_recall_n(y_true, y_prob, save_location,
@@ -51,11 +98,15 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     fig, ax1 = plt.subplots()
     ax1.plot(pct_above_per_thresh, precision_curve, 'b')
     ax1.set_xlabel('percent of population')
-
+    ax1.set_ylim([0,1])
+    ax1.set_xlim([0,1])
     ax1.set_ylabel('precision', color='b')
+
     ax2 = ax1.twinx()
     ax2.plot(pct_above_per_thresh, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
+    ax2.set_ylim([0,1])
+    ax2.set_xlim([0,1])
 
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
@@ -77,7 +128,7 @@ def plot_score_distribution(soft_predictions, save_location,
                             run_name, model_name):
     min_x = min(min(soft_predictions), 0)
     max_x = max(max(soft_predictions), 1)
-    plt.figure()
+    f = plt.figure()
     plt.hist(soft_predictions, np.linspace(min_x,max_x,100), align = 'left')
     plt.title("distribution of scores for {} model".format(model_name))
     plt.xlabel("soft prediction score")
@@ -85,25 +136,28 @@ def plot_score_distribution(soft_predictions, save_location,
     plt.ylabel("number of students")
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
+    f.clf()
+    
 
 
 def plot_precision_recall(soft_predictions, test_y, save_location,
                           run_name, model_name):
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
-    plt.figure()
+    f = plt.figure()
     plt.plot(recall, precision)
     plt.title("precision vs. recall")
     plt.xlabel("recall")
     plt.ylabel("precision")
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
+    f.clf()
 
 
 def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
                                     run_name, model_name):
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
     thresholds = np.concatenate(([0],thresholds))
-    plt.figure()
+    f = plt.figure()
     plt.hold(True)
     plt.plot(thresholds, precision)
     plt.plot(thresholds, recall)
@@ -112,12 +166,12 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     plt.legend(["precision", "recall"])
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall.png', bbox_inches='tight')
-
+    f.clf()
 
 def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
                      run_name, model_name):
     # add precision/recall cutoffs
-    plt.figure()
+    f = plt.figure()
     cm = confusion_matrix(test_y, soft_predictions > threshold)
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("confusion matrix at probability {} threshold".format(threshold))
@@ -131,6 +185,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_confusion_mat_{}.png'.format(threshold),
                 bbox_inches='tight')
+    f.clf()
 
 
 def markdown_report(f, save_location, saved_outputs):
@@ -261,7 +316,7 @@ def write_model_report(save_location, saved_outputs):
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
                 markdown_report(f,save_location, saved_outputs)
     print("report written to",save_location)
-
+    plt.close('all')
 
 def main():
     # note: this testing is outdated

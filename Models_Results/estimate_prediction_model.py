@@ -10,6 +10,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from save_reports import write_model_report
+from write_to_database import summary_to_db, write_scores_to_db, next_id
 from optparse import OptionParser
 
 # all model import statements
@@ -455,8 +456,10 @@ def run_all_models(model_options, clfs, params, save_location):
     for model_name, clf in all_validated_models.items():
         if hasattr(clf, "predict_proba"):
             test_set_scores = clf.predict_proba(test_X)[:,1]
+            train_set_scores = clf.predict_proba(train_X)[:,1]
         else:
             test_set_scores = clf.decision_function(test_X)
+            train_set_scores = clf.decision_function(train_X)
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
@@ -466,13 +469,24 @@ def run_all_models(model_options, clfs, params, save_location):
         # store option inputs (random_seed, train/test split rules, features)
         # store time to completion [missing]
 
+        count = next_id(model_options['user'])
+
         saved_outputs = {
             'model_name' : model_name,
+            'file_name' : "{filename}_{model}_{user}_{number}"\
+            .format(filename = model_options['file_save_name'], 
+                    model = model_name, 
+                    user = model_options['user'],
+                    number = count),
             'estimator' : model,
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
             'cross_validation_scores': validated_model_cv_scores[model_name]
             'test_y' : test_y,
             'test_set_soft_preds' : test_set_scores,
+            'test_set_preds' : model.predict(test_X),
+            'train_y' : train_y,
+            'train_set_soft_preds' : train_set_scores,
+            'train_set_preds' : model.predict(train_X),
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
             'parameter_grid' : params[model_name],
@@ -491,9 +505,12 @@ def run_all_models(model_options, clfs, params, save_location):
         #    - (B) write to and update an HTML/Markdown file
         #    to create visual tables and graphics for results
 
+        if model_options['write_predictions_to_database']:
+            write_scores_to_db(saved_outputs)
         write_model_report(save_location, saved_outputs)
+        summary_to_db(saved_outputs)
 
-def main():
+def main(args=None):
 # Create options file used to generate features
 # OR Read in an existing human-created options file
 
@@ -501,6 +518,7 @@ def main():
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
 
+    
     parser = OptionParser()
     parser.add_option('-m','--modelpath', dest='model_options_file',
         help="filename for model options; default 'model_options.yaml' ")
@@ -509,7 +527,7 @@ def main():
     parser.add_option('-o', '--outputpath', dest='save_location',
         help="location for saving output reports; default 'Reports/' ")
 
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
 
     ### Parameters to entered from the options or use default####
     model_options_file = os.path.join(base_pathname, 'Models_Results',
