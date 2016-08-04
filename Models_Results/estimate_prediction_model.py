@@ -408,13 +408,25 @@ def run_all_models(model_options, clfs, params, save_location):
          'leave_cohort_out':
         # choose another validation set amongst the training set to
         # estimate parameters and model selection across cohort folds
-        print('leave_cohort_out')
         cohort_kfolds = LeaveOneLabelOut(train[
                 model_options['cohort_grade_level_begin']])
 
+    elif model_options['parameter_cross_validation_scheme'] == \
+        'past_cohorts_only':
+        cohort_kfolds_plus_future = LeaveOneLabelOut(train[
+                model_options['cohort_grade_level_begin']])
+        cohort_kfolds = []
+        for train_list, test_list in cohort_kfolds:
+            test_year = pd.unique(cohort_kfolds.labels[test_list])
+            train_years_after_test = cohort_kfolds.labels[train_list] > test_year
+            train_indices_after_test = np.where(train_years_after_test)
+            train_list = np.delete(train_list, train_indices_after_test)
+            fold = (train_list, test_list)
+            if len(train_list) > 0:
+                cohort_kfolds.append(fold)
+
     elif model_options['parameter_cross_validation_scheme'] == 'k_fold':
         # ignore cohorts and use random folds to estimate parameter
-        print('k_fold_parameter_estimation')
         cohort_kfolds = LabelKFold(train.index,
                 n_folds = model_options['n_folds'])
 
