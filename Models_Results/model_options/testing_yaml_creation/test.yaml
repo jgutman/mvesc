@@ -1,0 +1,58 @@
+batch_name:
+  testing_yaml_creation
+model_classes_selected: 
+  - logit 
+  - DT 
+  - RF 
+  - ET 
+  - AB 
+  - SVM 
+  - GB 
+  - NB 
+  - SGD 
+  - KNN 
+  
+user_description: 
+                            testing all options by looping through 
+                            with a just 500 students
+file_save_name: test
+write_predictions_to_database: True
+user: ht
+debug: True
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: k_fold
+cohort_grade_level_begin: cohort_9th
+prediction_grade_level: 9
+feature_grade_range: 
+  - 6
+  - 7
+  - 8
+  
+
+cohorts_held_out: 
+  - 2011
+  - 2012
+  
+cohorts_training:
+  - 2009
+  - 2010
+  
+random_seed: 1470342767.3828835
+validation_criterion: custom_precision_5
+features_included:
+  absence: 
+    - absence*
+    - absence_unexcused*
+    - tardy*
+    - tardy_unexcused*
+    - medical*
+    - absence_consec*
+    - tardy_consec*
+    
+  
+outcome_name: not_on_time
+missing_impute_strategy: median_plus_dummies
+feature_scaling: robust
+
+sample_n:  None 

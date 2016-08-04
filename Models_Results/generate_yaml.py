@@ -55,7 +55,7 @@ def main():
         'cohorts_held_out': [2011,2012],
         'cohorts_training': [2009,2010],
         'random_seed': 2851,
-        'cv_criterions': ['custom_precision_10','custom_recall_10']
+        'cv_criterions': ['custom_precision_10','custom_recall_10'],
         'features': {'grades':
                      {'except':['gpa*']},
                      'demographics': 'all',
