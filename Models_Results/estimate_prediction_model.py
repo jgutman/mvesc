@@ -24,7 +24,7 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
-from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
+from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix, f1_score, make_scorer
 from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
 
 import yaml
@@ -95,7 +95,9 @@ def clf_loop(clfs, params, train_X, train_y,
         parameter_values = params[model_name]
         with Timer(model_name) as t:
             best_validated_models[model_name] = \
-                GridSearchCV(clf, parameter_values, scoring=criterion,
+                GridSearchCV(clf, parameter_values,
+                             scoring=lambda estimator, X, y: (make_scorer(f1_score)(estimator, X, y),
+                                                              make_scorer(f1_score)(estimator, X, y)),
                              cv=cv_folds)
             best_validated_models[model_name].fit(train_X, train_y)
             validated_model_times[model_name] = t.time_check()

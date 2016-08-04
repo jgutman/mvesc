@@ -6,7 +6,6 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
-import estimate_prediction_model
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -256,7 +255,7 @@ def write_model_report(save_location, saved_outputs):
                             run_name, model_name)
     #plot_confusion_matrix(test_set_scores, test_y, .5, save_location,
     #                      run_name, model_name)
-    plot_confusion_matrix(test_set_scores, test_y, .3, save_location, 
+    plot_confusion_matrix(test_set_scores, test_y, .3, save_location,
                           run_name, model_name)
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
                 markdown_report(f,save_location, saved_outputs)
@@ -273,7 +272,7 @@ def main():
               "<location of model options file>")
         sys.exit(1)
 
-    model_options = estimate_prediction_model.read_in_yaml(options_location)
+    # model_options = estimate_prediction_model.read_in_yaml(options_location)
     model_name = 'logit'
     test_y = np.concatenate((np.ones(50),np.zeros(50)))
     test_set_scores = test_y + np.random.randn(test_y.size)
