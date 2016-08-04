@@ -1,0 +1,40 @@
+# grid search options, extensive version
+logit:
+    penalty: [l1, l2]
+    C: [0.01, 0.1, 1.0, 10.0, 100, 1000]
+LR_no_penalty: {}
+DT:
+    criterion: [gini, entropy]
+    max_depth: [1, 5, 10, 20, 50, 100]
+    max_features: [sqrt, log2]
+    min_samples_split: [2, 5, 10]
+RF:
+    n_estimators: [ 500]
+    max_depth: [50]
+    max_features: [sqrt]
+    min_samples_split: [3, 5]
+SGD:
+    loss: [hinge, log, perceptron]
+    penalty: [l2, l1, elasticnet]
+ET:
+    n_estimators: [500]
+    criterion: [gini, entropy]
+    max_depth: [ 20]
+    max_features: [sqrt]
+    min_samples_split: [2, 5]
+AB:
+    algorithm: [SAMME, SAMME.R]
+    n_estimators: [1, 10, 100, 1000, 10000]
+GB:
+    n_estimators: [500]
+    learning_rate: [0.01]
+    subsample: [0.5]
+    max_depth: [ 30]
+NB: {}
+SVM:
+    C: [ 0.01, 0.1, 1, 10]
+    kernel: [linear]
+KNN:
+    n_neighbors: [1,5,10,25,50]
+    weights: [uniform, distance]
+    algorithm: [auto, ball_tree, kd_tree]

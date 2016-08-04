@@ -181,13 +181,12 @@ def write_scores_to_db(saved_outputs):
     # importance scores for each feature
     model_name = saved_outputs['model_name']
     try:
-        # print("attributes of top_features:")
-        # print(dir(Top_features))
+        print("attributes of top_features:")
+        print(dir(Top_features))
         # print(model_name)
         get_top_features = getattr(Top_features, model_name)
     except AttributeError:
         print('top features not implemented for {}'.format(model_name))
-        pass
     else:                                                                  
         top_features = get_top_features(saved_outputs['estimator'],        
                                         saved_outputs['features'], -1)

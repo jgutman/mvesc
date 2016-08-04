@@ -21,7 +21,7 @@ def generate_yaml(template_options, yaml_location='.'):
                     
     env = jnj.Environment(loader=jnj.FileSystemLoader('.'))
     env.trim_blocks = True
-    temp = env.get_template('model_options.jnj')
+    temp = env.get_template('model_options.jinja')
     
     with(open(os.path.join(template_options['name'] + '.yaml'), "w")) as f:
         f.write(temp.render(template_options))
@@ -32,10 +32,10 @@ def main():
         'model_classes': ['logit','DT'],
         'description': 'testing yaml creation',
         'name': 'yaml_creation',
-        'write_to_database': False,
+        'write_to_database': True,
         'user': 'ht',
         'test_set_type': 'temporal_cohort',
-        'cv_scheme': 'leave_one_cohort_out',
+        'cv_scheme': 'leave_cohort_out',
         # if cv_scheme = 'k_fold', need  'n_folds' key
         'cohort': 'cohort_9th',
         'prediction_grade': 10,
@@ -43,7 +43,7 @@ def main():
         'cohorts_held_out': [2011,2012],
         'cohorts_training': [2009,2010],
         'random_seed': 2851,
-        'cv_criterion': 'precision_at_10',
+        'cv_criterion': 'custom_precision_10',
         'features': {'grades':
                      {'except':['gpa*']},
                      'demographics': 'all',
@@ -63,6 +63,7 @@ def main():
         template_options['name'] = '{0}_years_data_{1}_cohorts'.\
                                    format(len(grades),len(years))
         generate_yaml(template_options)
+        estimate_prediction_model.main(['-m',template_options['name']+'.yaml'])
 
 if __name__ == "__main__":
     main()

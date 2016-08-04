@@ -91,7 +91,7 @@ initial results to use in the deep dive 6/26
 
 ### Performance Metrics
 on average, model run in 0.07 seconds (1 times) <br/>precision on top 10%: 0.0821 <br/>precision on top 5%: 0.0821 <br/>top features: gpa_gr_7 (0.46), gpa_gr_8 (0.14), status_gr_9_esc (0.12)
-![deep_dive_4_years_DT_score_dist.png](deep_dive_4_years_DT_score_dist.png)
-![deep_dive_4_years_DT_precision_recall_at_k.png](deep_dive_4_years_DT_precision_recall_at_k.png)
-![deep_dive_4_years_DT_confusion_mat_0.3.png](deep_dive_4_years_DT_confusion_mat_0.3.png)
-![deep_dive_4_years_DT_pr_vs_threshold.png](deep_dive_4_years_DT_pr_vs_threshold.png)
+![./figs/deep_dive_4_years_DT_score_dist.png](deep_dive_4_years_DT_score_dist.png)
+![./figs/deep_dive_4_years_DT_precision_recall_at_k.png](deep_dive_4_years_DT_precision_recall_at_k.png)
+![./figs/deep_dive_4_years_DT_confusion_mat_0.3.png](deep_dive_4_years_DT_confusion_mat_0.3.png)
+![./figs/deep_dive_4_years_DT_pr_vs_threshold.png](deep_dive_4_years_DT_pr_vs_threshold.png)

@@ -90,7 +90,7 @@ initial results to use in the deep dive 6/26
 	 * discipline_incidents_gr_9
 
 ### Performance Metrics
-on average, model run in 0.04 seconds (1 times) <br/>precision on top 10%: 0.117 <br/>precision on top 5%: 0.128 <br/>![deep_dive_SGD_confusion_mat_0.3.png](deep_dive_SGD_confusion_mat_0.3.png)
-![deep_dive_SGD_score_dist.png](deep_dive_SGD_score_dist.png)
-![deep_dive_SGD_precision_recall_at_k.png](deep_dive_SGD_precision_recall_at_k.png)
-![deep_dive_SGD_pr_vs_threshold.png](deep_dive_SGD_pr_vs_threshold.png)
+on average, model run in 0.04 seconds (1 times) <br/>precision on top 10%: 0.117 <br/>precision on top 5%: 0.128 <br/>![./figs/deep_dive_SGD_confusion_mat_0.3.png](deep_dive_SGD_confusion_mat_0.3.png)
+![./figs/deep_dive_SGD_score_dist.png](deep_dive_SGD_score_dist.png)
+![./figs/deep_dive_SGD_precision_recall_at_k.png](deep_dive_SGD_precision_recall_at_k.png)
+![./figs/deep_dive_SGD_pr_vs_threshold.png](deep_dive_SGD_pr_vs_threshold.png)

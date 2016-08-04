@@ -34,7 +34,7 @@ validation_criterion: accuracy # f1 # average_precision
 features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
   # grades: [gpa_gr_7, gpa_gr_8, gpa_gr_9]
-
+feature_grade_range: [7, 8, 9]
 outcome_name: not_on_time
 # currently implemented: impute numeric features with mean or median
 # add dummy for numeric + categorical, no mode imputation for categorical

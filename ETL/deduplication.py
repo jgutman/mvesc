@@ -20,7 +20,8 @@ def add_id(cursor, table, schema='clean'):
     cursor.execute("alter table {}.{} add column id serial"\
                    .format(schema,table))
 
-def remove_residents(cursor, value, column, table, schema='clean'):
+def remove_residents(cursor, value='resident', column='status',
+    table='all_snapshots', schema='clean'):
     """
     Removes records with the given condition
 
@@ -30,9 +31,9 @@ def remove_residents(cursor, value, column, table, schema='clean'):
     :param str table: table name in the database
     :param str schema: schema name in database
     """
-    delete_query = "delete from {schema}.{table} where {col} = %s;"\
-                   .format(schema=schema,table=table,col=column)
-    cursor.execute(delete_query, value)
+    delete_query = "delete from {schema}.{table} where {col} like '{value}'"\
+                   .format(schema=schema,table=table,col=column, value=value)
+    cursor.execute(delete_query)
 
 def remove_duplicates(cursor, cols, table, schema='clean'):
     """
@@ -46,8 +47,8 @@ def remove_duplicates(cursor, cols, table, schema='clean'):
     """
     # For identical lookup, district, school, grade, and year there are
     # never more than 2 records sharing these 5 traits in all_snapshots
-    # In all examples I looked at all columns where identical or one record had 
-    # a value and the other record had null, so MAX should only be taking 
+    # In all examples I looked at all columns where identical or one record had
+    # a value and the other record had null, so MAX should only be taking
     # the non-null value
 
     other_cols = get_column_names(cursor, table, schema=schema)
@@ -59,13 +60,13 @@ def remove_duplicates(cursor, cols, table, schema='clean'):
     for c in other_cols:
         dedupe_query += "max({col}) as {col}, ".format(col=c)
     dedupe_query = dedupe_query[:-2] + """
-    from {0}.{1} 
-    group by 
+    from {0}.{1}
+    group by
     """.format(schema,table)
     for c in cols:
         dedupe_query += " {}, ".format(c)
     dedupe_query = dedupe_query[:-2]
-    
+
     cursor.execute(dedupe_query)
     cursor.execute("drop table {}.{};".format(schema,table))
     cursor.execute("""
@@ -76,7 +77,7 @@ def remove_duplicates(cursor, cols, table, schema='clean'):
 
 def remove_trails(cursor):
     """
-    Removes trailing records (more than two consecutive years in the same grade 
+    Removes trailing records (more than two consecutive years in the same grade
     in the same school) from clean.all_snapshots
 
     :param pg cursor object cursor: cursor for psql database
@@ -99,10 +100,10 @@ def remove_trails(cursor):
     alter table grade_counts alter column max_num type int using
     greatest(num_1,num_2,num_3,num_4,num_5,num_6,num_7,num_8,num_9,
              num_10,num_11,num_12);
-    
+
     alter table grade_counts add column max_num_grade int;
     alter table grade_counts alter column max_num_grade type int using
-    case 
+    case
     """
     for g in range(1,13):
         add_cols_query += """
@@ -116,32 +117,32 @@ def remove_trails(cursor):
     # and grade for at least 3 years in a row
     cursor.execute("""
     create temp table to_keep as
-    select distinct on (student_lookup, grade, district) 
+    select distinct on (student_lookup, grade, district)
     t1.*, max_num, max_num_grade
     from clean.all_snapshots as t1
-    left join 
+    left join
     grade_counts as t2
-    on t1.student_lookup = t2.student_lookup 
+    on t1.student_lookup = t2.student_lookup
     order by student_lookup,grade, district, school_year
     """)
 
     # joining grade counts onto snapshots table
-    cursor.execute(""" 
+    cursor.execute("""
     create temp table joined_grade_counts as select t1.id,max_num,max_num_grade
     from clean.all_snapshots as t1
-    left join 
+    left join
     grade_counts as t2
     on t1.student_lookup = t2.student_lookup;
     """)
 
-    # keeps all records where 
+    # keeps all records where
     # (a) student is in the same school/grade pair for less than 3 years or
     # (b) the first record in a long string in the same school/grade
     cursor.execute("""
     delete from clean.all_snapshots as s using joined_grade_counts
     where s.id not in (select id from to_keep)
-        and (joined_grade_counts.id = s.id 
-            and max_num > 2 
+        and (joined_grade_counts.id = s.id
+            and max_num > 2
             and grade = max_num_grade)
     """)
     print('trails deleted!')
@@ -150,7 +151,7 @@ def remove_trails(cursor):
 def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            cols = ['student_lookup', 'district', 'school_code', 'grade', 
+            cols = ['student_lookup', 'district', 'school_code', 'grade',
                     'school_year']
             add_id(cursor, 'all_snapshots')
             remove_residents(cursor)
@@ -159,10 +160,10 @@ def main():
             remove_trails(cursor)
             connection.commit()
 
-    # as of 7/28 data this left 4 students with conflicting grade levels 
+    # as of 7/28 data this left 4 students with conflicting grade levels
     # among the students with outcomes:
-    # student lookups 70212 (conflicting electronic school record), 
-    # 37529 (two people merged), and 62594 and 2486 (dealt with manually - 
+    # student lookups 70212 (conflicting electronic school record),
+    # 37529 (two people merged), and 62594 and 2486 (dealt with manually -
     # these had some mistaken records)
 
 if __name__ == "__main__":
