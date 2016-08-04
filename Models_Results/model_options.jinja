@@ -1,3 +1,5 @@
+batch_name:
+  {{batch_name}}
 model_classes_selected: 
   {% for c in model_classes %}- {{c}} 
   {% endfor %}
@@ -10,7 +12,7 @@ debug: {{debug}}
 
 model_test_holdout: {{test_set_type}}
 parameter_cross_validation_scheme: {{cv_scheme}}
-cohort_grade_level_begin: {{cohort}}
+cohort_grade_level_begin: cohort_{{prediction_grade}}th
 prediction_grade_level: {{prediction_grade}}
 feature_grade_range: 
   {% for g in feature_grade_range %}- {{g}}

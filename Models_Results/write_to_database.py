@@ -46,7 +46,7 @@ def build_results_table(cursor,columns,replace=False):
         results_table_query = "create table model.reports ("         
         for c, c_type in columns:
             results_table_query += "{0} {1}, ".format(c, c_type)
-        results_table_query = results_table_query[:-2] + ");"
+        results_table_query+="timestamp timestamp default current_timestamp);"
         cursor.execute(results_table_query)
 
 def add_row(cursor, columns, values): 
@@ -178,8 +178,8 @@ def write_scores_to_db(saved_outputs):
     filename = saved_outputs['file_name']
 
     engine = postgres_engine_generator()
-    results.to_sql("students_"+filename,  engine, 
-                   schema='scores', if_exists = 'replace')
+    results.to_sql(filename,  engine, 
+                   schema='predictions', if_exists = 'replace')
     print('student predictions written to database')
 
     # importance scores for each feature
@@ -192,7 +192,7 @@ def write_scores_to_db(saved_outputs):
         top_features = get_top_features(saved_outputs['estimator'], 
                                         saved_outputs['features'], -1)
         features = pd.DataFrame(top_features, columns=['feature','importance'])
-        features.to_sql('features_' + filename, engine, schema='scores',
+        features.to_sql(filename, engine, schema='feature_scores',
                         if_exists = 'replace')
         print('feature importances written to database')
             

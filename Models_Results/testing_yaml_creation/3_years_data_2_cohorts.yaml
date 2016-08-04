@@ -5,7 +5,7 @@ model_classes_selected:
   - DT 
   
 user_description: testing yaml creation
-file_save_name: 4_years_data_2_cohorts
+file_save_name: 3_years_data_2_cohorts
 write_predictions_to_database: True
 user: ht
 debug: True
@@ -18,7 +18,6 @@ feature_grade_range:
   - 6
   - 7
   - 8
-  - 9
   
 
 cohorts_held_out: 
@@ -32,18 +31,9 @@ cohorts_training:
 random_seed: 2851
 validation_criterion: custom_precision_10
 features_included:
-  mobility: 
-    - n_addresses_to*
-    - n_districts_to*
-    - n_cities_to*
-    - n_records_to*
-    - avg_address_change_to*
-    - avg_district_change_to*
-    - avg_city_change_to*
-    - street_transition_in*
-    - district_transition_in*
-    - city_transition_in*
-    - mid_year_withdraw*
+  demographics: 
+    - ethnicity
+    - gender
     
   grades: 
     - language_gpa*
@@ -66,9 +56,18 @@ features_included:
     - num_pf_classes*
     - gpa_district*
     
-  demographics: 
-    - ethnicity
-    - gender
+  mobility: 
+    - n_addresses_to*
+    - n_districts_to*
+    - n_cities_to*
+    - n_records_to*
+    - avg_address_change_to*
+    - avg_district_change_to*
+    - avg_city_change_to*
+    - street_transition_in*
+    - district_transition_in*
+    - city_transition_in*
+    - mid_year_withdraw*
     
   
 outcome_name: definite

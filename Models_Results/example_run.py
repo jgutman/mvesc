@@ -1,20 +1,20 @@
 import estimate_prediction_model
-import generate_yaml from generate_yaml
+from generate_yaml import generate_yaml
 
 template_options = {
+        'batch_name' : 'testing_yaml_creation', # for an entire batch, fldr name
         'model_classes': ['logit','DT'],
         'description': 'testing yaml creation',
-        'name': 'yaml_creation',
+        'name': 'yaml_creation', # specific to a particular set of options      
         'write_to_database': True,
-        'user': 'ht', # each person's initials
-        'test_set_type': 'temporal_cohort', #temporal_cohort,
+        'user': 'ht',
+        'test_set_type': 'temporal_cohort',
         'cv_scheme': 'leave_cohort_out',
         # if cv_scheme = 'k_fold', need  'n_folds' key                          
-        'cohort': 'cohort_9th',
-        'prediction_grade': 10,
-        'feature_grade_range': range(6,10),
+        'prediction_grade': 9, #currently only 9 or 6
+        'feature_grade_range': None, #filled in below
         'cohorts_held_out': [2011,2012],
-        'cohorts_training': [2009,2010],
+        'cohorts_training': None, #filled in below
         'random_seed': 2851,
         'cv_criterion': 'custom_precision_10',
         'features': {'grades':
@@ -27,10 +27,8 @@ template_options = {
         'scaling': 'robust',
         'debug': True
     }
-
-time_scales = zip([range(2009,2011),range(2008,2011),range(2007,2011),
-                   range(2006,2011)],
-                  [range(6,10),range(7,10),range(8,10),range(9,10)])
+time_scales = zip([range(2009,2011),range(2008,2011),range(2007,2011)],
+                  [range(6,9),range(7,9),range(8,9)])
 
 for years, grades in time_scales:
     template_options['cohorts_training'] = years
