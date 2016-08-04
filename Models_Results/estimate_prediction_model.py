@@ -32,6 +32,7 @@ import yaml
 import numpy as np
 import pandas as pd
 import pickle
+import random
 
 from my_timer import Timer
 from custom_scorers import *
@@ -440,7 +441,7 @@ def run_all_models(model_options, clfs, params, save_location):
               .format('leave_cohort_out', 'k_fold', 'none'))
 
     criterion = parse_criterion_string(
-            model_options['validation_criterion'])
+            model_options['validation_criterion'][0]) # this is outdated, just to handle list for now
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
@@ -527,9 +528,9 @@ def main(args=None):
 
     ### Parameters to entered from the options or use default####
     model_options_file = os.path.join(base_pathname, 'Models_Results',
-            'model_options.yaml')
+                                      'model_options','model_options.yaml')
     grid_options_file = os.path.join(base_pathname, 'Models_Results',
-            'grid_options_bare.yaml')
+                                     'grid_options', 'grid_options_bare.yaml')
     save_location = os.path.join(base_pathname, 'Reports')
     if options.model_options_file:
         model_options_file = options.model_options_file
@@ -541,7 +542,7 @@ def main(args=None):
     model_options = read_in_yaml(model_options_file)
 
     # set seed for this program from model_options
-    np.random.seed(model_options['random_seed'])
+    random.seed(model_options['random_seed'])
 
     # get grid search options for all classifiers
     clfs, params = define_clfs_params(grid_options_file)

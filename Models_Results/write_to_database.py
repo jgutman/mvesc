@@ -82,8 +82,9 @@ def summary_to_db(saved_outputs):
     values = dict()
     values['model_name'] = saved_outputs['model_name']
     values['label'] = model_options['outcome_name']
+ 
     features = list(model_options['features_included'].keys())
-    features.remove('grades')
+#    features.remove('grades')
     features = ", ".join(features)
     feature_grades = ", ".join([str(a) for a 
                                 in model_options['feature_grade_range']])
@@ -99,6 +100,9 @@ def summary_to_db(saved_outputs):
     for param in params.keys():
         param_list.append("{} = {}".format(param, getattr(model,param)))
     values['parameters'] = "; ".join(param_list)
+    values['cv_scheme'] = model_options['parameter_cross_validation_scheme']
+    values['imputation'] = model_options['missing_impute_strategy']
+    values['scaling'] = model_options['feature_scaling']
     values['train_acc'] = accuracy_score(train_y, train_preds)
     values['test_acc'] = accuracy_score(test_y, test_preds)
     values['train_precision_5'] = precision_at_k(train_y, train_scores, .05)
@@ -130,6 +134,9 @@ def summary_to_db(saved_outputs):
                ('filename', 'text'),
                ('random_seed', 'int'),
                ('label', 'text'),
+               ('cv_scheme', 'text'),
+               ('imputation','text'),
+               ('scaling', 'text'),
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
                ('train_set', 'text'),

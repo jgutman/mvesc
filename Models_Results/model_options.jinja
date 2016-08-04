@@ -18,7 +18,7 @@ feature_grade_range:
   {% for g in feature_grade_range %}- {{g}}
   {% endfor %}
 
-{% if cv_scheme == "n_folds" %} n_folds: {{n_folds}}
+{% if cv_scheme == "k_fold" %}n_folds: {{n_folds}}
 {% endif %}
 
 cohorts_held_out: 
@@ -45,4 +45,4 @@ outcome_name: {{outcome}}
 missing_impute_strategy: {{imputation}}
 feature_scaling: {{scaling}}
 
-sample_n: {% if sample_n %} {{sample_n}} {% else %} None {% endif %}
+subset_n: {% if subset_n %} {{subset_n}} {% else %} None {% endif %}
