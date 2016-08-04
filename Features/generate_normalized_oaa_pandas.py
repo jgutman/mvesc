@@ -67,10 +67,10 @@ def get_table_of_student_in_grade_which_year(students_with_outcomes):
     # now, work backwards to fill in empty rows
     # go one column at a time
     # for each column, loop through each row at a time
-    # SLOW currently.
-    # FUTURE: would this be faster to do before pivoting?
-    # ATTEMPTED: using pandas apply function, but it had a problem accessing data
-    #       outside the column being applied to.
+    # Hanna's suggested speedup code using `where`
+        # cols = ['one','two','three']
+        # for i,c in enumerate(cols[1:]):
+        # df[c] = df[c].where(~df[c].isnull(), df[cols[i-1]]+1)
     for right_col in reversed(range(0, 13)):
         for index, row in wide_year_took_oaa.iterrows():
             if pd.isnull(row['was_in_grade_{}'.format(right_col-1)]):
