@@ -15,7 +15,7 @@
 ##  Loaded dict is in alphabetical order; but no content is changed
 
 model_classes_selected: [logit, DT, SVM] # must be a list of strings!
-user_description: initial results to use in the deep dive 6/26, only using 9th grade data
+user_description: initial results to use in the deep dive 6/26, only using 9th grade data, re-running on 7/2
 # model name and extension appended automatically
 file_save_name: deep_dive_1_year
 write_predictions_to_database: False
@@ -23,12 +23,13 @@ write_predictions_to_database: False
 model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k-fold
 cohort_grade_level_begin: cohort_9th
-prediction_grade_level: 9 # predicting at the end of this grade
+prediction_grade_level: 10 # predicting at the end of this grade
+feature_grade_range: [9]
 n_folds: 10
 cohorts_held_out: [2008]
 
 # allowed values for cohorts_training is 'all' or a list of cohort years
-cohorts_training: [2006, 2007] # need to remove 2012 from all
+cohorts_training: [2006, 2007] 
 random_seed: 2187 # number is parsed as number
 validation_criterion: custom_precision_10  #average_precision, accuracy, or f1
 

@@ -23,7 +23,7 @@ model_test_holdout: temporal_cohort
 parameter_cross_validation_scheme: leave_cohort_out #k_fold
 cohort_grade_level_begin: cohort_9th
 prediction_grade_level: 10 # predicting at the beginning of this grade
-feature_grade_range: [6, 7, 8, 9]
+feature_grade_range: [8, 9]
 n_folds: 10
 cohorts_held_out: [2011] # [2012 is ultimate test set not to be used here]
 
@@ -35,7 +35,7 @@ validation_criterion: custom_recall_10 # accuracy # f1 # average_precision
 # model_options['features_included'] must be a dictionary
 features_included:
   demographics: [ethnicity, gender] # list of columns in brackets
-  grades: [gpa*]
+  grades: [gpa*, language_gpa*, stem_gpa*, humanities_gpa*,num_stem_classes*,num_language_classes*, num_humanities_classes*]
   mobility: [n_addresses_to*, n_cities_to*, n_districts_to*]
   snapshots: [disadvantagement*, disability*, district*, gifted*,
         iss*, oss*, limited_english*, special_ed*, status*,
