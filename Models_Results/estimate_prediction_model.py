@@ -498,6 +498,7 @@ def main(args=None):
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
 
+    
     parser = OptionParser()
     parser.add_option('-m','--modelpath', dest='model_options_file',
         help="filename for model options; default 'model_options.yaml' ")

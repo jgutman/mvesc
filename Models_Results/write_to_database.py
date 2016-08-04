@@ -108,14 +108,14 @@ def summary_to_db(saved_outputs):
     values['average_precision'] = average_precision_score(test_y, test_scores)
     model_name = values['model_name']
     try:
-        get_top_features = getattr(Top_features, 'model_name')
+        get_top_features = getattr(Top_features, model_name)
     except AttributeError:
         top_features = [['NULL', 0],['NULL', 0],['NULL', 0]]
         print('top features not implemented for {}'.format(model_name))
-        pass
     else:
         top_features = get_top_features(saved_outputs['estimator'], 
                                         saved_outputs['features'], 3)
+    
     values['feature_1'] = top_features[0][0]
     values['feature_2'] = top_features[1][0]
     values['feature_3'] = top_features[2][0]
@@ -124,7 +124,10 @@ def summary_to_db(saved_outputs):
     values['feature_3_weight'] = top_features[2][1]
     values['filename'] = saved_outputs['file_name']
     values['random_seed'] = model_options['random_seed']
+    values['debug'] = model_options['debug']
+    values['time'] = saved_outputs['time']
     columns = [('model_name', 'text'),
+               ('filename', 'text'),
                ('random_seed', 'int'),
                ('label', 'text'),
                ('feature_categories', 'text'),
@@ -145,7 +148,8 @@ def summary_to_db(saved_outputs):
                ('feature_2_weight','float'),
                ('feature_3', 'text'),
                ('feature_3_weight', 'float'),
-               ('filename', 'text')]
+               ('time', 'float'),
+               ('debug', 'bool')]
 
     with postgres_pgconnection_generator() as connection: 
         with connection.cursor() as cursor:
@@ -181,14 +185,11 @@ def write_scores_to_db(saved_outputs):
     # importance scores for each feature
     model_name = saved_outputs['model_name']
     try:
-        print("attributes of top_features:")
-        print(dir(Top_features))
-        # print(model_name)
         get_top_features = getattr(Top_features, model_name)
     except AttributeError:
         print('top features not implemented for {}'.format(model_name))
-    else:                                                                  
-        top_features = get_top_features(saved_outputs['estimator'],        
+    else:
+        top_features = get_top_features(saved_outputs['estimator'], 
                                         saved_outputs['features'], -1)
         features = pd.DataFrame(top_features, columns=['feature','importance'])
         features.to_sql('features_' + filename, engine, schema='scores',

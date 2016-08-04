@@ -7,7 +7,6 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 
 from mvesc_utility_functions import * 
-#import estimate_prediction_model
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -129,7 +128,7 @@ def plot_score_distribution(soft_predictions, save_location,
                             run_name, model_name):
     min_x = min(min(soft_predictions), 0)
     max_x = max(max(soft_predictions), 1)
-    plt.figure()
+    f = plt.figure()
     plt.hist(soft_predictions, np.linspace(min_x,max_x,100), align = 'left')
     plt.title("distribution of scores for {} model".format(model_name))
     plt.xlabel("soft prediction score")
@@ -137,25 +136,28 @@ def plot_score_distribution(soft_predictions, save_location,
     plt.ylabel("number of students")
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
+    f.clf()
+    
 
 
 def plot_precision_recall(soft_predictions, test_y, save_location,
                           run_name, model_name):
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
-    plt.figure()
+    f = plt.figure()
     plt.plot(recall, precision)
     plt.title("precision vs. recall")
     plt.xlabel("recall")
     plt.ylabel("precision")
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
+    f.clf()
 
 
 def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
                                     run_name, model_name):
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
     thresholds = np.concatenate(([0],thresholds))
-    plt.figure()
+    f = plt.figure()
     plt.hold(True)
     plt.plot(thresholds, precision)
     plt.plot(thresholds, recall)
@@ -164,12 +166,12 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     plt.legend(["precision", "recall"])
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall.png', bbox_inches='tight')
-
+    f.clf()
 
 def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
                      run_name, model_name):
     # add precision/recall cutoffs
-    plt.figure()
+    f = plt.figure()
     cm = confusion_matrix(test_y, soft_predictions > threshold)
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("confusion matrix at probability {} threshold".format(threshold))
@@ -183,6 +185,7 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_confusion_mat_{}.png'.format(threshold),
                 bbox_inches='tight')
+    f.clf()
 
 
 def markdown_report(f, save_location, saved_outputs):
@@ -313,7 +316,7 @@ def write_model_report(save_location, saved_outputs):
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:
                 markdown_report(f,save_location, saved_outputs)
     print("report written to",save_location)
-
+    plt.close('all')
 
 def main():
     # note: this testing is outdated

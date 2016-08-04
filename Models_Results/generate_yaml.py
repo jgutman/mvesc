@@ -51,7 +51,8 @@ def main():
                  },
         'outcome': 'definite',
         'imputation': 'median_plus_dummies',
-        'scaling': 'robust'
+        'scaling': 'robust',
+        'debug': True
     }    
     
     time_scales = zip([range(2009,2011),range(2008,2011),range(2007,2011),
@@ -63,7 +64,6 @@ def main():
         template_options['name'] = '{0}_years_data_{1}_cohorts'.\
                                    format(len(grades),len(years))
         generate_yaml(template_options)
-        estimate_prediction_model.main(['-m',template_options['name']+'.yaml'])
 
 if __name__ == "__main__":
     main()
