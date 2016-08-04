@@ -176,7 +176,7 @@ def markdown_report(f, save_location, saved_outputs):
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
     f.write("* cross-validation scheme: {}\n".format(cv_scheme))
     params = saved_outputs['parameter_grid']
-    model = saved_outputs['estimator'].best_estimator_
+    model = saved_outputs['estimator']
     n_models = 1;
     for param, options in params.items():
         option_str = ", ".join([str(a) for a in options])

@@ -1,5 +1,5 @@
-from sklearn.metrics import make_scorer, get_scorer, precision_score,
-    recall_score, f1_score, roc_auc_score
+from sklearn.metrics import make_scorer, get_scorer
+from sklearn.metrics import precision_score, recall_score, roc_auc_score
 import numpy as np
 
 def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
@@ -25,6 +25,12 @@ def scorer_at_top_k(k, metric):
         # needs_proba = False, needs_threshold = False,
         k=k, metric=metric)
     return scorer
+
+def build_tuple_scorer(criterion_list):
+    scorer_list = [parse_criterion_string(x) for x in criterion_list]
+    tuple_score = lambda estimator, X, y: (score_fn(estimator, X, y)
+        for score_fn in scorer_list)
+    return tuple_score
 
 def parse_criterion_string(criterion):
     criterion = criterion.lower()

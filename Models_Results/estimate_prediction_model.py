@@ -66,7 +66,7 @@ def define_clfs_params(filename):
     return clfs, grid
 
 def clf_loop(clfs, params, train_X, train_y,
-        criterion, models_to_run, cv_folds):
+        criterion_list, models_to_run, cv_folds):
     """
     Returns a dictionary where the keys are model nicknames (strings)
     and the values are GridSearchCV objects containing attributes like
@@ -87,33 +87,32 @@ def clf_loop(clfs, params, train_X, train_y,
         given in train_X and train_y (a list of lists of student_lookups)
     :rtype dict(string: GridSearchCV)
     """
+    tuple_score = build_tuple_scorer(criterion_list)
+    n_criteria = len(criterion_list)
     all_validated_models = dict()
     validated_model_times = dict()
+    validated_model_cv_scores = dict()
     for index,clf in enumerate([clfs[x] for x in models_to_run]):
         model_name=models_to_run[index]
-        print(model_name)
         parameter_values = params[model_name]
-        with Timer(model_name) as t:
-            for p in ParameterGrid(parameter_values):
-                try:
-                    clf.set_params(**p)
-                    for train_list, val_list in cv_folds:
-                        clf.fit(train_X[train_list],
-                                train_y[train_list])
-                        criterion(clf, X = train_X[val_list],
-                            y = train_y[val_list])
+        for k, p in enumerate(ParameterGrid(parameter_values)):
+            model_name_and_version = '{}_param{}'.format(model_name, k)
+            with Timer(model_name) as t:
+                clf.set_params(**p)
+                cv_scores_avg = np.empty((len(cv_folds), n_criteria))
+                for i, (train_list, val_list) in enumerate(cv_folds):
+                    clf.fit(train_X.iloc[train_list], train_y.iloc[train_list])
+                    cv_score = tuple_score(clf,
+                        train_X.iloc[val_list], train_y.iloc[val_list])
+                    cv_scores_avg[i] = list(cv_score)
+                cv_scores_avg = np.mean(cv_scores_avg, axis=0)
+                all_validated_models[model_name_and_version] = \
+                    clf.fit(train_X, train_y)
+                validated_model_cv_scores[model_name_and_version] = \
+                    cv_scores_avg
+                validated_model_times[model_name_and_version] = t.time_check()
+    return all_validated_models, validated_model_times, validated_model_cv_scores
 
-            best_validated_models[model_name] = \
-                GridSearchCV(clf, parameter_values,
-                             scoring=criterion,
-                             cv=cv_folds)
-            best_validated_models[model_name].fit(train_X, train_y)
-            validated_model_times[model_name] = t.time_check()
-
-        model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model}, best {criterion} score: {score}".format(
-            model=model_name, criterion=criterion, score=model_cv_score))
-    return best_validated_models, validated_model_times
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out, cohorts_training):
@@ -444,18 +443,16 @@ def run_all_models(model_options, clfs, params, save_location):
         print('unknown cross-validation strategy. try "{}", "{}", or "{}"'\
               .format('leave_cohort_out', 'k_fold', 'none'))
 
-    criterion = parse_criterion_string(
-            model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
-    best_validated_models, validated_model_times = clf_loop(clfs, params, train_X, train_y,
-        criterion = criterion,
+    all_validated_models, validated_model_times, validated_model_cv_scores = \
+        clf_loop(clfs, params, train_X, train_y,
+        criterion_list = model_options['validation_criterion'],
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
 
-    for model_name, model in best_validated_models.items():
-        clf = model.best_estimator_
+    for model_name, clf in all_validated_models.items():
         if hasattr(clf, "predict_proba"):
             test_set_scores = clf.predict_proba(test_X)[:,1]
         else:
@@ -473,6 +470,7 @@ def run_all_models(model_options, clfs, params, save_location):
             'model_name' : model_name,
             'estimator' : model,
             'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
+            'cross_validation_scores': validated_model_cv_scores[model_name]
             'test_y' : test_y,
             'test_set_soft_preds' : test_set_scores,
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
