@@ -4,7 +4,7 @@
 import os, sys
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
-split_pathname = full_pathname.split("mvesc")
+split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
@@ -68,7 +68,7 @@ def define_clfs_params(filename):
 
 
 def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
-        criterion_list, models_to_run, cv_folds, save_location):
+        criterion_list, models_to_run, cv_folds, save_location, options):
     """
     Returns a dictionary where the keys are model nicknames (strings)
     and the values are classifiers with methods predict and fit and
@@ -106,7 +106,7 @@ def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
                     cv_scores_avg = np.mean(cv_scores_avg, axis=0)
                     clf.fit(train_X, train_y)
                     run_time = t.time_check()
-                write_out_predictions(model_options, model_name, clf, run_time,
+                write_out_predictions(options, model_name, clf, run_time,
                     cv_scores_avg, parameter_values, save_location,
                     train_X, train_y, test_X, test_y)
     return qq.time_check()
@@ -508,7 +508,7 @@ def run_all_models(model_options, clfs, params, save_location):
         criterion_list = model_options['validation_criterion'],
         models_to_run = model_options['model_classes_selected'],
         cv_folds = cohort_kfolds, # cv_folds is a k-fold generator
-        save_location = save_location)
+        save_location = save_location, options = model_options)
 
 
 def main(args=None):

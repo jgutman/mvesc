@@ -32,7 +32,7 @@ cohorts_training:
 random_seed: 2851
 validation_criterion:
   - custom_precision_10
-  - average_preicion
+  - average_precision
   - custom_recall_10
 
 features_included:

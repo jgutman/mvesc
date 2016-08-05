@@ -12,30 +12,32 @@ def next_id(user):
     :param str user: initials of the user for a particular run
     :rtype int:
     """
-    with postgres_pgconnection_generator() as connection: 
+    with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             cursor.execute("""
             select count(*) from information_schema.tables
             where table_schema = 'model' and table_name = 'reports'
             """)
-            table_exists = cursor.fetchall()[0][0] 
+            table_exists = cursor.fetchall()[0][0]
             if table_exists:
                 cursor.execute("""
-                select max(substring(filename from '{user}_(\d+)$')::int) 
+                select max(substring(filename from '{user}_(\d+)$')::int)
                 from model.reports;""".format(user=user))
                 last_id = cursor.fetchall()[0][0]
             else:
                 last_id = -1
-        connection.commit()  
+            if (type(last_id) != int):
+                last_id = -1
+        connection.commit()
     return last_id + 1
 
 def build_results_table(cursor,columns,replace=False):
-    """                                                                        
+    """
     builds the results table if it does not already exist
     :param pg_cursor cursor:
     :param list columns: list of column names to create
     :param bool replace: if true, existing table is deleted and replaced
-    """                                             
+    """
     cursor.execute("""
     select count(*) from information_schema.tables
     where table_schema = 'model' and table_name = 'reports'
@@ -43,32 +45,32 @@ def build_results_table(cursor,columns,replace=False):
     table_exists = cursor.fetchall()[0][0]
     if not table_exists or replace:
         cursor.execute("drop table if exists model.reports")
-        results_table_query = "create table model.reports ("         
+        results_table_query = "create table model.reports ("
         for c, c_type in columns:
             results_table_query += "{0} {1}, ".format(c, c_type)
         results_table_query+="timestamp timestamp default current_timestamp);"
         cursor.execute(results_table_query)
 
-def add_row(cursor, columns, values): 
-    """             
+def add_row(cursor, columns, values):
+    """
     adds a row to the results table consisting of the values given
     :param pg_cursor cursor:
-    :param list columns: list of column names to update                        
+    :param list columns: list of column names to update
     :param dict values: a dictionary with keys corresponding the col names
-    """                                                                        
+    """
     add_row_query = "insert into model.reports ( "
-    for c, t in columns:                  
-        add_row_query += "{}, ".format(c)                                      
+    for c, t in columns:
+        add_row_query += "{}, ".format(c)
     add_row_query = add_row_query[:-2] + " ) values ("
     for c, t in columns:
         add_row_query += "%({})s, ".format(c)
     add_row_query = add_row_query[:-2] + ");"
-    cursor.execute(add_row_query, values)  
+    cursor.execute(add_row_query, values)
 
 def summary_to_db(saved_outputs):
     """
     doc string!
-    Note: if you add more values, make sure to add it both to the values 
+    Note: if you add more values, make sure to add it both to the values
     dictionary and to the list of column names and types
     """
     model_options = saved_outputs['model_options']
@@ -78,14 +80,14 @@ def summary_to_db(saved_outputs):
     train_scores = saved_outputs['train_set_soft_preds']
     test_preds = saved_outputs['test_set_preds']
     train_preds = saved_outputs['train_set_preds']
-    
+
     values = dict()
     values['model_name'] = saved_outputs['model_name']
     values['label'] = model_options['outcome_name']
     features = list(model_options['features_included'].keys())
     features.remove('grades')
     features = ", ".join(features)
-    feature_grades = ", ".join([str(a) for a 
+    feature_grades = ", ".join([str(a) for a
                                 in model_options['feature_grade_range']])
     values['feature_categories'] = features
     values['feature_grades'] = feature_grades
@@ -94,7 +96,7 @@ def summary_to_db(saved_outputs):
     values['train_set'] = ", ".join([str(a) for a in train])
     values['test_set'] = ", ".join([str(a) for a in test])
     params = saved_outputs['parameter_grid']
-    model = saved_outputs['estimator'].best_estimator_
+    model = saved_outputs['estimator']
     param_list = []
     for param in params.keys():
         param_list.append("{} = {}".format(param, getattr(model,param)))
@@ -113,9 +115,9 @@ def summary_to_db(saved_outputs):
         top_features = [['NULL', 0],['NULL', 0],['NULL', 0]]
         print('top features not implemented for {}'.format(model_name))
     else:
-        top_features = get_top_features(saved_outputs['estimator'], 
+        top_features = get_top_features(saved_outputs['estimator'],
                                         saved_outputs['features'], 3)
-    
+
     values['feature_1'] = top_features[0][0]
     values['feature_2'] = top_features[1][0]
     values['feature_3'] = top_features[2][0]
@@ -151,12 +153,12 @@ def summary_to_db(saved_outputs):
                ('time', 'float'),
                ('debug', 'bool')]
 
-    with postgres_pgconnection_generator() as connection: 
+    with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             build_results_table(cursor, columns)
             add_row(cursor, columns, values)
-        connection.commit()  
-    print('row added')                                                 
+        connection.commit()
+    print('row added')
 
 def write_scores_to_db(saved_outputs):
     """
@@ -178,7 +180,7 @@ def write_scores_to_db(saved_outputs):
     filename = saved_outputs['file_name']
 
     engine = postgres_engine_generator()
-    results.to_sql(filename,  engine, 
+    results.to_sql(filename,  engine,
                    schema='predictions', if_exists = 'replace')
     print('student predictions written to database')
 
@@ -189,11 +191,9 @@ def write_scores_to_db(saved_outputs):
     except AttributeError:
         print('top features not implemented for {}'.format(model_name))
     else:
-        top_features = get_top_features(saved_outputs['estimator'], 
+        top_features = get_top_features(saved_outputs['estimator'],
                                         saved_outputs['features'], -1)
         features = pd.DataFrame(top_features, columns=['feature','importance'])
         features.to_sql(filename, engine, schema='feature_scores',
                         if_exists = 'replace')
         print('feature importances written to database')
-            
-
