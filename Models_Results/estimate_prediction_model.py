@@ -22,7 +22,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 
 #from sklearn.grid_search import ParameterGrid
-from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
@@ -66,12 +66,13 @@ def define_clfs_params(filename):
 
     return clfs, grid
 
-def clf_loop(clfs, params, train_X, train_y,
-        criterion, models_to_run, cv_folds):
+
+def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
+        criterion_list, models_to_run, cv_folds, save_location, options):
     """
     Returns a dictionary where the keys are model nicknames (strings)
-    and the values are GridSearchCV objects containing attributes like
-    model.best_score_ and model.best_estimator_
+    and the values are classifiers with methods predict and fit and
+    either predict_proba or decision_function
 
     :param dict(str:estimator) clfs: clfs as returned by define_clfs_params
     :param dict(str:dict) params: grid of classifier hyperparameter options
@@ -86,26 +87,90 @@ def clf_loop(clfs, params, train_X, train_y,
         from model_options (e.g. ['logit', 'DT'])
     :param sklearn.KFolds cv_folds: a KFolds generator object over the index
         given in train_X and train_y (a list of lists of student_lookups)
-    :rtype dict(string: GridSearchCV)
     """
-    best_validated_models = dict()
-    validated_model_times = dict()
-    for index,clf in enumerate([clfs[x] for x in models_to_run]):
-        model_name=models_to_run[index]
-        print(model_name)
-        parameter_values = params[model_name]
-        with Timer(model_name) as t:
-            best_validated_models[model_name] = \
-                GridSearchCV(clf, parameter_values,
-                             scoring=criterion,
-                             cv=cv_folds)
-            best_validated_models[model_name].fit(train_X, train_y)
-            validated_model_times[model_name] = t.time_check()
+    tuple_score = build_tuple_scorer(criterion_list)
+    n_criteria = len(criterion_list)
+    with Timer('clf_loop') as qq:
+        for index,clf in enumerate([clfs[x] for x in models_to_run]):
+            model_name=models_to_run[index]
+            parameter_values = params[model_name]
+            for p in ParameterGrid(parameter_values):
+                with Timer(model_name) as t:
+                    clf.set_params(**p)
+                    cv_scores_avg = np.empty((len(cv_folds), n_criteria))
+                    for i, (train_list, val_list) in enumerate(cv_folds):
+                        clf.fit(train_X.iloc[train_list], train_y.iloc[train_list])
+                        cv_score = tuple_score(clf,
+                            train_X.iloc[val_list], train_y.iloc[val_list])
+                        cv_scores_avg[i] = list(cv_score)
+                    cv_scores_avg = np.mean(cv_scores_avg, axis=0)
+                    clf.fit(train_X, train_y)
+                    run_time = t.time_check()
+                write_out_predictions(options, model_name, clf, run_time,
+                    cv_scores_avg, parameter_values, save_location,
+                    train_X, train_y, test_X, test_y)
+    return qq.time_check()
 
-        model_cv_score = best_validated_models[model_name].best_score_
-        print("model: {model}, best {criterion} score: {score}".format(
-            model=model_name, criterion=criterion, score=model_cv_score))
-    return best_validated_models, validated_model_times
+
+def write_out_predictions(model_options, model_name, clf, run_time,
+        average_cv_scores, params, save_location,
+        train_X, train_y, test_X, test_y):
+    if hasattr(clf, "predict_proba"):
+        test_set_scores = clf.predict_proba(test_X)[:,1]
+        train_set_scores = clf.predict_proba(train_X)[:,1]
+    else:
+        test_set_scores = clf.decision_function(test_X)
+        train_set_scores = clf.decision_function(train_X)
+
+    ## (4C) Save Results ##
+    # Save the recorded inputs, model, performance, and text description
+    # into a results folder
+    # according to sklearn documentation, use joblib instead of pickle
+    # save as a .pkl extension
+    # store option inputs (random_seed, train/test split rules, features)
+    # store time to completion [missing]
+
+    count = next_id(model_options['user'])
+
+    saved_outputs = {
+        'model_name' : model_name,
+        'file_name' : "{filename}_{model}_{user}_{number}"\
+            .format(filename = model_options['file_save_name'],
+                    model = model_name,
+                    user = model_options['user'],
+                    number = count),
+        'estimator' : clf,
+        'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
+        'cross_validation_scores': average_cv_scores,
+        'test_y' : test_y,
+        'test_set_soft_preds' : test_set_scores,
+        'test_set_preds' : clf.predict(test_X),
+        'train_y' : train_y,
+        'train_set_soft_preds' : train_set_scores,
+        'train_set_preds' : clf.predict(train_X),
+        'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
+        'features' : train_X.columns,
+        'parameter_grid' : params,
+        'performance_objects' : measure_performance(test_y, test_set_scores),
+        'time': run_time
+        }
+
+    # save outputs
+    file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
+    pkl_dir = 'pkls'
+    with open(os.path.join(save_location, pkl_dir, file_name), 'wb') as f:
+        pickle.dump(saved_outputs, f)
+
+    # write output summary to a database
+    #    - (A) write to a database table to store summary
+    #    - (B) write to and update an HTML/Markdown file
+    #    to create visual tables and graphics for results
+
+    if model_options['write_predictions_to_database']:
+        write_scores_to_db(saved_outputs)
+    write_model_report(save_location, saved_outputs)
+    summary_to_db(saved_outputs)
+
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     cohorts_held_out, cohorts_training):
@@ -436,72 +501,15 @@ def run_all_models(model_options, clfs, params, save_location):
         print('unknown cross-validation strategy. try "{}", "{}", or "{}"'\
               .format('leave_cohort_out', 'k_fold', 'none'))
 
-    criterion = parse_criterion_string(
-            model_options['validation_criterion'])
     # best_validated_models is a dictionary whose keys are the model
     # nicknames in model_classes_selected and values are objects
     # returned by GridSearchCV
-    best_validated_models, validated_model_times = clf_loop(clfs, params, train_X, train_y,
-        criterion = criterion,
+    output = clf_loop(clfs, params, train_X, train_y, test_X, test_y,
+        criterion_list = model_options['validation_criterion'],
         models_to_run = model_options['model_classes_selected'],
-        cv_folds = cohort_kfolds) # cv_folds is a k-fold generator
+        cv_folds = cohort_kfolds, # cv_folds is a k-fold generator
+        save_location = save_location, options = model_options)
 
-    for model_name, model in best_validated_models.items():
-        clf = model.best_estimator_
-        if hasattr(clf, "predict_proba"):
-            test_set_scores = clf.predict_proba(test_X)[:,1]
-            train_set_scores = clf.predict_proba(train_X)[:,1]
-        else:
-            test_set_scores = clf.decision_function(test_X)
-            train_set_scores = clf.decision_function(train_X)
-
-        ## (4C) Save Results ##
-        # Save the recorded inputs, model, performance, and text description
-        # into a results folder
-        # according to sklearn documentation, use joblib instead of pickle
-        # save as a .pkl extension
-        # store option inputs (random_seed, train/test split rules, features)
-        # store time to completion [missing]
-
-        count = next_id(model_options['user'])
-
-        saved_outputs = {
-            'model_name' : model_name,
-            'file_name' : "{filename}_{model}_{user}_{number}"\
-            .format(filename = model_options['file_save_name'], 
-                    model = model_name, 
-                    user = model_options['user'],
-                    number = count),
-            'estimator' : model,
-            'model_options' : model_options, # this also contains cohort_grade_level_begin for train/test split
-            'test_y' : test_y,
-            'test_set_soft_preds' : test_set_scores,
-            'test_set_preds' : model.predict(test_X),
-            'train_y' : train_y,
-            'train_set_soft_preds' : train_set_scores,
-            'train_set_preds' : model.predict(train_X),
-            'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
-            'features' : train_X.columns,
-            'parameter_grid' : params[model_name],
-            'performance_objects' : measure_performance(test_y, test_set_scores),
-            'time': validated_model_times[model_name]
-        }
-
-        # save outputs
-        file_name = model_options['file_save_name'] +'_' + model_name + '.pkl'
-        pkl_dir = 'pkls'
-        with open(os.path.join(save_location, pkl_dir, file_name), 'wb') as f:
-            pickle.dump(saved_outputs, f)
-
-        # write output summary to a database
-        #    - (A) write to a database table to store summary
-        #    - (B) write to and update an HTML/Markdown file
-        #    to create visual tables and graphics for results
-
-        if model_options['write_predictions_to_database']:
-            write_scores_to_db(saved_outputs)
-        write_model_report(save_location, saved_outputs)
-        summary_to_db(saved_outputs)
 
 def main(args=None):
 # Create options file used to generate features
@@ -511,7 +519,7 @@ def main(args=None):
 # and what columns to draw from each of those tables
 # Also needs to read in an option to output all results to a database
 
-    
+
     parser = OptionParser()
     parser.add_option('-m','--modelpath', dest='model_options_file',
         help="filename for model options; default 'model_options.yaml' ")

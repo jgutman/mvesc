@@ -16,7 +16,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
 
 class Top_features():
     def DT(model, columns, k):
-        imp = model.best_estimator_.feature_importances_
+        imp = model.feature_importances_
         top_feat = sorted(zip(columns,imp.tolist()),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -25,7 +25,7 @@ class Top_features():
             return top_feat[:k]
 
     def logit(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -34,13 +34,13 @@ class Top_features():
             return top_coefs[:k]
 
     def LR_no_penalty(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
     def SVM(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -49,31 +49,31 @@ class Top_features():
             return top_coefs[:k]
 
     def RF(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def GB(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def ET(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def AB(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def SGD(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
@@ -137,7 +137,7 @@ def plot_score_distribution(soft_predictions, save_location,
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
     f.clf()
-    
+
 
 
 def plot_precision_recall(soft_predictions, test_y, save_location,
@@ -231,7 +231,7 @@ def markdown_report(f, save_location, saved_outputs):
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
     f.write("* cross-validation scheme: {}\n".format(cv_scheme))
     params = saved_outputs['parameter_grid']
-    model = saved_outputs['estimator'].best_estimator_
+    model = saved_outputs['estimator']
     n_models = 1;
     for param, options in params.items():
         option_str = ", ".join([str(a) for a in options])
