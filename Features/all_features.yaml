@@ -90,7 +90,7 @@ oaa_normalized:
     - eighth_math_pl
     - eighth_science_normalized
     - eighth_science_percentile
-    - eighth_science_p
+    - eighth_science_pl
 
 snapshots:
     - disadvantagement*

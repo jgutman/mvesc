@@ -173,13 +173,13 @@ def build_outcomes_plus_features(model_options, subset_n=None):
         # can use subset=[colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
         if subset_n:
-            fraction = subset_n/float(outcomes_with_student_lookup.shape[0])
             outcomes_with_student_lookup = outcomes_with_student_lookup \
-            .groupby(outcome_name).apply(lambda x :x.sample(frac=fraction))
+            .groupby(outcome_name).apply(lambda x :x.sample(n=int(np.floor(subset_n/2))))
             outcomes_with_student_lookup.index = outcomes_with_student_lookup.index.droplevel()
-            if outcomes_with_student_lookup[outcome_name].eq(1).all():
-                outcomes_with_student_lookup[outcome_name]
-                .set_value(outcomes_with_student_lookup.index[0],outcome_name,1)
+            # if outcomes_with_student_lookup[outcome_name].eq(0).all():
+            #     outcomes_with_student_lookup[outcome_name]\
+            #     .set_value(outcomes_with_student_lookup.index[0],outcome_name,1)
+            #     print('SET ONE VALUE TO ONE')
 
         joint_label_features = outcomes_with_student_lookup.copy()
 

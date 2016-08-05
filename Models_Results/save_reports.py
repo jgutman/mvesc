@@ -302,15 +302,10 @@ def write_model_report(save_location, saved_outputs):
 
     plot_score_distribution(test_set_scores, save_location, run_name,
                             model_name)
-
-    #plot_precision_recall_threshold(test_set_scores, test_y, save_location,
-    #                                run_name, model_name)
     plot_precision_recall(test_set_scores, test_y, save_location,
                           run_name, model_name)
     plot_precision_recall_n(test_y, test_set_scores,save_location,
                             run_name, model_name)
-    #plot_confusion_matrix(test_set_scores, test_y, .5, save_location,
-    #                      run_name, model_name)
     plot_confusion_matrix(test_set_scores, test_y, .3, save_location,
                           run_name, model_name)
     with open(save_location+"/"+run_name+"_"+model_name+'.md','w+') as f:

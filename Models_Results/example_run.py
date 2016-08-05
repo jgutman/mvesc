@@ -25,7 +25,7 @@ template_options = {
     'subset_n': 100
 }
 
-cv_scheme_list = ['k_fold', 'past_cohorts_only']
+cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only'] #k-fold needs many students
 cv_criterion_list = ['custom_precision_5','f1']
 feature_list = []
 #table_list = ['absence','demographics','grades','mobility','snapshots']
@@ -82,7 +82,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
                                 except:
                                     print(template_options)
                                     raise
-                                print('param set {0} finished: run for {1}'\
+                                print('param set {0} finished: run for {1} '\
                                       'seconds so far'\
                                       .format(c, batch_timer.time_check()))
                                 c = c+1
