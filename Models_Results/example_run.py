@@ -17,8 +17,9 @@ template_options = {
     'write_to_database': True,
     'user': 'ht',
     'test_set_type': 'temporal_cohort',
+    'cv_criterions': ['custom_precision_5','f1'],
     # if cv_scheme = 'k_fold', need  'n_folds' key 
-    'n_folds': 10,
+    'n_folds': 4,
     'prediction_grade': 9, 
     'cohorts_held_out': [2011,2012],
     'debug': True,
@@ -26,7 +27,6 @@ template_options = {
 }
 
 cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only'] #k-fold needs many students
-cv_criterion_list = ['custom_precision_5','f1']
 feature_list = []
 #table_list = ['absence','demographics','grades','mobility','snapshots']
 #for t in table_list:
@@ -49,40 +49,38 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
     c = 0; #counter for yaml naming
     for cv_scheme in cv_scheme_list:
         template_options['cv_scheme'] = cv_scheme
-        for cv_criterion in cv_criterion_list:
-            template_options['cv_criterions'] = cv_criterion
-            for features in feature_list:
-                template_options['features'] = features
-                for outcome in outcome_list:
-                    template_options['outcome'] = outcome
-                    for imputation in imputation_list:
-                        template_options['imputation'] = imputation
-                        for scaling in scaling_list:
-                            template_options['scaling'] = scaling
-                            for years, grades in time_scales:
-                                template_options['cohorts_training']=years
-                                template_options['feature_grade_range']=grades
-                                # innermost layer of loop
-                                template_options['random_seed'] = time.time()
-                                template_options['name'] = 'param_set_'+str(c)
-                                template_options['description'] = \
-                                """testing all options by looping through"""\
-                                """with a just {} students"""\
-                                    .format(template_options['subset_n'])
-                                generate_yaml(template_options)
-                                path = os.path.join(base_pathname,
-                                                    'Models_Results',
-                                                    'model_options',
-                                                    template_options\
-                                                    ['batch_name'],
-                                                    template_options['name']
-                                                    +'.yaml')
-                                try:
-                                    estimate_prediction_model.main(['-m',path])
-                                except:
-                                    print(template_options)
-                                    raise
-                                print('param set {0} finished: run for {1} '\
-                                      'seconds so far'\
-                                      .format(c, batch_timer.time_check()))
-                                c = c+1
+        for features in feature_list:
+            template_options['features'] = features
+            for outcome in outcome_list:
+                template_options['outcome'] = outcome
+                for imputation in imputation_list:
+                    template_options['imputation'] = imputation
+                    for scaling in scaling_list:
+                        template_options['scaling'] = scaling
+                        for years, grades in time_scales:
+                            template_options['cohorts_training']=years
+                            template_options['feature_grade_range']=grades
+                            # innermost layer of loop
+                            template_options['random_seed'] = time.time()
+                            template_options['name'] = 'param_set_'+str(c)
+                            template_options['description'] = \
+                            """testing all options by looping through"""\
+                            """with a just {} students"""\
+                                .format(template_options['subset_n'])
+                            generate_yaml(template_options)
+                            path = os.path.join(base_pathname,
+                                                'Models_Results',
+                                                'model_options',
+                                                template_options\
+                                                ['batch_name'],
+                                                template_options['name']
+                                                +'.yaml')
+                            try:
+                                estimate_prediction_model.main(['-m',path])
+                            except:
+                                print(template_options)
+                                raise
+                            print('param set {0} finished: run for {1} '\
+                                  'seconds so far'\
+                                  .format(c, batch_timer.time_check()))
+                            c = c+1

@@ -15,8 +15,13 @@ from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     average_precision_score
 
 class Top_features():
+    """
+    This class contains methods for each applicable model to return the
+    feature scores.
+    """
+
     def DT(model, columns, k):
-        imp = model.best_estimator_.feature_importances_
+        imp = model.feature_importances_
         top_feat = sorted(zip(columns,imp.tolist()),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -25,7 +30,7 @@ class Top_features():
             return top_feat[:k]
 
     def logit(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -34,13 +39,13 @@ class Top_features():
             return top_coefs[:k]
 
     def LR_no_penalty(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
 
     def SVM(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: abs(x[1]), reverse=True)
         if k == -1:
@@ -49,31 +54,31 @@ class Top_features():
             return top_coefs[:k]
 
     def RF(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def GB(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def ET(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def AB(model, columns, k):
-        importances = model.best_estimator_.feature_importances_
+        importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
         return top_importances[:k]
 
     def SGD(model, columns, k):
-        coefs = model.best_estimator_.coef_
+        coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
         return top_coefs[:k]
@@ -82,7 +87,16 @@ class Top_features():
 
 def plot_precision_recall_n(y_true, y_prob, save_location,
                             run_name, model_name):
-    # from Rayid's magicloops code
+    """
+    Adapted from Rayid's magicloops code, this plots precision and recall
+    vs. the percent of population marked as 1
+
+    :param pd.Series y_true: 
+    :param pd.Series y_prob:
+    :param str save_location:
+    :param str run_name:
+    :param str model_name:
+    """
     y_score = y_prob
     precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
     precision_curve = precision_curve[:-1]
@@ -112,13 +126,31 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
 
 def precision_at_k(y_true, y_scores, k):
-    # from Rayid's magicloops code
+    """
+    Adapted from Rayid's magicloops code, this calculates precision on
+    the top k proportion of population
+
+    :param pd.Series y_true: 
+    :param pd.Series y_scores:
+    :param int k:
+    :returns: precision 
+    :rtype: float
+    """
     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
     return precision_score(y_true, y_pred)
 
 def recall_at_k(y_true, y_scores, k):
-    # from Rayid's magicloops code
+    """
+    Adapted from Rayid's magicloops code, this calculates recall on
+    the top k proportion of population
+
+    :param pd.Series y_true: 
+    :param pd.Series y_scores:
+    :param int k:
+    :returns: recall
+    :rtype: float
+    """
     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
     return recall_score(y_true, y_pred)
@@ -126,6 +158,14 @@ def recall_at_k(y_true, y_scores, k):
 
 def plot_score_distribution(soft_predictions, save_location,
                             run_name, model_name):
+    """
+    This plots the distribution of scores from a model
+
+    :param pd.Series soft_predictions: 
+    :param str save_location:
+    :param str run_name:
+    :param str model_name:
+    """
     min_x = min(min(soft_predictions), 0)
     max_x = max(max(soft_predictions), 1)
     f = plt.figure()
@@ -137,11 +177,20 @@ def plot_score_distribution(soft_predictions, save_location,
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_score_dist.png', bbox_inches='tight')
     f.clf()
-    
+
 
 
 def plot_precision_recall(soft_predictions, test_y, save_location,
                           run_name, model_name):
+    """
+    This plots precision vs. recall
+
+    :param pd.Series soft_predictions: 
+    :param pd.Series test_y: 
+    :param str save_location:
+    :param str run_name:
+    :param str model_name:
+    """
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
     f = plt.figure()
     plt.plot(recall, precision)
@@ -155,6 +204,15 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
 
 def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
                                     run_name, model_name):
+    """
+    This plots precision and recall vs. threshold
+
+    :param pd.Series soft_predictions: 
+    :param pd.Series test_y: 
+    :param str save_location:
+    :param str run_name:
+    :param str model_name:
+    """
     precision,recall,thresholds=precision_recall_curve(test_y,soft_predictions)
     thresholds = np.concatenate(([0],thresholds))
     f = plt.figure()
@@ -170,6 +228,15 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
 
 def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
                      run_name, model_name):
+    """
+    This plots the confusion matrix
+
+    :param pd.Series soft_predictions: 
+    :param pd.Series test_y: 
+    :param str save_location:
+    :param str run_name:
+    :param str model_name:
+    """
     # add precision/recall cutoffs
     f = plt.figure()
     cm = confusion_matrix(test_y, soft_predictions > threshold)
@@ -231,7 +298,7 @@ def markdown_report(f, save_location, saved_outputs):
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
     f.write("* cross-validation scheme: {}\n".format(cv_scheme))
     params = saved_outputs['parameter_grid']
-    model = saved_outputs['estimator'].best_estimator_
+    model = saved_outputs['estimator']
     n_models = 1;
     for param, options in params.items():
         option_str = ", ".join([str(a) for a in options])
