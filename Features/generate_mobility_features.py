@@ -50,13 +50,13 @@ def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
             count(distinct city) n_cities_to_gr_{gr},
             count(school_year) n_records_to_gr_{gr},
             (count(distinct street_clean)-1)/
-                greatest(1, count(distinct grade))::float
+                greatest(1, count(distinct school_year))::float
                 avg_address_change_to_gr_{gr},
             (count(distinct district)-1)/
-                greatest(1, count(distinct grade))::float
+                greatest(1, count(distinct school_year))::float
                 avg_district_change_to_gr_{gr},
             (count(distinct city)-1)/
-                greatest(1, count(distinct grade))::float
+                greatest(1, count(distinct school_year))::float
                 avg_city_change_to_gr_{gr}
         from {source_schema}.{source_table} where grade <= {gr}
         group by student_lookup) mobility_gr_{gr}
