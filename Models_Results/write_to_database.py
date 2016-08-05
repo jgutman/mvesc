@@ -86,7 +86,6 @@ def summary_to_db(saved_outputs):
     values['label'] = model_options['outcome_name']
  
     features = list(model_options['features_included'].keys())
-#    features.remove('grades')
     features = ", ".join(features)
     feature_grades = ", ".join([str(a) for a
                                 in model_options['feature_grade_range']])
@@ -137,6 +136,8 @@ def summary_to_db(saved_outputs):
                ('random_seed', 'int'),
                ('label', 'text'),
                ('cv_scheme', 'text'),
+               ('cv_criterion', 'text'),
+               ('cv_score', 'float'),
                ('imputation','text'),
                ('scaling', 'text'),
                ('feature_categories', 'text'),
@@ -163,7 +164,12 @@ def summary_to_db(saved_outputs):
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             build_results_table(cursor, columns)
-            add_row(cursor, columns, values)
+            for criterion, score in zip(model_options['validation_criterion'],
+                                        saved_outputs\
+                                        ['cross_validation_scores']):
+                values['cv_criterion'] = criterion
+                values['cv_score'] = score
+                add_row(cursor, columns, values)
         connection.commit()
     print('row added')
 

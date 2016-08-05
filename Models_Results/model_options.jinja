@@ -21,8 +21,12 @@ feature_grade_range:
 {% if cv_scheme == "k_fold" %}n_folds: {{n_folds}}
 {% endif %}
 
-cohorts_held_out: 
-  {% for c in cohorts_held_out %}- {{c}}
+cohorts_test: 
+  {% for c in cohorts_test %}- {{c}}
+  {% endfor %}
+
+cohorts_val: 
+  {% for c in cohorts_val %}- {{c}}
   {% endfor %}
 
 cohorts_training:

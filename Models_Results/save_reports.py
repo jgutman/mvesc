@@ -256,6 +256,13 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
 
 
 def markdown_report(f, save_location, saved_outputs):
+    """
+    Generates a markdown file with information and images about the run
+
+    :param file object f: markdown file
+    :param str save_location: dir to save images 
+    :param dict saved_outputs: dictionary with many outputs from the model run
+    """
     model_options = saved_outputs['model_options']
     model_name = saved_outputs['model_name']
     run_name = model_options['file_save_name']
@@ -296,16 +303,17 @@ def markdown_report(f, save_location, saved_outputs):
                          .split('_'))
     if "fold" in cv_scheme:
         cv_scheme += ", with {} folds".format(model_options['n_folds'])
-    f.write("* cross-validation scheme: {}\n".format(cv_scheme))
+    f.write("* parameter choices\n")
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator']
     n_models = 1;
     for param, options in params.items():
-        option_str = ", ".join([str(a) for a in options])
-        f.write("\t * searching {} in {}\n".format(param, option_str))
-        f.write("\t * chose {} = {}\n".format(param, getattr(model,param)))
+        f.write("\t * {} = {}\n".format(param, getattr(model,param)))
         n_models *= len(options)
-    f.write("\t * using {}\n".format(model_options['validation_criterion']))
+    f.write("* cross-validation scores: {}\n".format(cv_scheme))
+    for criterion, score in zip(model_options['validation_criterion'],
+                                saved_outputs['cross_validation_scores']):
+        f.write('\t * {0} score: {1:.02}\n'.format(criterion,score))
 
     imputation = " ".join(model_options['missing_impute_strategy'].split('_'))
     f.write("* imputation strategy: {}\n".format(imputation))

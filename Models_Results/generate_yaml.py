@@ -52,8 +52,9 @@ def main():
         # if cv_scheme = 'k_fold', need  'n_folds' key
         'prediction_grade': 10,
         'feature_grade_range': range(6,10),
-        'cohorts_held_out': [2011,2012],
-        'cohorts_training': [2009,2010],
+        'cohorts_test': [2012],
+        'cohorts_val': [2011],
+        'cohorts_train': [2009,2010],
         'random_seed': 2851,
         'cv_criterions': ['custom_precision_10','custom_recall_10'],
         'features': {'grades':

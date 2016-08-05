@@ -64,7 +64,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
                             template_options['random_seed'] = time.time()
                             template_options['name'] = 'param_set_'+str(c)
                             template_options['description'] = \
-                            """testing all options by looping through"""\
+                            """testing all options by looping through """\
                             """with a just {} students"""\
                                 .format(template_options['subset_n'])
                             generate_yaml(template_options)

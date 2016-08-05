@@ -178,7 +178,8 @@ def write_out_predictions(model_options, model_name, clf, run_time,
     # save python object as a pkl file on mnt drive
     file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
     pkl_dir = 'pkls'
-    with open(os.path.join('/mnt/data', pkl_dir, file_name), 'wb') as f:
+    with open(os.path.join('/mnt/data/mvesc/Models_Results',
+                           pkl_dir, file_name), 'wb') as f:
         pickle.dump(saved_outputs, f)
 
     # write features and predictions to database 
@@ -258,7 +259,7 @@ def build_outcomes_plus_features(model_options, subset_n=None):
             outcomes_with_student_lookup = outcomes_with_student_lookup \
             .groupby(outcome_name).apply(lambda x:
                                          x.sample(n=int(np.floor(subset_n/2))))
-            outcomes_with_student_lookup.index = 
+            outcomes_with_student_lookup.index = \
             outcomes_with_student_lookup.index.droplevel()
 
         joint_label_features = outcomes_with_student_lookup.copy()
