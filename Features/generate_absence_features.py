@@ -127,14 +127,62 @@ def create_consec_absence_temp_table(cursor, temp_table, source_table, source_co
     cursor.execute(sql_create_temp_index)
     return None
 
+def update_absence(cursor, table='clean.all_absences', col='absence'):
+    """ Update the clean.all_absences using the consecutive aggregations 
+    1. the reason to do this is the consecutive-dates-process takes 10~30 minutes to generate;
+    2. keep the feature-generation process consistent with other features
+  
+    :param cursor: sql cursor
+    :param str table: the table name to update
+    :param str col: the column name to construct on, e.g. col+'agg'
+
+    """
+    col_date, dtype_date = col+'_starting_date', 'date'
+    col_cnt, dtype_cnt = col+'_consec_count', 'int'
+    if col=='absence':
+        table_intermed = 'public.intermed_'+col[:3]+'_agg'
+    else:
+        table_intermed='public.intermed_tdy_agg'
+    sql_add_column = """
+    alter table {table} drop column if exists {column};
+    alter table {table} add column {column} {dtype} default null;
+    """.format(table=table, column=col_date, dtype=dtype_date )
+    cursor.execute(sql_add_column)
+    sql_add_column = """
+    alter table {table} drop column if exists {column};
+    alter table {table} add column {column} {dtype} default null;
+    """.format(table=table, column=col_cnt, dtype=dtype_cnt)
+    cursor.execute(sql_add_column)
+
+    # join the consecutive absence to table clean.all_absences 
+    # so that we can use the same feature generation process
+    sql_join_cmd = """
+    update only {table} t1
+    set {column_date}=t2.{column_date},
+        {column_cnt} =t2.{column_cnt}
+    from {table_intermed} t2
+    where t1.student_lookup=t2.student_lookup 
+    and t1.date=t2.{column_date}
+    and t1.absence_desc like '%{col}%';
+    """.format(table=table, column_date=col_date, column_cnt=col_cnt,
+               table_intermed=table_intermed, col=col)
+    cursor.execute(sql_join_cmd)
+
+    print(""" - updated {table}.({col1}, {col2}) from {tab_int}; """.format(
+            table=table, col1=col_date, col2=col_cnt, tab_int=table_intermed))
+
+
 def main():
     schema, table = "model" ,"absence"
     source_schema = "clean"
     tab_snapshots, tab_absence = "all_snapshots", "all_absences"
-    gr_min, gr_max = 3, 11
+    gr_min, gr_max = 3, 12
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
+            print(' - updating clean.absence by joining...')
+            update_absence(cursor, table='clean.all_absences', col='absence') # changed from absence_test to absence; run again
+            update_absence(cursor, table='clean.all_absences', col='tardy')
             create_feature_table(cursor, table, schema = 'model', replace = True)
 
             # days_absent columns
