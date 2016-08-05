@@ -53,7 +53,7 @@ def define_clfs_params(filename):
         'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1,
                                    criterion='entropy'),
         'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
-                                 algorithm="SAMME", n_estimators=200),
+                                algorithm="SAMME", n_estimators=200),
         'SVM': svm.SVC(kernel='linear', probability=False),
         'GB': GradientBoostingClassifier(
             learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
@@ -133,16 +133,16 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
     return train, test
 
-def measure_performance(outcomes, predictions):
-    """ Returns a dict of model performance objects
-    :param list[int] outcomes:
-    :param list[float] predictions:
-    """
-    performance_objects = {}
-    performance_objects['pr_curve'] = precision_recall_curve(outcomes,
-                                                             predictions)
-    performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
-    return performance_objects
+# def measure_performance(outcomes, predictions):
+#     """ Returns a dict of model performance objects
+#     :param list[int] outcomes:
+#     :param list[float] predictions:
+#     """
+#     performance_objects = {}
+#     performance_objects['pr_curve'] = precision_recall_curve(outcomes,
+#                                                              predictions)
+#     performance_objects['roc_curve'] = roc_curve(outcomes, predictions)
+#     return performance_objects
 
 def build_outcomes_plus_features(model_options, subset_n=None):
     """
@@ -164,16 +164,23 @@ def build_outcomes_plus_features(model_options, subset_n=None):
     'cohort_grade_level_begin' according to value in 'cohorts_held_out'
     """
     with postgres_pgconnection_generator() as connection:
+        outcome_name = model_options['outcome_name']
         outcomes_with_student_lookup = read_table_to_df(connection,
             table_name = 'outcome', schema = 'model', nrows = -1,
-            columns = ['student_lookup',
-            model_options['outcome_name'],
+            columns = ['student_lookup', outcome_name,
             model_options['cohort_grade_level_begin']])
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset=[colnames] to drop based on NAs in certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
         if subset_n:
-            outcomes_with_student_lookup = outcomes_with_student_lookup.sample(n=subset_n)
+            fraction = subset_n/float(outcomes_with_student_lookup.shape[0])
+            outcomes_with_student_lookup = outcomes_with_student_lookup \
+            .groupby(outcome_name).apply(lambda x :x.sample(frac=fraction))
+            outcomes_with_student_lookup.index = outcomes_with_student_lookup.index.droplevel()
+            if outcomes_with_student_lookup[outcome_name].eq(1).all():
+                outcomes_with_student_lookup[outcome_name]
+                .set_value(outcomes_with_student_lookup.index[0],outcome_name,1)
+
         joint_label_features = outcomes_with_student_lookup.copy()
 
         # get all requested input features
@@ -458,6 +465,10 @@ def run_all_models(model_options, clfs, params, save_location):
         else:
             test_set_scores = clf.decision_function(test_X)
             train_set_scores = clf.decision_function(train_X)
+        assert test_set_scores.size == test_X.shape[0], \
+            "different number of predictions for test set"
+        assert train_set_scores.size == train_y.size, \
+            "different number of predictions for train set"
 
         ## (4C) Save Results ##
         # Save the recorded inputs, model, performance, and text description
@@ -487,7 +498,7 @@ def run_all_models(model_options, clfs, params, save_location):
             'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
             'features' : train_X.columns,
             'parameter_grid' : params[model_name],
-            'performance_objects' : measure_performance(test_y, test_set_scores),
+            # 'performance_objects' : measure_performance(test_y, test_set_scores),
             'time': validated_model_times[model_name]
         }
 
