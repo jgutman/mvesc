@@ -86,7 +86,8 @@ def consecutive_aggregate(df, desc_str='absence'):
     sumdf = sumdf.merge(subdf[['student_lookup', 'date']], how='left', left_on=['student_lookup', new_date_col], right_on=['student_lookup', 'date'])
     return(sumdf.drop('date', axis=1))
 
-
+''' Updated the Absence-feature-generation process, 
+    this function is called in `generate_absence_features.py`
 def update_absence(cursor, table='clean.all_absences', col='absence'):
     """ Update the clean.all_absences using the consecutive aggregations 
     1. the reason to do this is the consecutive-dates-process takes 10~30 minutes to generate;
@@ -130,7 +131,8 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
     
     print(""" - updated {table}.({col1}, {col2}) from {tab_int}; """.format(
             table=table, col1=col_date, col2=col_cnt, tab_int=table_intermed))
-    
+'''
+ 
 def main():
     chunksize = 200
     schema, table = 'clean', 'all_absences'
@@ -164,11 +166,12 @@ def main():
             create index public_intmed_tdy_sl_dt on public.intermed_tdy_agg (student_lookup, tardy_starting_date);
             """
             cursor.execute(sql_index_intermed)
-
+            print(' - Done: generated consec tables for absence(intermed_abs_agg) and tardy(intermed_tdy_agg) in public;')
+            '''
             print(' - updating clean.absence by joining...')
             update_absence(cursor, table='clean.all_absences', col='absence') # changed from absence_test to absence; run again
             update_absence(cursor, table='clean.all_absences', col='tardy')
             print(' - Done: generate_consec_absence_columns.py!')
-            
+            '''
 if __name__=='__main__':
     main()
