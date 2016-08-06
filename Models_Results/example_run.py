@@ -9,6 +9,7 @@ from generate_yaml import generate_yaml
 from my_timer import Timer
 import time
 
+# some of these things need to be updated
 
 # setting options that will stay constant for this batch
 template_options = {
@@ -21,7 +22,7 @@ template_options = {
     # if cv_scheme = 'k_fold', need  'n_folds' key 
     'n_folds': 4,
     'prediction_grade': 9, 
-    'cohorts_test': [2012],
+    'cohorts_test': [2013],
     'cohorts_val': [2012],
     'debug': True,
     'subset_n': 100
