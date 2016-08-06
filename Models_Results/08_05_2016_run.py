@@ -12,37 +12,36 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-    'batch_name' : 'small_sample_test', 
+    'batch_name' : 'first_run_08_05_2016', 
     'model_classes': ['logit','DT','RF','ET','AB','SVM','GB','NB','SGD','KNN'],
     'write_to_database': True,
     'user': 'ht',
     'test_set_type': 'temporal_cohort',
-    'cv_criterions': ['custom_precision_5','f1'],
+    'cv_criterions': ['custom_precision_5','custom_precision_10',
+                      'custom_recall_5', 'f1'],
     # if cv_scheme = 'k_fold', need  'n_folds' key 
-    'n_folds': 4,
-    'prediction_grade': 9, 
-    'cohorts_test': [2012],
+    'n_folds': 5,
+    'prediction_grade': 10, 
+    'cohorts_test': [2013],
     'cohorts_val': [2012],
-    'debug': True,
-    'subset_n': 100
+    'debug': False
 }
 
-cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only'] #k-fold needs many students
+cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only', 'k-fold']
 feature_list = []
-#table_list = ['absence','demographics','grades','mobility','snapshots']
-#for t in table_list:
-#    feature_list.append({t: 'all'})
-basic_features = {
-    'demographics': 'all',
-    'grades': ['gpa*'],
-    'oaa_normalized': 'all',
-    'snapshots': 'all'
+table_list = ['absence','grades','mobility', 'oaa_normalized']
+for t in table_list:
+    feature_list.append({t: 'all'})
+feature_list.append('all')
+basics = {
+    'demographics':'all',
+    'snapshots':'all'
 }
-feature_list.append(basic_features)
-
-outcome_list = ['not_on_time', 'definite']
-time_scales = list(zip([range(2009,2011),range(2007,2011)],
-                  [range(6,9),range(8,9)]))
+feature_list.append(basics)
+outcome_list = ['not_on_time', 'is_dropout', 'definite']
+cohorts = [range(a, 2012) for a in range(2007,2012)]
+grade_ranges = [range(a,10) for a in reversed(range(5,10))]
+time_scales = list(zip(cohorts,grade_ranges))
 imputation_list = ['median_plus_dummies', 'mean_plus_dummies']
 scaling_list = ['robust','standard'] # error with none for KNN
 
@@ -65,9 +64,8 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
                             template_options['random_seed'] = time.time()
                             template_options['name'] = 'param_set_'+str(c)
                             template_options['description'] = \
-                            """testing all options by looping through """\
-                            """with a just {} students"""\
-                                .format(template_options['subset_n'])
+                           """First large run looping through many """\
+                            """models on 08/5/2016 """
                             generate_yaml(template_options)
                             path = os.path.join(base_pathname,
                                                 'Models_Results',

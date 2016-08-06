@@ -36,7 +36,6 @@ from write_to_database import summary_to_db, write_scores_to_db, next_id
 ######
 # Setup Modeling Options and Functions
 
-# all possible models and default parameter values
 def define_clfs_params(filename):
     """
     Defines the range of possible classifiers and parameters to search.
@@ -68,158 +67,8 @@ def define_clfs_params(filename):
 
     with open(filename, 'r') as f:
         grid = yaml.load(f)
-
-    return clfs, grid
-
-
-def clf_loop(clfs, params, train_X, train_y, test_X, test_y,
-        criterion_list, models_to_run, cv_folds, save_location, options):
-    """
-    Returns a dictionary where the keys are model nicknames (strings)
-    and the values are classifiers with methods predict and fit and
-    either predict_proba or decision_function
-
-    :param dict(str:estimator) clfs: clfs as returned by define_clfs_params
-    :param dict(str:dict) params: grid of classifier hyperparameter options
-        to grid search over as returned by define_clfs_params
-    :param pandas.DataFrame train_X: index is student_lookup, columns are all
-        features to train over in the model
-    :param pandas.Series(int) train_y: index is student_lookup, value is 0 or 1
-        for outcome label
-    :param string criterion: evaluation criterion for model selection on the
-        validation set, to be read in from model_options (e.g. 'f1')
-    :param list[string] models_to_run: which models to actually run as read in
-        from model_options (e.g. ['logit', 'DT'])
-    :param sklearn.KFolds cv_folds: a KFolds generator object over the index
-        given in train_X and train_y (a list of lists of student_lookups)
-    :returns: length of time to run full loop
-    :rtype: float
-    """
-    tuple_score = build_tuple_scorer(criterion_list)
-    n_criteria = len(criterion_list)
-    with Timer('clf_loop') as qq:
-        for index,clf in enumerate([clfs[x] for x in models_to_run]):
-            model_name=models_to_run[index]
-            parameter_values = params[model_name]
-            for p in ParameterGrid(parameter_values):
-                with Timer(model_name) as t:
-                    clf.set_params(**p)
-                    cv_scores_avg = np.empty((len(cv_folds), n_criteria))
-                    for i, (train_list, val_list) in enumerate(cv_folds):
-                        clf.fit(train_X.iloc[train_list], 
-                                train_y.iloc[train_list])
-                        cv_score = tuple_score(clf,
-                            train_X.iloc[val_list], train_y.iloc[val_list])
-                        cv_scores_avg[i] = list(cv_score)
-                    cv_scores_avg = np.mean(cv_scores_avg, axis=0)
-                    clf.fit(train_X, train_y)
-                    run_time = t.time_check()
-                write_out_predictions(options, model_name, clf, run_time,
-                    cv_scores_avg, parameter_values, save_location,
-                    train_X, train_y, test_X, test_y)
-    return qq.time_check()
-
-
-def write_out_predictions(model_options, model_name, clf, run_time,
-        average_cv_scores, params, save_location,
-        train_X, train_y, test_X, test_y):
-    """ 
-    Saves the output of a model in 3 ways:
-    (1) saves a pkl file to mtn/data
-    (2) saves a markdown report (from save_reports.py)
-    (3) writes information to the database (from write_to_database.py)
     
-    :param dict model_options:
-    :param str model_name: model nickname
-    :param estimator clf: sklearn estimator object 
-    :param float run_time: time for the model run
-    :param np.array average_cv_scores: score for each cv_criterion
-    :param str save_location: path to save reports to
-    :param pd.DataFrame train_X:
-    :param pd.DataFrame test_X:
-    :param pd.Series train_y:
-    :param pd.Series test_y:
-    """
-
-    # generate predictions
-    if hasattr(clf, "predict_proba"):
-        test_set_scores = clf.predict_proba(test_X)[:,1]
-        train_set_scores = clf.predict_proba(train_X)[:,1]
-    else:
-        test_set_scores = clf.decision_function(test_X)
-        train_set_scores = clf.decision_function(train_X)
-
-    # increment counter
-    count = next_id(model_options['user'])
-
-    # gather data to save
-    saved_outputs = {
-        'model_name' : model_name,
-        'file_name' : "{filename}_{model}_{user}_{number}"\
-            .format(filename = model_options['file_save_name'],
-                    model = model_name,
-                    user = model_options['user'],
-                    number = count),
-        'estimator' : clf,
-        'model_options' : model_options,
-        'cross_validation_scores': average_cv_scores,
-        'test_y' : test_y,
-        'test_set_soft_preds' : test_set_scores,
-        'test_set_preds' : clf.predict(test_X),
-        'train_y' : train_y,
-        'train_set_soft_preds' : train_set_scores,
-        'train_set_preds' : clf.predict(train_X),
-        'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
-        'features' : train_X.columns,
-        'parameter_grid' : params,
-        'time': run_time
-        }
-
-    # save python object as a pkl file on mnt drive
-    file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
-    pkl_dir = 'pkls'
-    with open(os.path.join('/mnt/data/mvesc/Models_Results',
-                           pkl_dir, file_name), 'wb') as f:
-        pickle.dump(saved_outputs, f)
-
-    # write features and predictions to database 
-    if model_options['write_predictions_to_database']:
-        write_scores_to_db(saved_outputs)
-        
-    # generate markdown report and images
-    write_model_report(save_location, saved_outputs)
-
-    # write summary row to model.reports
-    summary_to_db(saved_outputs)
-
-
-def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
-    cohorts_held_out, cohorts_training):
-    """ 
-    Splits the given joint_df of features & outcomes and
-    returns a train/test dataset
-    :param pd.DataFrame joint_df: data frame withcohort, outcome, and features
-    :param list[int] cohorts_held_out: a list of years to split test set on
-    :param string or list[int] cohorts_training: either the string 'all' or
-        a list of years to include in the training, all years must precede
-        the test set years in cohorts_held_out
-    :returns: two dataframes consisting of rows from joint_df, one for training
-        and one to be used for testing
-    :rtype: pd.DataFrame, pd.DataFrame
-    """
-    if (cohorts_training=='all'):
-        train = joint_df[~joint_df[cohort_grade_level_begin]\
-                         .isin(cohorts_held_out)]
-        assert (np.max(train[cohort_grade_level_begin]) 
-                < min(cohorts_held_out)), \
-            "Training years do not completely precede test years"
-    else:
-        assert (max(cohorts_training) < min(cohorts_held_out)), \
-            "Training years do not completely precede test years"
-        train = joint_df[joint_df[cohort_grade_level_begin].\
-                         isin(cohorts_training)]
-    test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_held_out)]
-    return train, test
+    return clfs, grid
 
 def build_outcomes_plus_features(model_options, subset_n=None):
     """
@@ -237,7 +86,7 @@ def build_outcomes_plus_features(model_options, subset_n=None):
 
     Usage:
     select train, validation, and test based on values in column
-    'cohort_grade_level_begin' according to value in 'cohorts_held_out'
+    'cohort_grade_level_begin' according to value in 'cohorts_val'
 
     :param dict model_options: all options read in from yaml file
     :param int subset_n: number of students to subsample (only for debugging)
@@ -293,6 +142,37 @@ def build_outcomes_plus_features(model_options, subset_n=None):
     joint_label_features = df2num(joint_label_features)
     return joint_label_features
 
+def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
+                               cohorts_test, cohorts_val, cohorts_training):
+    """ 
+    Splits the given joint_df of features & outcomes and
+    returns a train/test dataset
+    :param pd.DataFrame joint_df: data frame withcohort, outcome, and features
+    :param list[int] cohorts_val: a list of years to split val set on
+    :param list[int] cohorts_test: a list of years to split test set on
+    :param string or list[int] cohorts_training: either the string 'all' or
+        a list of years to include in the training, all years must precede
+        the test set years in cohorts_val
+    :returns: two dataframes consisting of rows from joint_df, one for training
+        and one to be used for testing
+    :rtype: pd.DataFrame, pd.DataFrame
+    """
+    if (cohorts_training=='all'):
+        train = joint_df[~joint_df[cohort_grade_level_begin]\
+                         .isin(cohorts_val + cohorts_test)]
+        assert (np.max(train[cohort_grade_level_begin]) 
+                < min(cohorts_val+cohorts_test)), \
+            "Training years do not completely precede test years"
+    else:
+        assert (max(cohorts_training) < min(cohorts_val+cohorts_test)), \
+            "Training years do not completely precede test years"
+        train = joint_df[joint_df[cohort_grade_level_begin].\
+                         isin(cohorts_training)]
+    val = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_val)]
+    test = joint_df[joint_df[cohort_grade_level_begin].isin(cohorts_test)]
+    return train, val, test
+
+
 def parse_features(features_included_raw, feature_grade_range):
     """
     Expands feature names including * to given grade range
@@ -327,7 +207,7 @@ def read_in_yaml(filename=os.path.join(base_pathname,
 
     assert(type(model_options) == dict), "bad formatting in yaml file"
     required_keys = set(('validation_criterion', 'features_included',
-                         'cohorts_training','cohorts_held_out', 
+                         'cohorts_training','cohorts_val', 
                          'file_save_name',
                          'model_classes_selected', 'outcome_name',
                          'cohort_grade_level_begin', 'model_test_holdout',
@@ -338,31 +218,33 @@ def read_in_yaml(filename=os.path.join(base_pathname,
         "bad formatting in yaml file"
     assert(type(model_options['model_classes_selected']) == list),\
         "bad formatting in yaml file"
-    assert(type(model_options['cohorts_held_out']) == list),\
+    assert(type(model_options['cohorts_val']) == list),\
         "bad formatting in yaml file"
     assert(type(model_options['cohorts_training']) == list or
         model_options['cohorts_training'] == 'all'),\
         "bad formatting in yaml file"
     return model_options
 
-def scale_features(train, test, strategy):
+def scale_features(train, val, test, strategy):
     """
     Scales features based on the training values with the given strategy
 
     :param pd.DataFrame train:
+    :param pd.DataFrame val:
     :param pd.DataFrame test:
     :param str strategy:
-    :returns: scaled training and test sets
-    :rtype: pd.DataFrame, pd.DataFrame
+    :returns: scaled training, val, and test sets
+    :rtype: pd.DataFrame, pd.DataFrame, pd.DataFrame
     """
     num_values_by_column = {x: len(train[x].unique()) for x in train.columns}
     zero_variance_columns = [k for k,v in num_values_by_column.items()
                              if v == 1]
     train.drop(zero_variance_columns, axis=1, inplace=True)
+    val.drop(zero_variance_columns, axis=1, inplace=True)
     test.drop(zero_variance_columns, axis=1, inplace=True)
 
     if (strategy == 'none'):
-        return train, test
+        return train, val, test
 
     elif(strategy == 'standard' or strategy == 'robust'):
         non_binary_columns = [k for k, v in num_values_by_column.items()
@@ -371,44 +253,54 @@ def scale_features(train, test, strategy):
             scaler = StandardScaler() if strategy == 'standard' \
                      else RobustScaler()
             train_non_binary = train[non_binary_columns]
+            val_non_binary = val[non_binary_columns]
             test_non_binary = test[non_binary_columns]
             scaler.fit(train_non_binary)
             train_non_binary = pd.DataFrame(scaler.transform(train_non_binary),
                 columns = non_binary_columns, index = train.index)
+            val_non_binary = pd.DataFrame(scaler.transform(val_non_binary),
+                columns = non_binary_columns, index = val.index)
             test_non_binary = pd.DataFrame(scaler.transform(test_non_binary),
                 columns = non_binary_columns, index = test.index)
             train_scaled = train.drop(non_binary_columns, axis=1)
+            val_scaled = val.drop(non_binary_columns, axis=1)
             test_scaled = test.drop(non_binary_columns, axis=1)
             train_scaled = train_scaled.merge(train_non_binary,
                 left_index=True, right_index=True)
+            val_scaled = val_scaled.merge(val_non_binary,
+                left_index=True, right_index=True)
             test_scaled = test_scaled.merge(test_non_binary,
                 left_index=True, right_index=True)
-            return train_scaled, test_scaled
+            return train_scaled,val_scaled, test_scaled
         else:
-            return train, test
+            return train,val, test
 
     else:
         print('unknown feature scaling strategy. try "{}", "{}", or "{}"'\
               .format('standard', 'robust', 'none'))
-        return train, test
+        return train, val, test
 
-def add_null_dummies_train_test(train, test):
+def add_null_dummies_train_test(train, val, test):
     """
     Adds a dummy column for each feature that has null values
 
     :param pd.DataFrame train:
+    :param pd.DataFrame val:
     :param pd.DataFrame test:
-    :returns: training and test sets
-    :rtype: pd.DataFrame, pd.DataFrame
+    :returns: training, val, and test sets
+    :rtype: pd.DataFrame, pd.DataFrame, pd.DataFrame
     """
     train_null_columns = train.columns[train.isnull().sum() > 0]
+    val_null_columns = val.columns[val.isnull().sum() > 0]
     test_null_columns = test.columns[test.isnull().sum() > 0]
-    null_column_set = set(train_null_columns).union(set(test_null_columns))
+    null_column_set = set(train_null_columns).union(set(test_null_columns))\
+                      .union(set(val_null_columns))
     null_columns = pd.indexes.base.Index(null_column_set)
 
     train_nullified = add_null_dummies(train, null_columns)
+    val_nullified = add_null_dummies(val, null_columns)
     test_nullified = add_null_dummies(test, null_columns)
-    return train_nullified, test_nullified
+    return train_nullified, val_nullified, test_nullified
 
 def add_null_dummies(data, null_columns):
     """
@@ -427,34 +319,173 @@ def add_null_dummies(data, null_columns):
         left_index=True, right_index=True)
     return data_plus_dummies
 
-def impute_missing_values(train, test, strategy):
+def impute_missing_values(train,val, test, strategy):
     """
     Imputes missing values based on the training set values
 
     :param pd.DataFrame train:
+    :param pd.DataFrame val:
     :param pd.DataFrame test:
     :param str strategy:
-    :returns: training and test sets
-    :rtype: pd.DataFrame, pd.DataFrame
+    :returns: training, val, and test sets
+    :rtype: pd.DataFrame, pd.DataFrame, pd.DataFrame
     """
     if (strategy=='none'):
-        return train, test
+        return train, val, test
 
     elif(strategy == 'mean_plus_dummies' or strategy == 'median_plus_dummies'):
         # add feature_isnull columns 0 or 1
-        train, test = add_null_dummies_train_test(train, test)
+        train, val, test = add_null_dummies_train_test(train, val, test)
         imputer = Imputer(strategy=strategy.split("_")[0])
         imputer.fit(train) # fit the imputer on the training mean/median
         train = pd.DataFrame(imputer.transform(train), # returns a numpy array
             columns = train.columns, index = train.index) # back to dataframe
+        val = pd.DataFrame(imputer.transform(val),
+            columns = val.columns, index = val.index)
         test = pd.DataFrame(imputer.transform(test),
             columns = test.columns, index = test.index)
-        return train, test
+        return train, val, test
 
     else:
         print('unknown imputation strategy. try "{}", "{}", or "{}"'.format(
             'mean_plus_dummies', 'median_plus_dummies', 'none'))
-        return train, test
+        return train, val, test
+
+def clf_loop(clfs, params, train_X, train_y, val_X, val_y, test_X, test_y,
+        criterion_list, models_to_run, cv_folds, save_location, options):
+    """
+    Returns a dictionary where the keys are model nicknames (strings)
+    and the values are classifiers with methods predict and fit and
+    either predict_proba or decision_function
+
+    :param dict(str:estimator) clfs: clfs as returned by define_clfs_params
+    :param dict(str:dict) params: grid of classifier hyperparameter options
+        to grid search over as returned by define_clfs_params
+    :param pandas.DataFrame train_X: index is student_lookup, columns are all
+        features to train over in the model
+    :param pandas.Series(int) train_y: index is student_lookup, value is 0 or 1
+        for outcome label
+    :param pandas.DataFrame val_X: index is student_lookup, columns are all
+        features to train over in the model
+    :param pandas.Series(int) val_y: index is student_lookup, value is 0 or 1
+        for outcome label
+    :param pandas.DataFrame test_X: index is student_lookup, columns are all
+        features to train over in the model
+    :param pandas.Series(int) test_y: index is student_lookup, value is 0 or 1
+        for outcome label
+    :param string criterion: evaluation criterion for model selection on the
+        validation set, to be read in from model_options (e.g. 'f1')
+    :param list[string] models_to_run: which models to actually run as read in
+        from model_options (e.g. ['logit', 'DT'])
+    :param sklearn.KFolds cv_folds: a KFolds generator object over the index
+        given in train_X and train_y (a list of lists of student_lookups)
+    :returns: length of time to run full loop
+    :rtype: float
+    """
+    tuple_score = build_tuple_scorer(criterion_list)
+    n_criteria = len(criterion_list)
+    with Timer('clf_loop') as qq:
+        for index,clf in enumerate([clfs[x] for x in models_to_run]):
+            model_name=models_to_run[index]
+            parameter_values = params[model_name]
+            for p in ParameterGrid(parameter_values):
+                with Timer(model_name) as t:
+                    clf.set_params(**p)
+                    cv_scores_avg = np.empty((len(cv_folds), n_criteria))
+                    for i, (train_list, val_list) in enumerate(cv_folds):
+                        clf.fit(train_X.iloc[train_list], 
+                                train_y.iloc[train_list])
+                        cv_score = tuple_score(clf,
+                            train_X.iloc[val_list], train_y.iloc[val_list])
+                        cv_scores_avg[i] = list(cv_score)
+                    cv_scores_avg = np.mean(cv_scores_avg, axis=0)
+                    clf.fit(train_X, train_y)
+                    run_time = t.time_check()
+                write_out_predictions(options, model_name, clf, run_time,
+                    cv_scores_avg, parameter_values, save_location,
+                    train_X, train_y,val_X, val_y, test_X, test_y)
+    return qq.time_check()
+
+
+def write_out_predictions(model_options, model_name, clf, run_time,
+        average_cv_scores, params, save_location,
+        train_X, train_y, val_X, val_y, test_X, test_y):
+    """ 
+    Saves the output of a model in 3 ways:
+    (1) saves a pkl file to mtn/data
+    (2) saves a markdown report (from save_reports.py)
+    (3) writes information to the database (from write_to_database.py)
+    
+    :param dict model_options:
+    :param str model_name: model nickname
+    :param estimator clf: sklearn estimator object 
+    :param float run_time: time for the model run
+    :param np.array average_cv_scores: score for each cv_criterion
+    :param str save_location: path to save reports to
+    :param pd.DataFrame train_X:
+    :param pd.DataFrame val_X:
+    :param pd.DataFrame test_X:
+    :param pd.Series train_y:
+    :param pd.Series val_y:
+    :param pd.Series test_y:
+    """
+
+    # generate predictions
+    if hasattr(clf, "predict_proba"):
+        test_set_scores = clf.predict_proba(test_X)[:,1]
+        val_set_scores = clf.predict_proba(val_X)[:,1]
+        train_set_scores = clf.predict_proba(train_X)[:,1]
+    else:
+        test_set_scores = clf.decision_function(test_X)        
+        val_set_scores = clf.decision_function(val_X)
+        train_set_scores = clf.decision_function(train_X)
+
+    # increment counter
+    count = next_id(model_options['user'])
+
+    # gather data to save
+    saved_outputs = {
+        'model_name' : model_name,
+        'file_name' : "{filename}_{model}_{user}_{number}"\
+            .format(filename = model_options['file_save_name'],
+                    model = model_name,
+                    user = model_options['user'],
+                    number = count),
+        'estimator' : clf,
+        'model_options' : model_options,
+        'cross_validation_scores': average_cv_scores,
+        'test_y' : test_y,
+        'test_set_soft_preds' : test_set_scores,
+        'test_set_preds' : clf.predict(test_X),
+        'val_y' : val_y,
+        'val_set_soft_preds' : val_set_scores,
+        'val_set_preds' : clf.predict(val_X),
+        'train_y' : train_y,
+        'train_set_soft_preds' : train_set_scores,
+        'train_set_preds' : clf.predict(train_X),
+        'train_set_balance': {0:sum(train_y==0), 1:sum(train_y==1)},
+        'features' : train_X.columns,
+        'parameter_grid' : params,
+        'time': run_time
+        }
+
+    # save python object as a pkl file on mnt drive
+    file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
+    pkl_dir = 'pkls'
+    with open(os.path.join('/mnt/data/mvesc/Models_Results',
+                           pkl_dir, file_name), 'wb') as f:
+        pickle.dump(saved_outputs, f)
+
+    # write features and predictions to database 
+    if model_options['write_predictions_to_database']:
+        write_scores_to_db(saved_outputs)
+        
+    # generate markdown report and images
+#    write_model_report(save_location, saved_outputs)
+
+    # write summary row to model.reports
+    summary_to_db(saved_outputs)
+
 
 def run_all_models(model_options, clfs, params, save_location):
     """ 
@@ -476,32 +507,40 @@ def run_all_models(model_options, clfs, params, save_location):
     # select test set
     if model_options['model_test_holdout'] == 'temporal_cohort':
         # if using temporal cohort model performance validation,
-        # we choose the cohorts in cohorts_held_out for the test set
-        train, test = temporal_cohort_test_split(outcome_plus_features,
+        # we choose the cohorts in cohorts_val for the val set
+        # and cohorts in cohorts_test for the test set
+        train, val, test = temporal_cohort_test_split(outcome_plus_features,
             model_options['cohort_grade_level_begin'],
-            model_options['cohorts_held_out'],
+            model_options['cohorts_test'],
+            model_options['cohorts_val'],
             model_options['cohorts_training'])
-    else:
+#    else:
         # if not using temporal test set, split randomly
-        train, test = train_test_split(outcome_plus_features, test_size=0.20,
-            random_state=model_options['random_seed'])
+        # this function doesn't actually exist?
+        # train, test = train_test_split(outcome_plus_features,val_size = 0.1,
+        #                                test_size=0.10,
+        #                                random_state= \
+        #                                model_options['random_seed'])
 
     # get subtables for each for easy reference
     train_X = train.drop([model_options['outcome_name'],
-        model_options['cohort_grade_level_begin']],axis=1)
+                          model_options['cohort_grade_level_begin']],axis=1)
     test_X = test.drop([model_options['outcome_name'],
-        model_options['cohort_grade_level_begin']],axis=1)
+                        model_options['cohort_grade_level_begin']],axis=1)
+    val_X = val.drop([model_options['outcome_name'],
+                      model_options['cohort_grade_level_begin']],axis=1)
     train_y = train[model_options['outcome_name']]
     test_y = test[model_options['outcome_name']]
-
+    val_y = val[model_options['outcome_name']]
+    
     # imputation for missing values in features
-    train_X, test_X = impute_missing_values(train_X, test_X,
+    train_X, val_X, test_X = impute_missing_values(train_X, val_X, test_X,
         model_options['missing_impute_strategy'])
     assert (all(train_X.columns == test_X.columns)),\
         "train and test have different columns"
 
     # feature scaling
-    train_X, test_X = scale_features(train_X, test_X,
+    train_X, val_X, test_X = scale_features(train_X, val_X, test_X,
         model_options['feature_scaling'])
     assert (all(train_X.columns == test_X.columns)),\
         "train and test have different columns"
@@ -545,11 +584,12 @@ def run_all_models(model_options, clfs, params, save_location):
               .format('leave_cohort_out', 'k_fold', 'none'))
 
     # run all the models in a loop
-    output = clf_loop(clfs, params, train_X, train_y, test_X, test_y,
-        criterion_list = model_options['validation_criterion'],
-        models_to_run = model_options['model_classes_selected'],
-        cv_folds = cohort_kfolds, # cv_folds is a k-fold generator
-        save_location = save_location, options = model_options)
+    output = clf_loop(clfs, params, train_X, train_y, val_X, val_y,
+                      test_X, test_y,
+                      criterion_list = model_options['validation_criterion'],
+                      models_to_run = model_options['model_classes_selected'],
+                      cv_folds = cohort_kfolds, #cv_folds is a k-fold generator
+                      save_location = save_location, options = model_options)
 
 def main(args=None):
     """

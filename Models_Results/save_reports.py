@@ -279,12 +279,16 @@ def markdown_report(f, save_location, saved_outputs):
 
     f.write("* label used: {}\n".format(model_options['outcome_name']))
 
-    f.write("* initial cohort grade: {}\n"\
-            .format(model_options['cohort_grade_level_begin'][-3:-2]))
+    f.write("* prediction grade: {}\n"\
+            .format(model_options['prediction_grade_level']))
+
+    f.write("* validation cohorts: {}\n"\
+            .format(", ".join([str(a) for a in
+                               model_options['cohorts_val']])))
 
     f.write("* test cohorts: {}\n"\
             .format(", ".join([str(a) for a in
-                               model_options['cohorts_held_out']])))
+                               model_options['cohorts_test']])))
 
     f.write("\t * {0} positive examples, {1} negative examples\n"\
             .format(sum(test_y==1), sum(test_y==0)))
@@ -332,12 +336,31 @@ def markdown_report(f, save_location, saved_outputs):
     f.write("\n### Performance Metrics\n")
     f.write("on average, model run in {:0.2f} seconds ({} times) <br/>"\
             .format(saved_outputs['time']/float(n_models),n_models))
+    val_y = saved_outputs['val_y']
+    val_set_scores = saved_outputs['val_set_soft_preds']
+
     prec_15 = precision_at_k(test_y, test_set_scores, .15)
     prec_10 = precision_at_k(test_y, test_set_scores, .1)
     prec_5 = precision_at_k(test_y, test_set_scores, .05)
     recall_15 = recall_at_k(test_y, test_set_scores, 0.15)
     recall_10 = recall_at_k(test_y, test_set_scores, 0.1)
     recall_5 = recall_at_k(test_y, test_set_scores, 0.05)
+    f.write("<br/>")
+    f.write("metrics on the test set: <br/>")
+    f.write("precision on top 15%: {:0.4} <br/>".format(prec_15))
+    f.write("precision on top 10%: {:0.4} <br/>".format(prec_10))
+    f.write("precision on top 5%: {:0.4} <br/>".format(prec_5))
+    f.write("recall on top 15%: {:0.4} <br/>".format(recall_15))
+    f.write("recall on top 10%: {:0.4} <br/>".format(recall_10))
+    f.write("recall on top 5%: {:0.4} <br/><br/>".format(recall_5))
+
+    prec_15 = precision_at_k(val_y, val_set_scores, .15)
+    prec_10 = precision_at_k(val_y, val_set_scores, .1)
+    prec_5 = precision_at_k(val_y, val_set_scores, .05)
+    recall_15 = recall_at_k(val_y, val_set_scores, 0.15)
+    recall_10 = recall_at_k(val_y, val_set_scores, 0.1)
+    recall_5 = recall_at_k(val_y, val_set_scores, 0.05)
+    f.write("metrics on the validation set: <br/>")
     f.write("precision on top 15%: {:0.4} <br/>".format(prec_15))
     f.write("precision on top 10%: {:0.4} <br/>".format(prec_10))
     f.write("precision on top 5%: {:0.4} <br/>".format(prec_5))
