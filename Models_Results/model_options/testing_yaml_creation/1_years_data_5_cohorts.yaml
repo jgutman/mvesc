@@ -18,9 +18,11 @@ feature_grade_range:
   - 9
   
 
-cohorts_held_out: 
-  - 2011
+cohorts_test: 
   - 2012
+  
+cohorts_val: 
+  - 2011
   
 cohorts_training:
   - 2006
@@ -38,19 +40,6 @@ features_included:
   demographics: 
     - ethnicity
     - gender
-    
-  mobility: 
-    - n_addresses_to*
-    - n_districts_to*
-    - n_cities_to*
-    - n_records_to*
-    - avg_address_change_to*
-    - avg_district_change_to*
-    - avg_city_change_to*
-    - street_transition_in*
-    - district_transition_in*
-    - city_transition_in*
-    - mid_year_withdraw*
     
   grades: 
     - language_gpa*
@@ -73,9 +62,22 @@ features_included:
     - num_pf_classes*
     - gpa_district*
     
+  mobility: 
+    - n_addresses_to*
+    - n_districts_to*
+    - n_cities_to*
+    - n_records_to*
+    - avg_address_change_to*
+    - avg_district_change_to*
+    - avg_city_change_to*
+    - street_transition_in*
+    - district_transition_in*
+    - city_transition_in*
+    - mid_year_withdraw*
+    
   
 outcome_name: definite
 missing_impute_strategy: median_plus_dummies
 feature_scaling: robust
 
-sample_n:  500 
+subset_n:  None 

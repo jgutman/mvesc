@@ -7,6 +7,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from optparse import OptionParser
+import pdb 
 
 # all model import statements
 from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
@@ -336,6 +337,8 @@ def impute_missing_values(train,val, test, strategy):
     elif(strategy == 'mean_plus_dummies' or strategy == 'median_plus_dummies'):
         # add feature_isnull columns 0 or 1
         train, val, test = add_null_dummies_train_test(train, val, test)
+        
+        pdb.set_trace()
         imputer = Imputer(strategy=strategy.split("_")[0])
         imputer.fit(train) # fit the imputer on the training mean/median
         train = pd.DataFrame(imputer.transform(train), # returns a numpy array
@@ -440,6 +443,15 @@ def write_out_predictions(model_options, model_name, clf, run_time,
         val_set_scores = clf.decision_function(val_X)
         train_set_scores = clf.decision_function(train_X)
 
+    assert (test_set_scores.size==test_y.size),\
+        "dimensions of test predictions don't match" 
+
+    assert (val_set_scores.size==val_y.size),\
+        "dimensions of val predictions don't match" 
+
+    assert (train_set_scores.size==train_y.size),\
+        "dimensions of train predictions don't match"
+        
     # increment counter
     count = next_id(model_options['user'])
 
