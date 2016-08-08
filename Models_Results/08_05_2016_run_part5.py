@@ -12,7 +12,7 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-    'batch_name' : 'first_run_08_05_2016_pt2', 
+    'batch_name' : 'first_run_08_05_2016_pt4', 
     'model_classes': ['logit','DT','RF','ET','AB','SVM','GB','NB','SGD','KNN'],
     'write_to_database': True,
     'user': 'ht',
@@ -27,17 +27,20 @@ template_options = {
     'debug': False
 }
 
-cv_scheme_list = ['past_cohorts_only', 'k_fold'] #['leave_cohort_out', 'past_cohorts_only', 'k_fold']
+cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only', 'k_fold']
 feature_list = []
-table_list = ['absence','grades','mobility', 'oaa_normalized']
-for t in table_list:
-    feature_list.append({t: 'all'})
+# table_list = ['mobility', 'oaa_normalized'] #['absence','grades','mobility', 'oaa_normalized']
+# commented out grades because it had an error in k_fold, so skip forward to next feature
+# it could be an error using grade 5 data?
+# for t in table_list:
+#     feature_list.append({t: 'all'})
 # feature_list.append('all')
-# basics = {
-#     'demographics':'all',
-#     'snapshots':'all'
-# }
-# feature_list.append(basics)
+basics = {
+    'demographics':'all',
+    'snapshots':'all'
+}
+feature_list.append(basics)
+
 outcome_list = ['not_on_time', 'is_dropout', 'definite']
 cohorts = [range(a, 2012) for a in range(2007,2012)]
 grade_ranges = [range(a,10) for a in reversed(range(5,10))]
@@ -46,7 +49,7 @@ imputation_list = ['median_plus_dummies', 'mean_plus_dummies']
 scaling_list = ['robust','standard'] # error with none for KNN
 
 with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
-    c = 385; #counter for yaml naming
+    c = 569; #counter for yaml naming
     for cv_scheme in cv_scheme_list:
         template_options['cv_scheme'] = cv_scheme
         for features in feature_list:
