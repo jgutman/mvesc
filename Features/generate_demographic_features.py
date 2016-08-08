@@ -20,11 +20,13 @@ from feature_utilities import update_column_with_join
 def create_temp_table(cursor, schema='clean', table='all_snapshots',
     temp='single_gender', feature='gender'):
 
+    # include max(school_year) because in case there are ties for
+    #   gender or ethnicity counts, we select on the more recent one
     query_rank_feature_by_count = """create temporary table {temp} as
-    (select student_lookup, {feature}, count({feature}),
+    (select student_lookup, {feature}, max(school_year), count({feature}),
         rank() over (
             partition by student_lookup
-            order by count({feature}) desc)
+            order by count({feature}), max(school_year) desc)
     from {schema}.{table}
     group by student_lookup, {feature});
     """.format(schema=schema, table=table, temp=temp, feature=feature)
