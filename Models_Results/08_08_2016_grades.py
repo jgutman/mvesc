@@ -12,7 +12,7 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-    'batch_name' : 'debugging_08_08_2016', 
+    'batch_name' : 'grades_features_08_08_2016', 
     'model_classes': ['logit','DT','RF','ET','AB','SVM','GB','NB','SGD','KNN'],
     'write_to_database': True,
     'user': 'ht',
@@ -27,23 +27,17 @@ template_options = {
     'debug': False
 }
 
-cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only', 'k_fold']
-feature_list = [{'grades': 'all'}]
-table_list = ['absence','grades','mobility', 'oaa_normalized']
+cv_scheme_list = ['k_fold']# ['leave_cohort_out', 'past_cohorts_only', 'k_fold']
+feature_list = []
+table_list = ['grades']
 for t in table_list:
    feature_list.append({t: 'all'})
-feature_list.append('all')
-basics = {
-    'demographics':'all',
-    'snapshots':'all'
-}
-feature_list.append(basics)
-outcome_list = ['not_on_time']#, 'is_dropout', 'definite']
+outcome_list = ['not_on_time', 'is_dropout', 'definite']
 cohorts = [range(a, 2012) for a in range(2007,2012)]
 grade_ranges = [range(a,10) for a in reversed(range(5,10))]
 time_scales = list(zip(cohorts,grade_ranges))
-imputation_list = ['median_plus_dummies'] #, 'mean_plus_dummies']
-scaling_list = ['robust'] #,'standard'] # error with none for KNN
+imputation_list = ['median_plus_dummies', 'mean_plus_dummies']
+scaling_list = ['robust','standard'] # error with none for KNN
 
 with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
     c = 0; #counter for yaml naming
@@ -64,11 +58,9 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
                             template_options['feature_grade_range']=grades
                             # innermost layer of loop
                             template_options['random_seed'] = time.time()
-                            template_options['name'] = template_options\
-                                                       ['batch_name']+\
-                                                       '_param_set_'+str(c)
+                            template_options['name'] = 'param_set_'+str(c)
                             template_options['description'] = \
-                            """Debugging errors from first run"""
+                            """Running k-fold cv with grades features"""
                             generate_yaml(template_options)
                             path = os.path.join(base_pathname,
                                                 'Models_Results',
