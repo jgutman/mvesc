@@ -29,17 +29,17 @@ template_options = {
 
 cv_scheme_list = ['leave_cohort_out', 'past_cohorts_only', 'k_fold']
 feature_list = []
-# table_list = ['mobility', 'oaa_normalized'] #['absence','grades','mobility', 'oaa_normalized']
+table_list = ['snapshots'] #['absence','grades','mobility', 'oaa_normalized']
 # commented out grades because it had an error in k_fold, so skip forward to next feature
 # it could be an error using grade 5 data?
-# for t in table_list:
-#     feature_list.append({t: 'all'})
+for t in table_list:
+    feature_list.append({t: 'all'})
 # feature_list.append('all')
-basics = {
-    'demographics':'all',
-    'snapshots':'all'
-}
-feature_list.append(basics)
+# basics = {
+#     'demographics':'all',
+#     'snapshots':'all'
+# }
+# feature_list.append(basics)
 
 outcome_list = ['not_on_time', 'is_dropout', 'definite']
 cohorts = [range(a, 2012) for a in range(2007,2012)]

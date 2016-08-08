@@ -564,9 +564,9 @@ def run_all_models(model_options, clfs, params, save_location):
         cohort_kfolds_plus_future = LeaveOneLabelOut(train[
                 model_options['cohort_grade_level_begin']])
         cohort_kfolds = []
-        for train_list, test_list in cohort_kfolds:
-            test_year = pd.unique(cohort_kfolds.labels[test_list])
-            train_years_after_test = cohort_kfolds.labels[train_list] > \
+        for train_list, test_list in cohort_kfolds_plus_future:
+            test_year = pd.unique(cohort_kfolds_plus_future.labels[test_list])
+            train_years_after_test = cohort_kfolds_plus_future.labels[train_list] > \
                                      test_year
             train_indices_after_test = np.where(train_years_after_test)
             train_list = np.delete(train_list, train_indices_after_test)
