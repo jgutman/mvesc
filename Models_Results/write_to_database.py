@@ -98,7 +98,9 @@ def summary_to_db(saved_outputs):
     val = model_options['cohorts_val']
     test = model_options['cohorts_test']
     values['train_set'] = ", ".join([str(a) for a in train])
+    values['val_set'] = ", ".join([str(a) for a in val])
     values['test_set'] = ", ".join([str(a) for a in test])
+    values['prediction_grade'] = model_options['prediction_grade_level']
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator']
     param_list = []
@@ -164,7 +166,9 @@ def summary_to_db(saved_outputs):
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
                ('train_set', 'text'),
+               ('val_set', 'text'),
                ('test_set', 'text'),
+               ('prediction_grade', 'int'),
                ('parameters', 'text'),
                ('train_acc', 'float'),
                ('val_acc', 'float'),

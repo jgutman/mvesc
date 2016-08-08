@@ -207,12 +207,17 @@ def read_in_yaml(filename=os.path.join(base_pathname,
         model_options = yaml.load(f)
 
     assert(type(model_options) == dict), "bad formatting in yaml file"
-    required_keys = set(('validation_criterion', 'features_included',
-                         'cohorts_training','cohorts_val', 
-                         'file_save_name',
-                         'model_classes_selected', 'outcome_name',
-                         'cohort_grade_level_begin', 'model_test_holdout',
-                         'random_seed'))
+    required_keys = set(('batch_name','model_classes_selected',
+                         'user_description', 'file_save_name',
+                         'write_predictions_to_database', 'user', 'debug',
+                         'model_test_holdout',
+                         'parameter_cross_validation_scheme',
+                         'cohort_grade_level_begin', 
+                         'prediction_grade_level', 'feature_grade_range',
+                         'cohorts_training', 'cohorts_val', 'cohorts_test',
+                         'random_seed', 'validation_criterion', 
+                         'features_included', 'outcome_name',
+                         'missing_impute_strategy', 'feature_scaling'))
     assert (all([key in model_options.keys() for key in required_keys])), \
         "missing model specifications in yaml file"
     assert(type(model_options['features_included']) == dict), \
