@@ -31,8 +31,8 @@ def main():
 
     if options.path:
         path = options.path
-    if options.filename:
-        filename = options.filename
+    if options.file:
+        filename = options.file
     if options.load_pkl:
         load_pkl = options.load_pkl
     if options.optimization_criteria:
@@ -47,10 +47,7 @@ def main():
         with open(os.path.join(path, filename), 'wb') as f:
             pickle.dump(all_top_crosstabs, f)
 
-    model_list = ['param_set_39_DT_ht_7290', 'param_set_39_AB_ht_7293',
-                    'param_set_39_ET_ht_7292', 'param_set_43_RF_ht_7331',
-                    'param_set_3_AB_ht_6340', 'param_set_2_DT_ht_6920',
-                    'param_set_11_ET_ht_6524', 'param_set_5_RF_ht_6381']
+    model_list = [model[0] for model in all_top_crosstabs.keys()]
     feature_list = ['gpa_gr_9','seventh_read_normalized','days_present_gr_9',
                     'mid_year_withdraw_gr_9', 'mid_year_withdraw_gr_8',
                     'gender', 'discipline_incidents_gr_9']
@@ -63,12 +60,12 @@ def main():
             except KeyError:
                 continue
 
-def get_specific_cross_tabs(cross_tabs, filename, feature, split = 'val'):
-    crosstab = all_top_crosstabs[(filename, split)][feature]
+def get_specific_cross_tabs(crosstabs, filename, feature, split = 'val'):
+    crosstab = crosstabs[(filename, split)][feature]
     totals = crosstab.ix['true_label: All']
-    predicted = 100*pd.crosstab.ix[['predicted_label: True',
+    predicted = 100*crosstab.ix[['predicted_label: True',
         'predicted_label: False']]/totals
-    actual = 100*pd.crosstab.ix[['true_label: True',
+    actual = 100*crosstab.ix[['true_label: True',
         'true_label: False']]/totals
     full = predicted.append(actual)
     full = full.append(totals*100)
@@ -80,6 +77,7 @@ def loop_through_top_models(optimization_criteria):
         with connection.cursor() as cursor:
             predictions = None
             top_models_query = """
+        drop table if exists top_models;
         create temporary table top_models as
         select distinct on (model_name, label)
         * from
@@ -89,7 +87,7 @@ def loop_through_top_models(optimization_criteria):
                 order by {ranker} desc) as val_rank
             from model.reports
             where debug=false
-                and feature_categories like 'snapshots,%'
+                and feature_categories like 'absence,%'
                 and cv_scheme = 'leave_cohort_out'
             order by model_name, label, val_rank) vr
         order by model_name, label, val_rank;
@@ -101,9 +99,11 @@ def loop_through_top_models(optimization_criteria):
                 feature_grades from top_models;""")
             models_and_features = cursor.fetchall()
             crosstabs_by_model_and_feature = dict()
+            print('done grabbing models')
 
             for (table_name, feature_tables, feature_grade_range) \
                     in models_and_features:
+                print('working on {}'.format(table_name))
                 feature_table_list = feature_tables.split(", ")
                 feature_grades = [int(i) for i in
                         feature_grade_range.split(", ")]
@@ -179,8 +179,12 @@ def make_df_categorical(raw_data):
 
     for string_col in string_features.columns:
         raw_data[string_col] = string_features[string_col].astype('category')
-        if len(raw_data[string_col].cat.categories) < 2:
+        if (len(raw_data[string_col].cat.categories) < 2
+            and string_col != 'predicted_label'
+            and string_col != 'true_label'
+            and string_col != 'correct'):
             raw_data.drop(string_col, axis=1, inplace=True)
+
     for numeric_col in numeric_features.columns:
         num_values = len(numeric_features[numeric_col].unique())
         num_bins = min(5, num_values)
@@ -193,6 +197,7 @@ def make_df_categorical(raw_data):
         else:
             raw_data[numeric_col] = pd.cut(numeric_features[numeric_col],
                 bins = num_bins, precision = 1)
+
     return raw_data
 
 if __name__ == '__main__':
