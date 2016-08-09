@@ -10,16 +10,53 @@ import pandas as pd
 import numpy as np
 import re
 import pickle
+from optparse import OptionParser
 
 def main():
-    if len(sys.argv > 1):
-        path = os.path.abspath(sys.argv[1])
-    else:
-        path = os.path.join(base_pathname, 'Error_Feature_Analysis', 'pkls')
+    parser = OptionParser()
+    parser.add_option('-p','--path', dest='path',
+        help="path to store pkl output")
+    parser.add_option('-f','--file', dest='file',
+        help="filename for pkl output")
+    parser.add_option('-l','--load', dest='load_pkl',
+        action='store_true', help="path to store pkl output")
+    parser.add_option('-c','--criterion', dest='optimization_criteria',
+        action='append', help="path to store pkl output")
+
+    (options, args) = parser.parse_args()
+    path = os.path.join(base_pathname, 'Error_Feature_Analysis', 'pkls')
+    filename = 'crosstabs.pkl'
+    load_pkl = False
     optimization_criteria = ['val_precision_5', 'val_recall_5']
-    all_top_crosstabs = loop_through_top_models(optimization_criteria)
-    with open(os.path.join(path, 'crosstabs.pkl'), 'wb') as f:
-        pickle.dump(all_top_crosstabs, f)
+
+    if options.path:
+        path = options.path
+    if options.filename:
+        filename = options.filename
+    if options.load_pkl:
+        load_pkl = options.load_pkl
+    if options.optimization_criteria:
+        optimization_criteria = options.optimization_criteria
+
+    if load_pkl:
+        # load pkl file
+        pkl_file = open(os.path.join(path, filename),'rb')
+        all_top_crosstabs = pickle.load(pkl_file)
+    else:
+        all_top_crosstabs = loop_through_top_models(optimization_criteria)
+        with open(os.path.join(path, filename), 'wb') as f:
+            pickle.dump(all_top_crosstabs, f)
+
+    model_list = ['param_set_39_DT_ht_7290', 'param_set_39_AB_ht_7293',
+        'param_set_39_ET_ht_7292', 'param_set_43_RF_ht_7331',
+        'param_set_3_AB_ht_6340', 'param_set_2_DT_ht_6920',
+        'param_set_11_ET_ht_6524', 'param_set_5_RF_ht_6381']
+    feature_list = ['gpa_gr_9','seventh_read_normalized','days_present_gr_9',
+                    'mid_year_withdraw_gr_9', 'mid_year_withdraw_gr_8',
+                    'gender', 'discipline_incidents_gr_9']
+    for model in model_list:
+        for feature in feature_list:
+            print(get_specific_cross_tabs(all_top_crosstabs, model, feature))
 
 def get_specific_cross_tabs(cross_tabs, filename, feature, split = 'val'):
     crosstab = all_top_crosstabs[(filename, split)][feature]
