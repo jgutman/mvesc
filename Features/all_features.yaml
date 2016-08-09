@@ -6,6 +6,16 @@ absence:
     - medical*
     - absence_consec*
     - tardy_consec*
+    - absence_wkd_1*
+    - absence_wkd_2*
+    - absence_wkd_3*
+    - absence_wkd_4*
+    - absence_wkd_5*
+    - tardy_wkd_1*
+    - tardy_wkd_2*
+    - tardy_wkd_3*
+    - tardy_wkd_4*
+    - tardy_wkd_5*
 
 demographics:
     - ethnicity
@@ -108,3 +118,16 @@ snapshots:
     - days_present*
     - discipline_incidents*
     - section_504_plan*
+
+intervention:
+    - extracurr_program*
+    - post_secondary*
+    - academic_inv*
+    - atheletics*
+    - placement*
+    - spec_instruc*
+    - vocational* 
+    - academic_intracurr*
+    - school_program*
+    - titlei*
+
