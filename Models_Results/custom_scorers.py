@@ -1,6 +1,6 @@
 from sklearn.metrics import make_scorer, get_scorer
 from sklearn.metrics import precision_score, recall_score, roc_auc_score
-from save_report import precision_at_k, recall_at_k
+from save_reports import precision_at_k, recall_at_k
 import numpy as np
 
 def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
