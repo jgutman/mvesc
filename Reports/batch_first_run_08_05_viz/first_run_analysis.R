@@ -25,12 +25,15 @@ reports = reports %>% filter(cv_criterion == 'custom_precision_5',
 ### (1) Plot the Overall Distribution for each Model Name ###
 #   dot plot of all the runs for each model
 #   group by model type and get the top performances in a certain category
-distrib_for_model = function(df, score_col, top_num, shape_col, outcome_label) {
+distrib_for_model = function(df, score_col, top_num, 
+                             shape_col, outcome_label,
+                             summarize = FALSE,
+                             suggested_title = NA) {
   model_groups = df %>% filter(label == outcome_label) %>%
     select_(score_col, shape_col, 
             "model_name", "feature_categories") %>%
     group_by(model_name, feature_categories) %>%
-    mutate_(rank = interp(~min_rank(desc(v)), v = as.name(score_col))) %>%
+    mutate_(rank = interp(~row_number(desc(v)), v = as.name(score_col))) %>%
     filter(rank < top_num)
   plot_df = collect(model_groups) %>% ungroup(feature_categories)
   
@@ -40,14 +43,42 @@ distrib_for_model = function(df, score_col, top_num, shape_col, outcome_label) {
                               "full_features",
                               feature_categories))
   
+  if (summarize) {
+    plot_df = plot_df %>% group_by(model_name, feature_name) %>%
+      summarise_(plot_score = interp(~mean(v), v=as.name(score_col)))
+  } else {
+    plot_df = plot_df %>% rename_("plot_score" = score_col)
+  }
+  if (is.na(suggested_title)){
+    suggested_title = paste("All Runs", score_col, "keep only top", top_num,
+                            "of each feature;\nuse label", outcome_label,
+                            "\nignoring grade_range, impute, scaling, cv_scheme info")
+  }
+  
+  # refactor based on best "full_features"
+  ordering_models = plot_df %>% filter(feature_name == 'full_features') %>%
+    arrange(desc(plot_score)) %>% distinct(model_name)
+  # refactor plot_df model_names based on this
+  plot_df = plot_df %>% ungroup() %>%
+    mutate(model_name = factor(model_name,
+                               levels = ordering_models$model_name))
+  
+  
+  
   # dot plot by model_type
-  g <- ggplot(plot_df, aes_string("model_name", score_col,
-                             color = "feature_name")) +
-    geom_point(position = position_jitter(height = 0)) +
-    theme_bw() +
-    ggtitle(paste("All Runs", score_col, "keep only top", top_num,
-                  "of each feature;\nuse label", outcome_label,
-                  "\nignoring grade_range, impute, scaling, cv_scheme info"))
+  g <- ggplot(plot_df, aes_string("model_name", "plot_score",
+                             color = "feature_name",
+                             group = "feature_name")) +
+    geom_line() +
+    theme_bw() + ylab(score_col) +
+    ggtitle(suggested_title)
+  if (summarize) {
+    g = g + geom_point(position = position_jitter(height = 0, width = 0.1),
+                       size = 8)
+  } else {
+    g = g + geom_point(position = position_jitter(height = 0),
+                       size = 2)
+  }
   g
 }
 
@@ -62,6 +93,34 @@ for (metric in c('val_precision_5')){
     # top 12
     g = distrib_for_model(reports, metric, 12, 'cv_scheme', outcome)
     ggsave(plot = g, 
+           filename = paste0('all_model_dist/dist_', metric,
+                             '_', outcome, '_top12.pdf'),
+           w = 8, h = 8)
+    # save summarized top 12
+    g = distrib_for_model(reports, metric, 12, 'cv_scheme', outcome,
+                          summarize = T,
+                          suggested_title = paste("Avgd Model Performance by Feature
+                          on label", outcome, "using metric", metric))
+    g = g + theme(text = element_text(size=20)) +
+      ylab(metric)
+    # ggsave(plot = g, 
+    #        filename = paste0('all_model_dist/avgd_dist_', metric,
+    #                          '_', outcome, '_top12.pdf'),
+    #        w = 8, h = 8)
+  }
+}
+
+for (metric in c('val_precision_5')){
+  for (outcome in c('not_on_time', 'definite', 'is_dropout')) {
+    # top 25
+    g = distrib_for_model(reports, metric, 25, 'cv_scheme', outcome)
+    ggsave(plot = g,
+           filename = paste0('all_model_dist/dist_', metric,
+                             '_', outcome, '_top25.pdf'),
+           w = 8, h = 8)
+    # top 12
+    g = distrib_for_model(reports, metric, 12, 'cv_scheme', outcome)
+    ggsave(plot = g,
            filename = paste0('all_model_dist/dist_', metric,
                              '_', outcome, '_top12.pdf'),
            w = 8, h = 8)
@@ -165,6 +224,9 @@ for (metric in c('val_precision_5')){
            w = 8, h = 8)
   }
 }
+
+### (4) Comparing Train Test & Val Performance ###
+get_top_n_train_performance = function(df)
 
 
 #### OLD Plots ###
