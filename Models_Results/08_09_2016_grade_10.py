@@ -52,7 +52,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
             template_options['name'] = template_options\
                                        ['batch_name']+\
                                        '_param_set_'+str(c)
-            template_options['description'] = "running second pass for grade 9"
+            template_options['description'] = "running second pass for grade 10"
             generate_yaml(template_options)
             model_option_path = os.path.join(base_pathname,
                                              'Models_Results',
