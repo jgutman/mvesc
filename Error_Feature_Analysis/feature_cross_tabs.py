@@ -30,6 +30,7 @@ def get_specific_cross_tabs(cross_tabs, filename, feature, split = 'val'):
         'true_label: False']]/totals
     full = predicted.append(actual)
     full = full.append(totals*100)
+    full = full.round(2)
     return full
 
 def loop_through_top_models(optimization_criteria):
