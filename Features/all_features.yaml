@@ -112,10 +112,6 @@ snapshots:
     - limited_english*
     - special_ed*
     - status*
-    - days_absent*
-    - days_absent_excused*
-    - days_absent_unexcused*
-    - days_present*
     - discipline_incidents*
     - section_504_plan*
 
