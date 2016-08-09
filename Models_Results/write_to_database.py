@@ -89,6 +89,7 @@ def summary_to_db(saved_outputs):
     values['label'] = model_options['outcome_name']
  
     features = list(model_options['features_included'].keys())
+    features.sort()
     features = ", ".join(features)
     feature_grades = ", ".join([str(a) for a
                                 in model_options['feature_grade_range']])
@@ -103,8 +104,10 @@ def summary_to_db(saved_outputs):
     values['prediction_grade'] = model_options['prediction_grade_level']
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator']
+    param_types = list(params.keys())
+    param_types.sort()
     param_list = []
-    for param in params.keys():
+    for param in param_types:
         param_list.append("{} = {}".format(param, getattr(model,param)))
     values['parameters'] = "; ".join(param_list)
     values['cv_scheme'] = model_options['parameter_cross_validation_scheme']
