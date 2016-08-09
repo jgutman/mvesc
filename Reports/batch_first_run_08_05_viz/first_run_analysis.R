@@ -37,7 +37,7 @@ distrib_for_model = function(df, score_col, top_num, shape_col, outcome_label) {
   # manually adjust the values in feature_categories
   plot_df = plot_df %>% mutate(feature_name = 
                        ifelse(str_count(feature_categories, ",") > 4,
-                              "all_features",
+                              "full_features",
                               feature_categories))
   
   # dot plot by model_type
@@ -53,10 +53,17 @@ distrib_for_model = function(df, score_col, top_num, shape_col, outcome_label) {
 
 for (metric in c('val_precision_5')){
   for (outcome in c('not_on_time', 'definite', 'is_dropout')) {
+    # top 25
     g = distrib_for_model(reports, metric, 25, 'cv_scheme', outcome)
     ggsave(plot = g, 
            filename = paste0('all_model_dist/dist_', metric,
-                             '_', outcome, '.pdf'),
+                             '_', outcome, '_top25.pdf'),
+           w = 8, h = 8)
+    # top 12
+    g = distrib_for_model(reports, metric, 12, 'cv_scheme', outcome)
+    ggsave(plot = g, 
+           filename = paste0('all_model_dist/dist_', metric,
+                             '_', outcome, '_top12.pdf'),
            w = 8, h = 8)
   }
 }
