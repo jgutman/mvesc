@@ -85,7 +85,7 @@ class Top_features():
 
 
 
-def plot_precision_recall_n(y_true, y_prob, save_location,
+def plot_precision_recall_n(y_true, y_scores, save_location,
                             run_name, model_name):
     """
     Adapted from Rayid's magicloops code, this plots precision and recall
@@ -97,27 +97,25 @@ def plot_precision_recall_n(y_true, y_prob, save_location,
     :param str run_name:
     :param str model_name:
     """
-    y_score = y_prob
-    precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
-    precision_curve = precision_curve[:-1]
-    recall_curve = recall_curve[:-1]
-    pct_above_per_thresh = []
-    number_scored = len(y_score)
-    for value in pr_thresholds:
-        num_above_thresh = len(y_score[y_score>=value])
-        pct_above_thresh = num_above_thresh / float(number_scored)
-        pct_above_per_thresh.append(pct_above_thresh)
-    pct_above_per_thresh = np.array(pct_above_per_thresh)
+    n = len(y_scores)
+    precision_curve = np.zeros([n,1])
+    recall_curve = np.zeros([n,1])
+    ranks = y_scores.rank(method='first', ascending=False)
+    for i in range(n):
+        pred = pd.Series([1 if r <= i+1 else 0 for r in ranks])
+        precision_curve[i] = precision_score(y_true, pred)
+        recall_curve[i] = recall_score(y_true, pred)
     plt.clf()
     fig, ax1 = plt.subplots()
-    ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+    percents = (np.arange(n)+1)/n
+    ax1.plot(percents, precision_curve, 'b')
     ax1.set_xlabel('percent of population')
     ax1.set_ylim([0,1])
     ax1.set_xlim([0,1])
     ax1.set_ylabel('precision', color='b')
 
     ax2 = ax1.twinx()
-    ax2.plot(pct_above_per_thresh, recall_curve, 'r')
+    ax2.plot(percents, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
     ax2.set_ylim([0,1])
     ax2.set_xlim([0,1])
@@ -136,8 +134,9 @@ def precision_at_k(y_true, y_scores, k):
     :returns: precision 
     :rtype: float
     """
-    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
-    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    pred = [int(a) for a in 
+            y_scores.rank(method='first',pct=True, ascending=False) < k]
+    y_pred = pd.Series(pred, index=y_scores.index)
     return precision_score(y_true, y_pred)
 
 def recall_at_k(y_true, y_scores, k):
@@ -151,8 +150,9 @@ def recall_at_k(y_true, y_scores, k):
     :returns: recall
     :rtype: float
     """
-    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
-    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+    pred = [int(a) for a in 
+            y_scores.rank(method='first',pct=True, ascending=False) < k]
+    y_pred = pd.Series(pred, index=y_scores.index)
     return recall_score(y_true, y_pred)
 
 
@@ -198,7 +198,7 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
     plt.xlabel("recall")
     plt.ylabel("precision")
     base = save_location + "/figs/" + run_name + "_" + model_name
-    plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
+    plt.savefig(base+'_pr.png', bbox_inches='tight')
     f.clf()
 
 
@@ -223,7 +223,7 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     plt.xlabel("threshold")
     plt.legend(["precision", "recall"])
     base = save_location + "/figs/" + run_name + "_" + model_name
-    plt.savefig(base+'_precision_recall.png', bbox_inches='tight')
+    plt.savefig(base+'_pr_vs_threshold.png', bbox_inches='tight')
     f.clf()
 
 def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
