@@ -48,15 +48,19 @@ def main():
             pickle.dump(all_top_crosstabs, f)
 
     model_list = ['param_set_39_DT_ht_7290', 'param_set_39_AB_ht_7293',
-        'param_set_39_ET_ht_7292', 'param_set_43_RF_ht_7331',
-        'param_set_3_AB_ht_6340', 'param_set_2_DT_ht_6920',
-        'param_set_11_ET_ht_6524', 'param_set_5_RF_ht_6381']
+                    'param_set_39_ET_ht_7292', 'param_set_43_RF_ht_7331',
+                    'param_set_3_AB_ht_6340', 'param_set_2_DT_ht_6920',
+                    'param_set_11_ET_ht_6524', 'param_set_5_RF_ht_6381']
     feature_list = ['gpa_gr_9','seventh_read_normalized','days_present_gr_9',
                     'mid_year_withdraw_gr_9', 'mid_year_withdraw_gr_8',
                     'gender', 'discipline_incidents_gr_9']
     for model in model_list:
         for feature in feature_list:
-            print(get_specific_cross_tabs(all_top_crosstabs, model, feature))
+            try:
+                print(get_specific_cross_tabs(
+                    all_top_crosstabs, model, feature))
+            except KeyError:
+                continue
 
 def get_specific_cross_tabs(cross_tabs, filename, feature, split = 'val'):
     crosstab = all_top_crosstabs[(filename, split)][feature]
