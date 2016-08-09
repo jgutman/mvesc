@@ -63,8 +63,6 @@ distrib_for_model = function(df, score_col, top_num,
     mutate(model_name = factor(model_name,
                                levels = ordering_models$model_name))
   
-  
-  
   # dot plot by model_type
   g <- ggplot(plot_df, aes_string("model_name", "plot_score",
                              color = "feature_name",
@@ -135,9 +133,11 @@ for (metric in c('val_precision_5')){
 plot_each_model_on_grade = function(df, score_col, model_type,
                                       outcome_label) {
   filtered_ref = df %>% filter(label == outcome_label,
-                               model_name == model_type) %>%
+                               model_name == model_type,
+                               cv_scheme == 'k_fold') %>%
     select_(score_col, "feature_categories", 
-            "cv_scheme", "feature_grades", "imputation")
+            "cv_scheme", "feature_grades", "imputation",
+            "scaling")
   # get into memory
   plot_df = collect(filtered_ref)
   # manually adjust the values in feature_categories
@@ -146,17 +146,20 @@ plot_each_model_on_grade = function(df, score_col, model_type,
                                         "all_features",
                                         feature_categories))
   
+  # uniting imputation & scaling
+  plot_df = plot_df %>% unite(imp_scal, c(imputation, scaling))
+  
   # plot
   #   should have 12 dots for each grade_range
   #   2 impute X 2 scaling X 3 cv
   g <- ggplot(plot_df, aes_string(x = "feature_grades", y = score_col,
-                            color = "imputation")) +
+                            color = "imp_scal")) +
     geom_point(size = 2.5, alpha = 0.75, position = position_jitter(height = 0)) +
-    facet_grid(cv_scheme ~ feature_categories) + theme_bw() +
+    facet_wrap(~feature_categories) + theme_bw() +
     ggtitle(paste("Grade Ranges: for", 
             model_type, "model using label", outcome_label,
-            "\n with cv_scheme in color",
-            "\nignoring impute, scaling"))
+            "\n with cv_scheme = k_fold",
+            "\n impute/scale in color"))
   g # return
 }
 
