@@ -9,10 +9,28 @@ from mvesc_utility_functions import *
 import pandas as pd
 import numpy as np
 import re
+import pickle
 
 def main():
+    if len(sys.argv > 1):
+        path = os.path.abspath(sys.argv[1])
+    else:
+        path = os.path.join(base_pathname, 'Error_Feature_Analysis', 'pkls')
     optimization_criteria = ['val_precision_5', 'val_recall_5']
-    loop_through_top_models(optimization_criteria)
+    all_top_crosstabs = loop_through_top_models(optimization_criteria)
+    with open(os.path.join(path, 'crosstabs.pkl'), 'wb') as f:
+        pickle.dump(all_top_crosstabs, f)
+
+def get_specific_cross_tabs(cross_tabs, filename, feature, split = 'val'):
+    crosstab = all_top_crosstabs[(filename, split)][feature]
+    totals = crosstab.ix['true_label: All']
+    predicted = 100*pd.crosstab.ix[['predicted_label: True',
+        'predicted_label: False']]/totals
+    actual = 100*pd.crosstab.ix[['true_label: True',
+        'true_label: False']]/totals
+    full = predicted.append(actual)
+    full = full.append(totals*100)
+    return full
 
 def loop_through_top_models(optimization_criteria):
     with postgres_pgconnection_generator() as connection:
@@ -28,6 +46,8 @@ def loop_through_top_models(optimization_criteria):
                 order by {ranker} desc) as val_rank
             from model.reports
             where debug=false
+                and feature_categories like 'snapshots,%'
+                and cv_scheme = 'leave_cohort_out'
             order by model_name, label, val_rank) vr
         order by model_name, label, val_rank;
         """.format(criteria = ", ".join(optimization_criteria),
@@ -37,6 +57,7 @@ def loop_through_top_models(optimization_criteria):
             cursor.execute("""select filename, feature_categories,
                 feature_grades from top_models;""")
             models_and_features = cursor.fetchall()
+            crosstabs_by_model_and_feature = dict()
 
             for (table_name, feature_tables, feature_grade_range) \
                     in models_and_features:
@@ -73,14 +94,41 @@ def loop_through_top_models(optimization_criteria):
                     predictions = make_df_categorical(predictions)
 
                     crosstabs = build_crosstabs(predictions)
-
-                print('table:{}, features:{}, grades:{}'.format(
-                    table_name, feature_tables, feature_grade_range))
-                print(predictions.dtypes)
+                    key = (table_name, test_set)
+                    crosstabs_by_model_and_feature[key] = crosstabs
+    return crosstabs_by_model_and_feature
 
 def build_crosstabs(prediction_data):
-    # do something
-    return crosstabs
+    # base_rates = {col: prediction_data[col].value_counts()
+    #                    for col in prediction_data.columns}
+    predicted = {col: pd.crosstab(index=prediction_data.predicted_label,
+                    columns = prediction_data[col], margins=True,
+                    normalize = True)
+                for col in prediction_data.columns[3:]}
+    actual = {col: pd.crosstab(index=prediction_data.true_label,
+                    columns = prediction_data[col], margins=True,
+                    normalize = True)
+                 for col in prediction_data.columns[3:]}
+    correct = {col: pd.crosstab(index=prediction_data.correct,
+                    columns = prediction_data[col], margins=True,
+                    normalize = True)
+                 for col in prediction_data.columns[3:]}
+
+    predicted_plus_actual = dict()
+    for feature in predicted.keys():
+        preds = predicted[feature]
+        true = actual[feature]
+        corr = correct[feature]
+        preds.index = ['{name}: {value}'.format(name=preds.index.name,
+                        value=value) for value in preds.index]
+        true.index = ['{name}: {value}'.format(name=true.index.name,
+                        value=value) for value in true.index]
+        corr.index = ['{name}: {value}'.format(name=corr.index.name,
+                        value=value) for value in corr.index]
+        full = preds.append(true)
+        full = full.append(corr)
+        predicted_plus_actual[feature] = full
+    return predicted_plus_actual
 
 def make_df_categorical(raw_data):
     string_features = raw_data.select_dtypes(include=[object, bool])
