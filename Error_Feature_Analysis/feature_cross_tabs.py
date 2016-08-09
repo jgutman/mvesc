@@ -57,6 +57,7 @@ def main():
     for model in model_list:
         for feature in feature_list:
             try:
+                print(model)
                 print(get_specific_cross_tabs(
                     all_top_crosstabs, model, feature))
             except KeyError:
