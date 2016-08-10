@@ -22,6 +22,9 @@ def create_temp_table(cursor, schema='clean', table='all_snapshots',
 
     # include max(school_year) because in case there are ties for
     #   gender or ethnicity counts, we select on the more recent one
+    # Jackie suggestion to fix double-tie:
+    #   select distinct on (student_lookup) student_lookup, {feature} ... 
+    #   order by rank ... instead of the delete from where rank > 1
     query_rank_feature_by_count = """create temporary table {temp} as
     (select student_lookup, {feature}, max(school_year), count({feature}),
         rank() over (
@@ -30,6 +33,7 @@ def create_temp_table(cursor, schema='clean', table='all_snapshots',
     from {schema}.{table}
     group by student_lookup, {feature});
     """.format(schema=schema, table=table, temp=temp, feature=feature)
+    
     query_drop_rows = """delete from {temp}
     where rank > 1;""".format(temp=temp)
 
