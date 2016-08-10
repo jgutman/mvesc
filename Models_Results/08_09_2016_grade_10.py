@@ -64,7 +64,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
             grid_option_path = os.path.join(base_pathname,
                                             'Models_Results',
                                             'grid_options',
-                                            'grid_option_small.yaml')
+                                            'grid_options_small.yaml')
             try:
                estimate_prediction_model.main(['-m', model_option_path,
                                                '-g', grid_option_path])
