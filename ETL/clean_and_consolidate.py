@@ -5,7 +5,7 @@ import build_cohort_tree_counts
 import cleaning_all_snapshots
 import deduplication
 import create_index
-
+import build_clean_intervention_table
 #consolidating tables in clean schema
 consolidating_tables.main()
 print('consolidated tables')
@@ -28,6 +28,10 @@ print('oaaogt cleaned')
 cleaning_all_snapshots.main()
 deduplication.main()
 print('all_snapshots cleaned')
+
+#intervention
+build_clean_intervention_table.main()
+print('intervention built and cleaned')
 
 #additional tables for analysis
 execute_sql_script("build_graduates_table_from_snapshots.sql")

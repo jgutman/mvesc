@@ -85,7 +85,11 @@ def main():
     df['inv_group'] = inv_groups
     print(" - Saving intervention data frame to postgres... ")
     df2postgres(df, 'intervention', nrows=-1, if_exists='replace', schema='clean')
-
+    with postgres_pgconnection_generator() as connection:
+        connection.autocommit = True
+        with connection.cursor() as cursor:
+            sql_index = 'create index {t}_lookup on clean.{t} (student_lookup)'.format(t='intervention')
+            cursor.execute(sql_index)
 
 
 if __name__ == "__main__":

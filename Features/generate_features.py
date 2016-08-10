@@ -8,7 +8,7 @@ import generate_consec_absence_columns
 import generate_absence_features
 import generate_gpa
 import generate_normalized_oaa_pandas
-
+import generate_intervention_features
 ####
 # Pseudo-code Outline
 ####
@@ -42,3 +42,5 @@ print("--- working on generating model.grades table ... ")
 generate_gpa.main()
 print("--- working on generating model.oaa_normalized table ... ")
 generate_normalized_oaa_pandas.main() # a bit slow due to for loop and writing to postgres from pandas
+print("--- working on generating model.intervention table ... ")
+generate_intervention_features.main()
