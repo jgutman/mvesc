@@ -97,6 +97,14 @@ def plot_precision_recall_n(y_true, y_scores, save_location,
     :param str run_name:
     :param str model_name:
     """
+    if type(y_scores) == pd.core.frame.DataFrame:
+        y_scores = y_scores[0]
+    elif type(y_scores) != pd.core.series.Series:
+        try: 
+            y_scores = pd.Series(y_scores)
+        except:
+            print('y_scores must be a Series or a DataFrame')
+            sys.exit(1)
     n = len(y_scores)
     precision_curve = np.zeros([n,1])
     recall_curve = np.zeros([n,1])
@@ -134,6 +142,14 @@ def precision_at_k(y_true, y_scores, k):
     :returns: precision 
     :rtype: float
     """
+    if type(y_scores) == pd.core.frame.DataFrame:
+        y_scores = y_scores[0]
+    elif type(y_scores) != pd.core.series.Series:
+        try: 
+            y_scores = pd.Series(y_scores)
+        except:
+            print('y_scores must be a Series or a DataFrame')
+            sys.exit(1)
     pred = [int(a) for a in 
             y_scores.rank(method='first',pct=True, ascending=False) < k]
     y_pred = pd.Series(pred, index=y_scores.index)
@@ -150,6 +166,14 @@ def recall_at_k(y_true, y_scores, k):
     :returns: recall
     :rtype: float
     """
+    if type(y_scores) == pd.core.frame.DataFrame:
+        y_scores = y_scores[0]
+    elif type(y_scores) != pd.core.series.Series:
+        try: 
+            y_scores = pd.Series(y_scores)
+        except:
+            print('y_scores must be a Series or a DataFrame')
+            sys.exit(1)
     pred = [int(a) for a in 
             y_scores.rank(method='first',pct=True, ascending=False) < k]
     y_pred = pd.Series(pred, index=y_scores.index)
