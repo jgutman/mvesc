@@ -131,10 +131,10 @@ def build_temp_table_best_models(cursor, optimization_criteria,
         order by {ranker} desc) as val_rank
         from model.reports
         where debug=false
-        and feature_categories like {features}
+        and feature_categories like '{features}'
         and cv_scheme = 'leave_cohort_out'
         and prediction_grade = {grade}
-        and timestamp_filter > {timestamp}
+        and timestamp > '{timestamp}'
         order by model_name, label, val_rank) vr
     order by model_name, label, val_rank;
     """.format(table = table_name, features = feature_categories,
