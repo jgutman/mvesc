@@ -1,9 +1,11 @@
 """ Generate Intervention Related features
+
 Depends on tables:
 - clean.intervention
 Depends on code:
 - generate_intervention_features.py (1 min to run)
 - build_clean_intervention_table.py (in ../ETL/, 3 mins to run)
+
 For Each Grade, generate features:
 - extracurr_program*
 - post_secondary*, -
@@ -52,6 +54,14 @@ def set_null_as_0(cursor, columns, schema='model', table='intervention'):
 def create_temp_intervention(cursor, grade_range, table = 'intervention_1type_temp_table',
     source_schema = 'clean', type_str = 'academic_inv', source_table = 'intervention'):
     """
+    Create temp table to update model.intervention
+    
+    :param cursor cursor:
+    :param list int grade_range: grade range in list
+    :param str table: temp table name
+    :param str source_schema:
+    :param str type_str: type desciption to match a certain type
+    :param source_table: clean.intervention 
     """
     # create table with all student_lookups to store features for
     query_join_inv_features = """
@@ -64,10 +74,6 @@ def create_temp_intervention(cursor, grade_range, table = 'intervention_1type_te
         ) student_inv_list
     """.format(t=table, source_schema=source_schema, source_table=source_table)
 
-    # for each student, get the number of distinct addresses, cities, districts
-    # lived in up to the specified max_grade, also store the total number of
-    # non-null records going into that count (how long they've been in data)
-    # then compute average as (number_addresses - 1) / number_records
     for gr in grade_range:
         sql_join_grade = """
         left join
@@ -83,12 +89,11 @@ def create_temp_intervention(cursor, grade_range, table = 'intervention_1type_te
         query_join_inv_features += sql_join_grade
 
     cursor.execute(query_join_inv_features)
-    # get column names in temporary table just created and return all in a list
-    # remove student_lookup from list of column names returned
     #print(pd.read_sql_query("select * from {t} limit 20".format(t=table), conn))
     cursor.execute("select * from {t}".format(t=table))
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
+
 def main():
     source_schema, source_table = 'clean', 'intervention'
     schema, table = 'model', 'intervention' 
@@ -106,6 +111,7 @@ def main():
     'vocational'] 
     top_feature_list = ['academic_inv',  'atheletics', 'placement']
     features2run = all_features_list
+
     with postgres_pgconnection_generator() as conn:
         conn.autocommit = True
         with conn.cursor() as cursor:
