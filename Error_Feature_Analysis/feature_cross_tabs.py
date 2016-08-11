@@ -27,7 +27,7 @@ def main():
 
     # set default args
     path = os.path.join(base_pathname, 'Error_Feature_Analysis', 'pkls')
-    filename = 'crosstabs.pkl'
+    filename = 'selected_RF_not_on_time.pkl'
     load_pkl = False
     optimization_criteria = ['val_precision_5', 'val_recall_5']
 
@@ -45,11 +45,26 @@ def main():
         # load pkl file
         pkl_file = open(os.path.join(path, filename),'rb')
         all_top_crosstabs = pickle.load(pkl_file)
+        
     else:
         with postgres_pgconnection_generator() as connection:
             with connection.cursor() as cursor:
                 models_and_features = build_temp_table_best_models(
                     cursor, optimization_criteria)
+                """
+                select_hanna_models = "
+                    select distinct on (filename) filename, model_name, label,
+                    feature_categories, feature_grades
+                    from model.reports
+                    where filename in
+                    ('08_09_2016_grade_6_param_set_0_RF_ht_8585',
+                    '08_09_2016_grade_7_param_set_7_RF_ht_10497',
+                    '08_09_2016_grade_8_param_set_13_RF_ht_13254',
+                    '08_09_2016_grade_9_param_set_0_RF_ht_8645',
+                    '08_09_2016_grade_10_param_set_0_RF_ht_8680');"
+                cursor.execute(select_hanna_models)
+                models_and_features = cursor.fetchall()
+                """
                 all_top_crosstabs = loop_through_top_models(
                     cursor, models_and_features, ['val', 'test'])
                 with open(os.path.join(path, filename), 'wb') as f:
@@ -60,6 +75,30 @@ def main():
     ignore_models = set()
     ignore_outcomes = set()
     specific_feature_list = dict()
+    specific_feature_list = {'08_09_2016_grade_10_param_set_0_RF_ht_8680':
+        ['gpa_district_gr_9', 'absence_gr_9', 'gpa_gr_9', 'humanities_gpa_gr_9',
+        'eighth_math_percentile', 'health_gpa_gr_9', 'eighth_math_normalized',
+        'eighth_read_normalized', 'stem_gpa_gr_9', 'seventh_math_normalized'],
+    '08_09_2016_grade_6_param_set_0_RF_ht_8585': ['sixth_math_percentile',
+        'eighth_math_normalized', 'sixth_math_normalized',
+        'eighth_math_percentile', 'fifth_socstudies_normalized',
+        'eighth_science_normalized', 'eighth_science_percentile',
+        'absence_gr_5', 'sixth_read_normalized', 'seventh_read_percentile'],
+    '08_09_2016_grade_7_param_set_7_RF_ht_10497': ['eighth_math_percentile',
+        'eighth_math_normalized', 'sixth_math_percentile',
+        'sixth_math_normalized', 'eighth_read_normalized', 'gpa_district_gr_6',
+        'absence_gr_6', 'fifth_socstudies_normalized',
+        'eighth_science_normalized', 'seventh_read_normalized'],
+    '08_09_2016_grade_8_param_set_13_RF_ht_13254': ['gpa_gr_7',
+        'gpa_district_gr_7', 'stem_gpa_gr_7', 'humanities_gpa_gr_7',
+        'eighth_math_percentile', 'absence_gr_7', 'eighth_math_normalized',
+        'eighth_science_normalized', 'eighth_science_percentile',
+        'sixth_math_percentile'],
+    '08_09_2016_grade_9_param_set_0_RF_ht_8645': ['gpa_gr_8',
+        'gpa_district_gr_8', 'absence_gr_8', 'eighth_math_percentile',
+        'stem_gpa_gr_8', 'eighth_math_normalized', 'humanities_gpa_gr_8',
+        'eighth_science_normalized', 'seventh_read_normalized',
+        'eighth_read_normalized']}
 
     for model in all_top_crosstabs.keys():
         filename = model[0]
@@ -70,10 +109,11 @@ def main():
             outcome in ignore_outcomes):
             continue
         else:
-            if not specific_feature_list:
-                feature_list = all_top_crosstabs[model].keys()
-            else:
+            if (filename in specific_feature_list):
                 feature_list = specific_feature_list[filename]
+            else:
+                feature_list = all_top_crosstabs[model].keys()
+
             for feature in feature_list:
                 try:
                     print(filename, model_name, outcome, split)
