@@ -19,6 +19,7 @@ from mvesc_utility_functions import *
 def main():
     # Parameters to read and clean the tables
     schema = 'public'
+    clean_table = 'intervention'
     public_tables = ['INV_06_16_CO_M', 'INV_06_16_FR_M', 'INV_06_16_MA_M', 'INV_06_16_RV_M', 'INV_06_16_RW_M', 
                      'INV_06_16_TV_M', 'INV_06_16_WM_M', 'INV_10_16_CEVSD_M', 'INV_10_16_EM_M']
     new_column_names = ['student_lookup', 'status', 'grade', 'gender', 'hmrm', 
@@ -88,11 +89,11 @@ def main():
     df['inv_group'] = inv_groups
 
     print(" - Saving intervention data frame to postgres... ")
-    df2postgres(df, 'intervention', nrows=-1, if_exists='replace', schema='clean')
+    df2postgres(df, clean_table, nrows=-1, if_exists='replace', schema='clean')
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
-            sql_index = 'create index {t}_lookup on clean.{t} (student_lookup)'.format(t='intervention')
+            sql_index = 'create index {t}_lookup on clean.{t} (student_lookup)'.format(t=clean_table)
             cursor.execute(sql_index)
 
 
