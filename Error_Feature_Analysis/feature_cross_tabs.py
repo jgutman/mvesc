@@ -45,7 +45,7 @@ def main():
         # load pkl file
         pkl_file = open(os.path.join(path, filename),'rb')
         all_top_crosstabs = pickle.load(pkl_file)
-        
+
     else:
         with postgres_pgconnection_generator() as connection:
             with connection.cursor() as cursor:
@@ -75,6 +75,7 @@ def main():
     ignore_models = set()
     ignore_outcomes = set()
     specific_feature_list = dict()
+    # use code to pull top features for each model
     specific_feature_list = {'08_09_2016_grade_10_param_set_0_RF_ht_8680':
         ['gpa_district_gr_9', 'absence_gr_9', 'gpa_gr_9', 'humanities_gpa_gr_9',
         'eighth_math_percentile', 'health_gpa_gr_9', 'eighth_math_normalized',
