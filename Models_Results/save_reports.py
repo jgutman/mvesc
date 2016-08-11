@@ -14,6 +14,8 @@ from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     confusion_matrix, precision_score, recall_score, roc_auc_score, \
     average_precision_score
 
+from custom_scorers import precision_at_k, recall_at_k, precision_recall_range
+
 class Top_features():
     """
     This class contains methods for each applicable model to return the
@@ -130,55 +132,6 @@ def plot_precision_recall_n(y_true, y_scores, save_location,
 
     base = save_location + "/figs/" + run_name + "_" + model_name
     plt.savefig(base+'_precision_recall_at_k.png', bbox_inches='tight')
-
-def precision_at_k(y_true, y_scores, k):
-    """
-    Adapted from Rayid's magicloops code, this calculates precision on
-    the top k proportion of population
-
-    :param pd.Series y_true: 
-    :param pd.Series y_scores:
-    :param int k:
-    :returns: precision 
-    :rtype: float
-    """
-    if type(y_scores) == pd.core.frame.DataFrame:
-        y_scores = y_scores[0]
-    elif type(y_scores) != pd.core.series.Series:
-        try: 
-            y_scores = pd.Series(y_scores)
-        except:
-            print('y_scores must be a Series or a DataFrame')
-            sys.exit(1)
-    pred = [int(a) for a in 
-            y_scores.rank(method='first',pct=True, ascending=False) < k]
-    y_pred = pd.Series(pred, index=y_scores.index)
-    return precision_score(y_true, y_pred)
-
-def recall_at_k(y_true, y_scores, k):
-    """
-    Adapted from Rayid's magicloops code, this calculates recall on
-    the top k proportion of population
-
-    :param pd.Series y_true: 
-    :param pd.Series y_scores:
-    :param int k:
-    :returns: recall
-    :rtype: float
-    """
-    if type(y_scores) == pd.core.frame.DataFrame:
-        y_scores = y_scores[0]
-    elif type(y_scores) != pd.core.series.Series:
-        try: 
-            y_scores = pd.Series(y_scores)
-        except:
-            print('y_scores must be a Series or a DataFrame')
-            sys.exit(1)
-    pred = [int(a) for a in 
-            y_scores.rank(method='first',pct=True, ascending=False) < k]
-    y_pred = pd.Series(pred, index=y_scores.index)
-    return recall_score(y_true, y_pred)
-
 
 def plot_score_distribution(soft_predictions, save_location,
                             run_name, model_name):
