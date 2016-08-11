@@ -288,7 +288,7 @@ def barplot_feature_importance(table, schema='feature_scores', topN=10, save=Tru
     :param str style: plot style, 'ggplot', 'fivethirtyeight', etc
     :param str kind: bar plot kind, `bar`, `barh`
     :param int dpi: resolution, the larger the better
-    :return str fn: figure name, if false, None
+    :return str fn: figure name; if save==False, return None  
     """
     plt.style.use(style)
     with postgres_pgconnection_generator() as conn:
@@ -296,7 +296,9 @@ def barplot_feature_importance(table, schema='feature_scores', topN=10, save=Tru
 
     df = feature_importances[[value_column]]
     df.index = feature_importances[name_column]
-    ax = df.iloc[:topN+1:-1,:].plot(kind=kind, title=title, figsize=figsize, fontsize=fontsize, legend=False)
+    df = df.sort_values(by=[value_column], ascending=False)
+    df = df.iloc[:topN, :]
+    ax = df.iloc[::-1,:].plot(kind=kind, title=title, figsize=figsize, fontsize=fontsize, legend=False)
     plt.ylabel(ylabel, fontsize=fontsize)
     plt.xlabel(xlabel, fontsize=fontsize)
     plt.tight_layout()
@@ -307,6 +309,7 @@ def barplot_feature_importance(table, schema='feature_scores', topN=10, save=Tru
             fn = str(figname)
         plt.savefig(fn, dpi=dpi)
     return(fn)
+
 ############ Upload file or directory to postgres (not useful in most cases)###############
 def read_csv_noheader(filepath):
     """ Read a csv file with no header
