@@ -15,6 +15,8 @@ For Each Grade, generate features:
 - academic_intracurr*,  
 - school_program*, 
 - titlei*
+
+Refer to table public."INV_MembershipCodes"
 """
 
 
