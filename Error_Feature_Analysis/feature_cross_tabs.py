@@ -46,30 +46,44 @@ def main():
         pkl_file = open(os.path.join(path, filename),'rb')
         all_top_crosstabs = pickle.load(pkl_file)
     else:
-        all_top_crosstabs = loop_through_top_models(optimization_criteria)
-        with open(os.path.join(path, filename), 'wb') as f:
-            pickle.dump(all_top_crosstabs, f)
+        with postgres_pgconnection_generator() as connection:
+            with connection.cursor() as cursor:
+                models_and_features = build_temp_table_best_models(
+                    cursor, optimization_criteria)
+                all_top_crosstabs = loop_through_top_models(
+                    cursor, models_and_features, ['val', 'test'])
+                with open(os.path.join(path, filename), 'wb') as f:
+                    pickle.dump(all_top_crosstabs, f)
 
     # models and features to display crosstabs for
-    model_list = [model[0] for model in all_top_crosstabs.keys()]
-    outcome_list = ['not_on_time']
-    feature_list = ['gpa_gr_9','seventh_read_normalized','days_present_gr_9',
-                    'mid_year_withdraw_gr_9', 'mid_year_withdraw_gr_8',
-                    'gender', 'discipline_incidents_gr_9']
-    for model in model_list:
-        for outcome in outcome_list:
+    ignore_splits = set('train')
+    ignore_models = set()
+    ignore_outcomes = set()
+    specific_feature_list = None
+
+    for model in all_top_crosstabs.keys():
+        filename = model[0]
+        model_name = model[1]
+        outcome = model[2]
+        split = model[3]
+        if (model_name in ignore_models or split in ignore_splits or
+            outcome in ignore_outcomes):
+            continue
+        else:
+            if not specific_feature_list:
+                feature_list = all_top_crosstabs[model].keys()
+            else:
+                feature_list = specific_feature_list
             for feature in feature_list:
                 try:
-                    print(model, outcome)
-                    print(get_specific_cross_tabs(
-                        all_top_crosstabs, model, outcome, feature))
+                    print(filename, model_name, outcome, split)
+                    get_specific_cross_tabs(
+                        all_top_crosstabs, model, feature)
                 except KeyError:
-                    # this model doesn't exist in this pkl
-                    # or this feature doesn't exist in this model
+                    print('{} not in {}'.format(feature, filename))
                     continue
 
-def get_specific_cross_tabs(crosstabs, model_name, label, feature,
-    split = 'val'):
+def get_specific_cross_tabs(crosstabs, key, feature):
     """
     Given the dictionary of all possible crosstabs, and a filename for a
     single model, and a single feature, and whether to use the predictions on
@@ -87,7 +101,7 @@ def get_specific_cross_tabs(crosstabs, model_name, label, feature,
         on positive/negative class by binned level of feature
     :rtype pd.dataframe
     """
-    crosstab = crosstabs[(model_name, label, split)][feature]
+    crosstab = crosstabs[key][feature]
     totals = crosstab.ix['true_label: All']
     predicted = 100*crosstab.ix[['predicted_label: True',
         'predicted_label: False']]/totals
@@ -151,7 +165,7 @@ def build_temp_table_best_models(cursor, optimization_criteria,
     print('done grabbing models')
     return models_and_features
 
-def loop_through_top_models(optimization_criteria,
+def loop_through_top_models(cursor, models_and_features,
     splits = ['train', 'val', 'test']):
     """
     Get a list of models to search over and then for each model, pull the
@@ -166,59 +180,53 @@ def loop_through_top_models(optimization_criteria,
         combination of 'train', 'test', 'val'
     :returns a dictionary of rough crosstabs, keyed by model
     """
-    with postgres_pgconnection_generator() as connection:
-        with connection.cursor() as cursor:
-            models_and_features = build_temp_table_best_models(
-                cursor, optimization_criteria)
-            crosstabs_by_model_and_feature = dict()
+    crosstabs_by_model_and_feature = dict()
 
-            for (table_name, model_name, label, feature_tables,
-                    feature_grade_range) in models_and_features:
-                print('working on {}:{}'.format(model_name, label))
-                feature_table_list = feature_tables.split(", ")
-                feature_grades = [int(i) for i in
-                        feature_grade_range.split(", ")]
-                feature_grade_regex = '({})'.format('|'.join(
-                    [str(i) for i in feature_grades]))
-                pattern = re.compile('(_gr_{rx}\Z)|(\D\Z)'.format(
-                    rx=feature_grade_regex))
+    for (table_name, model_name, label, feature_tables,
+            feature_grade_range) in models_and_features:
+        print('working on {}:{}'.format(model_name, label))
+        feature_table_list = feature_tables.split(", ")
+        feature_grades = [int(i) for i in
+                feature_grade_range.split(", ")]
+        feature_grade_regex = '({})'.format('|'.join(
+            [str(i) for i in feature_grades]))
+        pattern = re.compile('(_gr_{rx}\Z)|(\D\Z)'.format(
+            rx=feature_grade_regex))
 
-                for test_set in splits:
-                    get_model_predictions = """
-                    select * from
-                    (select student_lookup, true_label, predicted_label,
-                    predicted_label = true_label as correct
-                    from predictions."{table}"
-                    where split = '{test_set}') preds
-                    """.format(table = table_name, test_set = test_set)
+        for test_set in splits:
+            get_model_predictions = """
+            select * from
+            (select student_lookup, true_label, predicted_label,
+            predicted_label = true_label as correct
+            from predictions."{table}"
+            where split = '{test_set}') preds
+            """.format(table = table_name, test_set = test_set)
 
-                    for features in feature_table_list:
-                        get_model_predictions += """ left join
-                    (select * from model.{features}) {features}
-                    using(student_lookup)
-                    """.format(features = features)
+            for features in feature_table_list:
+                get_model_predictions += """ left join
+            (select * from model.{features}) {features}
+            using(student_lookup)
+            """.format(features = features)
 
-                    cursor.execute(get_model_predictions)
-                    predictions_and_features = cursor.fetchall()
-                    colnames = [i[0] for i in cursor.description]
+            cursor.execute(get_model_predictions)
+            predictions_and_features = cursor.fetchall()
+            colnames = [i[0] for i in cursor.description]
 
-                    predictions = pd.DataFrame.from_records(
-                        predictions_and_features,
-                        index = 'student_lookup',
-                        columns = colnames)
-                    predictions = predictions.filter(regex=pattern)
-                    predictions[['true_label', 'predicted_label']] = \
-                    predictions[['true_label', 'predicted_label']].astype(bool)
-                    predictions = make_df_categorical(predictions)
+            predictions = pd.DataFrame.from_records(
+                predictions_and_features,
+                index = 'student_lookup',
+                columns = colnames)
+            predictions = predictions.filter(regex=pattern)
+            predictions[['true_label', 'predicted_label']] = \
+            predictions[['true_label', 'predicted_label']].astype(bool)
+            predictions = make_df_categorical(predictions)
 
-                    crosstabs = build_crosstabs(predictions)
-                    key = (model_name, label, test_set)
-                    crosstabs_by_model_and_feature[key] = crosstabs
+            crosstabs = build_crosstabs(predictions)
+            key = (table_name, model_name, label, test_set)
+            crosstabs_by_model_and_feature[key] = crosstabs
     return crosstabs_by_model_and_feature
 
 def build_crosstabs(prediction_data):
-    # base_rates = {col: prediction_data[col].value_counts()
-    #                    for col in prediction_data.columns}
     predicted = {col: pd.crosstab(index=prediction_data.predicted_label,
                     columns = prediction_data[col], margins=True,
                     normalize = True)
@@ -272,7 +280,6 @@ def make_df_categorical(raw_data):
         else:
             raw_data[numeric_col] = pd.cut(numeric_features[numeric_col],
                 bins = num_bins, precision = 1)
-
     return raw_data
 
 if __name__ == '__main__':
