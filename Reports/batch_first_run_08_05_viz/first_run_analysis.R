@@ -3,7 +3,7 @@
 # Load required credentials and libraries
 library("plyr"); library("dplyr"); library("ggplot2");
 library("tidyr"); library("stringr"); library("RPostgreSQL")
-library("lazyeval")
+library("lazyeval"); library("lubridate")
 # getting postgres database credentials
 pgpass = str_split(read.table("/mnt/data/mvesc/pgpass")[1,1], ":")[[1]]
 # connecting to db
@@ -11,7 +11,7 @@ pg_db = src_postgres(dbname = pgpass[3], host = pgpass[1],
                      port = pgpass[2], user = pgpass[4], password = pgpass[5])
 
 # Get the reference to the `reports` table
-reports = tbl(pg_db, dplyr::sql('SELECT * FROM model.reports'))
+reports_ref = tbl(pg_db, dplyr::sql('SELECT * FROM model.reports'))
 # set wd
 setwd('~/mvesc/Reports/batch_first_run_08_05_viz/')
 
@@ -19,8 +19,9 @@ setwd('~/mvesc/Reports/batch_first_run_08_05_viz/')
 # since some rows contain duplicates, remove by choosing one of the four
 #   cv_criterion
 # only use non-debug rows
-reports = reports %>% filter(cv_criterion == 'custom_precision_5',
+reports = reports_ref %>% filter(cv_criterion == 'custom_precision_5',
                              debug == FALSE)
+  
 
 ### (1) Plot the Overall Distribution for each Model Name ###
 #   dot plot of all the runs for each model
@@ -190,20 +191,30 @@ plot_multiple_model_on_grade = function(df, score_col, model_vector,
                                scaling == scale_type,
                                cv_scheme == 'k_fold') %>%
     select_(score_col, "feature_categories", 
-            "cv_scheme", "feature_grades", "model_name")
+            "cv_scheme", "feature_grades", "model_name", "timestamp")
   # get into memory
   plot_df = collect(filtered_ref)
+  # filter to keep only the first batch
+  plot_df = plot_df %>% filter(yday(timestamp) <= 222) %>%
+    select(-timestamp)
+  
   # manually adjust the values in feature_categories
   plot_df = plot_df %>% mutate(feature_name = 
                                  ifelse(str_count(feature_categories, ",") > 4,
                                         "all_features",
                                         feature_categories))
+  # manually adjust the values in feature_categories
+  plot_df = plot_df %>% mutate(feature_name = 
+                                 ifelse(str_count(feature_categories, ",") > 4,
+                                        "all_features",
+                                        feature_categories))
+  
   # plot
   #   should have 12 dots for each grade_range
   #   2 impute X 2 scaling X 3 cv
   g <- ggplot(plot_df, aes_string(x = "feature_grades", y = score_col,
-                                  color = "feature_categories",
-                                  group = "feature_categories")) +
+                                  color = "feature_name",
+                                  group = "feature_name")) +
     geom_point(size = 3, alpha = 1) +
     geom_line() +
     facet_wrap(~model_name) + theme_bw() +
