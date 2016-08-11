@@ -59,7 +59,7 @@ def main():
     ignore_splits = set('train')
     ignore_models = set()
     ignore_outcomes = set()
-    specific_feature_list = None
+    specific_feature_list = dict()
 
     for model in all_top_crosstabs.keys():
         filename = model[0]
@@ -73,7 +73,7 @@ def main():
             if not specific_feature_list:
                 feature_list = all_top_crosstabs[model].keys()
             else:
-                feature_list = specific_feature_list
+                feature_list = specific_feature_list[filename]
             for feature in feature_list:
                 try:
                     print(filename, model_name, outcome, split)
