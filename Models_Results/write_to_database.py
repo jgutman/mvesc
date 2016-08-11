@@ -69,9 +69,11 @@ def add_row(cursor, columns, values):
 
 def summary_to_db(saved_outputs):
     """
-    doc string!
+    Writes a summary row to the model.reports table.
     Note: if you add more values, make sure to add it both to the values
     dictionary and to the list of column names and types
+
+    :param dict saved_outputs: output from a model in estimate_prediction_model
     """
     model_options = saved_outputs['model_options']
     test_y = saved_outputs['test_y']
@@ -122,6 +124,8 @@ def summary_to_db(saved_outputs):
     values['train_recall_3'] = recall_at_k(train_y, train_scores, .03)
     values['train_recall_5'] = recall_at_k(train_y, train_scores, .05)
     values['train_recall_10'] = recall_at_k(train_y, train_scores, .1)
+    values['train_recall_5_15'] = precision_recall_range(train_y, train_scores,
+                                                         .05, .15)
 
     values['val_precision_3'] = precision_at_k(val_y, val_scores, .03)
     values['val_precision_5'] = precision_at_k(val_y, val_scores, .05)
@@ -129,14 +133,16 @@ def summary_to_db(saved_outputs):
     values['val_recall_3'] = recall_at_k(val_y, val_scores, .03)
     values['val_recall_5'] = recall_at_k(val_y, val_scores, .05)
     values['val_recall_10'] = recall_at_k(val_y, val_scores, .1)
-
+    values['val_recall_5_15'] = precision_recall_range(val_y, val_scores,
+                                                       .05, .15)
     values['test_precision_3'] = precision_at_k(test_y, test_scores, .03)
     values['test_precision_5'] = precision_at_k(test_y, test_scores, .05)
     values['test_precision_10'] = precision_at_k(test_y, test_scores, .1)
     values['test_recall_3'] = recall_at_k(test_y, test_scores, .03)
     values['test_recall_5'] = recall_at_k(test_y, test_scores, .05)
     values['test_recall_10'] = recall_at_k(test_y, test_scores, .1)
-
+    values['test_recall_5_15'] = precision_recall_range(test_y, test_scores,
+                                                        .05, .15)
     model_name = values['model_name']
     try:
         get_top_features = getattr(Top_features, model_name)
@@ -202,6 +208,9 @@ def summary_to_db(saved_outputs):
                ('feature_3_weight', 'float'),
                ('time', 'float'),
                ('debug', 'bool')]
+# ('train_recall_5_15', 'float')
+# ('val_recall_5_15', 'float')
+# ('test_recall_5_15', 'float')
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
@@ -217,7 +226,9 @@ def summary_to_db(saved_outputs):
 
 def write_scores_to_db(saved_outputs):
     """
-    doc string!
+    Writes all the feature scores and student predictions to tables in the database
+
+    :param dict saved_outputs: output from a model in estimate_prediction_model
     """
     # scores and predictions for each student
     test_label = pd.Series('test', index=saved_outputs['test_y'].index)
