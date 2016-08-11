@@ -1,7 +1,7 @@
 import pandas as pd
 from mvesc_utility_functions import postgres_pgconnection_generator, \
 postgres_engine_generator
-from save_reports import precision_at_k, Top_features
+from save_reports import precision_at_k, recall_at_k, Top_features
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     confusion_matrix, precision_score, average_precision_score, accuracy_score
 
@@ -76,38 +76,67 @@ def summary_to_db(saved_outputs):
     model_options = saved_outputs['model_options']
     test_y = saved_outputs['test_y']
     train_y = saved_outputs['train_y']
+    val_y = saved_outputs['val_y']
     test_scores = saved_outputs['test_set_soft_preds']
     train_scores = saved_outputs['train_set_soft_preds']
+    val_scores = saved_outputs['val_set_soft_preds']
     test_preds = saved_outputs['test_set_preds']
     train_preds = saved_outputs['train_set_preds']
+    val_preds = saved_outputs['val_set_preds']
 
     values = dict()
     values['model_name'] = saved_outputs['model_name']
     values['label'] = model_options['outcome_name']
+ 
     features = list(model_options['features_included'].keys())
-    features.remove('grades')
+    features.sort()
     features = ", ".join(features)
     feature_grades = ", ".join([str(a) for a
                                 in model_options['feature_grade_range']])
     values['feature_categories'] = features
     values['feature_grades'] = feature_grades
     train = model_options['cohorts_training']
-    test = model_options['cohorts_held_out']
+    val = model_options['cohorts_val']
+    test = model_options['cohorts_test']
     values['train_set'] = ", ".join([str(a) for a in train])
+    values['val_set'] = ", ".join([str(a) for a in val])
     values['test_set'] = ", ".join([str(a) for a in test])
+    values['prediction_grade'] = model_options['prediction_grade_level']
     params = saved_outputs['parameter_grid']
     model = saved_outputs['estimator']
+    param_types = list(params.keys())
+    param_types.sort()
     param_list = []
-    for param in params.keys():
+    for param in param_types:
         param_list.append("{} = {}".format(param, getattr(model,param)))
     values['parameters'] = "; ".join(param_list)
+    values['cv_scheme'] = model_options['parameter_cross_validation_scheme']
+    values['imputation'] = model_options['missing_impute_strategy']
+    values['scaling'] = model_options['feature_scaling']
     values['train_acc'] = accuracy_score(train_y, train_preds)
+    values['val_acc'] = accuracy_score(val_y, val_preds)
     values['test_acc'] = accuracy_score(test_y, test_preds)
+    values['train_precision_3'] = precision_at_k(train_y, train_scores, .03)
     values['train_precision_5'] = precision_at_k(train_y, train_scores, .05)
     values['train_precision_10'] = precision_at_k(train_y, train_scores, .1)
+    values['train_recall_3'] = recall_at_k(train_y, train_scores, .03)
+    values['train_recall_5'] = recall_at_k(train_y, train_scores, .05)
+    values['train_recall_10'] = recall_at_k(train_y, train_scores, .1)
+
+    values['val_precision_3'] = precision_at_k(val_y, val_scores, .03)
+    values['val_precision_5'] = precision_at_k(val_y, val_scores, .05)
+    values['val_precision_10'] = precision_at_k(val_y, val_scores, .1)
+    values['val_recall_3'] = recall_at_k(val_y, val_scores, .03)
+    values['val_recall_5'] = recall_at_k(val_y, val_scores, .05)
+    values['val_recall_10'] = recall_at_k(val_y, val_scores, .1)
+
+    values['test_precision_3'] = precision_at_k(test_y, test_scores, .03)
     values['test_precision_5'] = precision_at_k(test_y, test_scores, .05)
     values['test_precision_10'] = precision_at_k(test_y, test_scores, .1)
-    values['average_precision'] = average_precision_score(test_y, test_scores)
+    values['test_recall_3'] = recall_at_k(test_y, test_scores, .03)
+    values['test_recall_5'] = recall_at_k(test_y, test_scores, .05)
+    values['test_recall_10'] = recall_at_k(test_y, test_scores, .1)
+
     model_name = values['model_name']
     try:
         get_top_features = getattr(Top_features, model_name)
@@ -132,18 +161,39 @@ def summary_to_db(saved_outputs):
                ('filename', 'text'),
                ('random_seed', 'int'),
                ('label', 'text'),
+               ('cv_scheme', 'text'),
+               ('cv_criterion', 'text'),
+               ('cv_score', 'float'),
+               ('imputation','text'),
+               ('scaling', 'text'),
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
                ('train_set', 'text'),
+               ('val_set', 'text'),
                ('test_set', 'text'),
+               ('prediction_grade', 'int'),
                ('parameters', 'text'),
                ('train_acc', 'float'),
+               ('val_acc', 'float'),
                ('test_acc', 'float'),
+               ('train_precision_3','float'),
                ('train_precision_5','float'),
                ('train_precision_10','float'),
+               ('train_recall_3','float'),
+               ('train_recall_5','float'),
+               ('train_recall_10','float'),
+               ('val_precision_3','float'),
+               ('val_precision_5','float'),
+               ('val_precision_10','float'),
+               ('val_recall_3','float'),
+               ('val_recall_5','float'),
+               ('val_recall_10','float'),
+               ('test_precision_3','float'),
                ('test_precision_5','float'),
                ('test_precision_10','float'),
-               ('average_precision','float'),
+               ('test_recall_3','float'),
+               ('test_recall_5','float'),
+               ('test_recall_10','float'),
                ('feature_1', 'text'),
                ('feature_1_weight','float'),
                ('feature_2', 'text'),
@@ -156,7 +206,12 @@ def summary_to_db(saved_outputs):
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             build_results_table(cursor, columns)
-            add_row(cursor, columns, values)
+            for criterion, score in zip(model_options['validation_criterion'],
+                                        saved_outputs\
+                                        ['cross_validation_scores']):
+                values['cv_criterion'] = criterion
+                values['cv_score'] = score
+                add_row(cursor, columns, values)
         connection.commit()
     print('row added')
 
@@ -166,6 +221,7 @@ def write_scores_to_db(saved_outputs):
     """
     # scores and predictions for each student
     test_label = pd.Series('test', index=saved_outputs['test_y'].index)
+    val_label = pd.Series('val', index=saved_outputs['val_y'].index)
     train_label = pd.Series('train', index=saved_outputs['train_y'].index)
     test = saved_outputs['test_y'].to_frame('true_label')
     test['predicted_score'] = saved_outputs['test_set_soft_preds']
@@ -175,7 +231,11 @@ def write_scores_to_db(saved_outputs):
     train['predicted_score'] = saved_outputs['train_set_soft_preds']
     train['predicted_label'] = saved_outputs['train_set_preds']
     train['split'] = train_label
-    results = pd.concat([test,train])
+    val = saved_outputs['val_y'].to_frame('true_label')
+    val['predicted_score'] = saved_outputs['val_set_soft_preds']
+    val['predicted_label'] = saved_outputs['val_set_preds']
+    val['split'] = val_label
+    results = pd.concat([test,val,train])
 
     filename = saved_outputs['file_name']
 

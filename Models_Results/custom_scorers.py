@@ -1,5 +1,6 @@
 from sklearn.metrics import make_scorer, get_scorer
 from sklearn.metrics import precision_score, recall_score, roc_auc_score
+from save_reports import precision_at_k, recall_at_k
 import numpy as np
 
 def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
@@ -7,15 +8,11 @@ def precision_recall_at_top_k(y_true, y_scores, k, metric = 'precision'):
     if (len(y_scores.shape) == 2):
         y_scores = y_scores[:,1]
     top_n = int(k*len(y_scores))
-    threshold = np.sort(y_scores)[::-1][top_n]
-    if (type(threshold)==np.ndarray):
-        threshold = threshold[0]
-    y_pred = 1.0 * (y_scores >= threshold)
 
     if (metric == 'precision'):
-        return precision_score(y_true, y_pred)
+        return precision_at_k(y_true, y_scores, k)
     elif (metric == 'recall'):
-        return recall_score(y_true, y_pred)
+        return recall_at_k(y_true, y_scores, k)
     else:
         print('unknown metric')
         return 0.0
