@@ -1,7 +1,10 @@
 batch_name: testing_downsampling
 model_classes_selected:
-  - logit
+  - RF
   - DT
+  - GB
+  - SVM
+  - ET
 
 user_description: testing downsampling upsampling sample weights
 file_save_name: 2_years_data_4_cohorts_jackie
@@ -24,7 +27,7 @@ cohorts_val:
 cohorts_test:
   - 2012
 
-subset_n: !!null 
+subset_n: !!null
 
 cohorts_training:
   - 2007
@@ -75,9 +78,9 @@ features_included:
     - city_transition_in*
     - mid_year_withdraw*
 
-downsample_param: .90
+# downsample_param: .90
 # upsample_param: .90
-# sample_wt_ratio: .90
+sample_wt_ratio: .90
 
 outcome_name: definite
 missing_impute_strategy: median_plus_dummies

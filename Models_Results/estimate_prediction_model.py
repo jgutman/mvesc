@@ -467,7 +467,11 @@ def clf_loop(clfs, params, train_X, train_y, val_X, val_y, test_X, test_y,
     return qq.time_check()
 
 def get_sample_weights(sample_wt_ratio, y):
+    # currently this option is implemented in LogisticRegression only with
+    # the solvers {‘newton-cg’, ‘lbfgs’, ‘sag’} not the default 'liblinear'
+    # none of these solvers support L1 penalty
     ratio = np.array([sample_wt_ratio, 1-sample_wt_ratio])
+    y = y.astype(int)
     wts = ratio/np.bincount(y)
     wts_array = wts[y]
     return wts_array
@@ -479,8 +483,9 @@ def upsample(upsample_param, X, y):
         return X, y
     n_resampled_positive = round(n_negative/upsample_param - n_negative)
     negatives_ix = np.where(y==0)[0]
-    positives_ix = resample(np.where(y)[0], replace=True,
-        n_samples = n_resampled_negative)
+    # sklearn.utils.resample doesn't work here because n_samples > n_max_samples
+    positives_ix = np.random.choice(np.where(y)[0], replace=True,
+        size = n_resampled_positive)
     shuffled_ix = shuffle(np.append(positives_ix,negatives_ix))
     return X.iloc[shuffled_ix], y.iloc[shuffled_ix]
 
