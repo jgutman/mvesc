@@ -55,6 +55,22 @@ def main():
                 group by student_lookup
             ) as cohorts_sixth
             using(student_lookup)
+
+            left join
+            (   select student_lookup, max(num_ogt_passed) as num_ogt_passed
+                from {schema}.ogt_passfail
+                group by student_lookup
+            ) as num_ogt_passed
+            using(student_lookup)
+
+            left join
+            (   select student_lookup, max(absences_unexcused_gr_11) as absences_unexcused_gr_11,
+                    max(absences_unexcused_gr_12) as absences_unexcused_gr_12
+                from {schema}.absence
+                group by student_lookup
+            ) as absences_unexcused
+            using(student_lookup)            
+
             order by cohort_9th;
             """.format(schema=schema, table=table,
             source_schema=source_schema, source_table=source_table,
