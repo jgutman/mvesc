@@ -30,8 +30,6 @@ grades:
     - health_gpa*
     - future_prep_gpa*
     - interventions_gpa*
-    - language_gpa*
-    - num_language_classes*
     - num_stem_classes*
     - num_humanities_classes*
     - num_art_classes*
