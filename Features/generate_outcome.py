@@ -13,12 +13,26 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 def main():
-    schema, table = "model", "outcome"
+    schema, table = "model", "outcome2"
     source_schema, source_table = "clean", "wrk_tracking_students"
     snapshots = "all_snapshots"
+    current_year = 2016
+    prediction_grade_range = list(range(5,10))
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
+            insert_outcome_category_future = """
+            update {source_schema}.{source_table}
+                set outcome_category = 'future'
+                where student_lookup in
+                (select student_lookup from {source_schema}.{source_table}
+                where "{last_year}" >= {min_grade} and
+                "{last_year}" <= {max_grade})
+            """.format(source_schema=source_schema, source_table=source_table,
+                last_year=current_year-1,
+                min_grade = min(prediction_grade_range),
+                max_grade = max(prediction_grade_range))
+
             sql_drop_table = """drop table if exists {schema}.{table};""".format(schema=schema, table=table)
             cursor.execute(sql_drop_table)
 
@@ -90,17 +104,18 @@ def main():
             snapshots=snapshots)
             cursor.execute(sql_create_table)
 
-            prediction_grade_range = list(range(5,10))
             for grade in prediction_grade_range:
                 update_2016_cohorts = """
                 update {schema}.{table}
                     set cohort_{grade_plus}th = {current_year}
                     where student_lookup in
-                    (select student_lookup from clean.wrk_tracking_students
+                    (select student_lookup from {source_schema}.{source_table}
                     where "{last_year}" = {grade})
-                """.format(schema=schema, table=table, grade_plus=grade+1,
-                    current_year=2016, last_year=2015, grade=grade)
-            
+                """.format(schema=schema, table=table,
+                    source_schema=source_schema, source_table=source_table,
+                    grade=grade, grade_plus=grade+1,
+                    last_year=current_year-1, current_year=current_year)
+
 
             connection.commit()
             print("Table {schema}.{table} created! ".format(
