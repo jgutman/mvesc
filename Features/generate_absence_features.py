@@ -101,6 +101,34 @@ def create_absence_type_temp_table(cursor, temp_table, source_table,
     cursor.execute(sql_create_temp_index)
     return None
 
+def create_absence_wkd_type_temp_table(cursor, temp_table, source_table,
+                                   new_column, type_str, grade, wkd, source_schema='clean'):
+    """
+    Create temp table for only certain type of absences at a certain weekday
+    :param pg.cursor curosr: postgres pg.cursor
+    :param str temp_table: name of temp table to create
+    :param str source_table: name of source table to create temp table
+    :param str new_column: new column name in temp table
+    :param int grade: the grade to subseti
+    :param int wkd: weekday, Sun 0, Mon 1, ..., Sat 6
+    :param str source_scheam: name of source schema, default 'clean'
+    :return: None
+    """
+    sql_create_agg_temp = """
+    drop table if exists {tmp};
+    create temporary table {tmp} as
+    select student_lookup, count(*) as {nc} from {ss}.{st}
+    where grade={grd} and weekday={wkd} and absence_desc like '%{type_str}%' 
+    group by student_lookup;
+    """.format(tmp=temp_table, nc=new_column, ss=source_schema, 
+               st=source_table, type_str=type_str, grd=grade, wkd=wkd)
+    cursor.execute(sql_create_agg_temp)
+    sql_create_temp_index = """create index {tmp}_ind on {tmp}(student_lookup);""".format(tmp=temp_table);
+    cursor.execute(sql_create_temp_index)
+    return None
+
+
+
 def create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
                                      new_column, grade, source_schema='clean'):
     """
@@ -251,6 +279,20 @@ def main():
                                                  column, grade=grd, source_schema='clean')
                 update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
                 set_null_as_0(cursor, column, schema=schema, table=table)
+
+            # absence & tardy on weekend
+            abs_types = ['absence', 'tardy']
+            weekdays = [1, 2, 3, 4, 5]
+            source_table, new_col_name = tab_absence, 'medical'
+            for abs_type in abs_types:
+                new_col_name = abs_type
+                for wkd in weekdays:
+                    for grd in range(gr_min, gr_max+1):
+                        temp_table = column = new_col_name +'_wkd_'+str(wkd)+'_gr_' + str(grd)
+                        create_absence_wkd_type_temp_table(cursor, temp_table, source_table, column,
+                                               type_str=abs_type, grade=grd, wkd=wkd, source_schema='clean')
+                        update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                        set_null_as_0(cursor, column, schema=schema, table=table)
 
             connection.commit()
 

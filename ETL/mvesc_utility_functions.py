@@ -155,9 +155,9 @@ def get_column_type(cursor, table_name, column_name):
         column_type = column_type[0][0]
     return column_type
 
-def clean_column(cursor, values, old_column_name, table_name,
-                 new_column_name=None, schema_name='clean',
-                 replace = 1, exact = 1):
+def clean_column(cursor, values, old_column_name, table_name, \
+                 new_column_name=None, schema_name='clean', replace = 1,
+                 exact = 1):
     """
     Cleans the given column by replacing values according to the given
     json file, which should be in the form:
@@ -220,7 +220,7 @@ def clean_column(cursor, values, old_column_name, table_name,
                 params['item{0}'.format(count)] = '%{}%'.format(old_name)
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
-        clean_col_query += "then  %(item{0})s \n".format(count)
+        clean_col_query += "then '{}' \n".format(new_name)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
     clean_col_query += "else {0} end; ".format(old_column_name)

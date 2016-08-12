@@ -8,3 +8,5 @@ Descriptives/*/.cache/*
 */__pycache__/*
 Reports/*npy*
 Reports/*pkl*
+Models_Results/pkls/*
+Models_Results/pkls_zz/*
