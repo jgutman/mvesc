@@ -23,19 +23,28 @@ def generate_yaml(template_options, yaml_location=None):
                 template_options['features'][table] = all_features[table]
             elif type(features)==dict and list(features.keys())[0] == 'except':
                 feature_list = all_features[table]
-                if type(features['except'][0]) == int:
-                    for gr in features['except']:
-                        to_remove = []
+                to_remove = []
+                for e in features['except']:
+                    if type(e) == int:
+                        # if except a number, then remove all features 
+                        # with that grade level
                         for f in feature_list:
-                            if int(f.split('_')[-1]) == gr:
+                            if int(f.split('_')[-1]) == e:
                                 to_remove.append(f)
-                        for f in to_remove:
-                            feature_list.remove(f)
-                    template_options['features'][table] = feature_list
-                else: 
-                    for f in features['except']:
-                        feature_list.remove(f)
-                    template_options['features'][table] = feature_list
+                    elif e.split('_')[0] == 'like':
+                        # if except starts with 'like', then remove features
+                        # containing the following string following like
+                        e = '_'.join(e.split('_')[1:])
+                        for f in feature_list:
+                            if e in f:
+                                to_remove.append(f)
+                    else: 
+                        # if except is a feature, then remove that feature
+                        to_remove.append(e)
+                to_remove = set(to_remove) # removing duplicates
+                for f in to_remove:
+                    feature_list.remove(f)
+                template_options['features'][table] = feature_list
     
     if type(template_options['cv_criterions']) != list:
         template_options['cv_criterions'] = [template_options['cv_criterions']]
@@ -74,7 +83,7 @@ def main():
                      'demographics': 'all',
                      'mobility': 'all',
                      'oaa_normalized': 
-                     {'except': [8]}
+                     {'except': [8, 'like_pl']}
                  },
         'outcome': 'definite',
         'imputation': 'median_plus_dummies',
