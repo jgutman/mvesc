@@ -130,7 +130,6 @@ def summary_to_db(saved_outputs):
                                                          .05, .15, 'recall')
     values['train_precision_5_15'] = precision_recall_range(train_y, train_scores,
                                                          .05, .15, 'precision')
-
     values['val_precision_3'] = precision_at_k(val_y, val_scores, .03)
     values['val_precision_5'] = precision_at_k(val_y, val_scores, .05)
     values['val_precision_10'] = precision_at_k(val_y, val_scores, .1)

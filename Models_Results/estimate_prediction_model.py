@@ -7,7 +7,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 from optparse import OptionParser
-import pdb 
+import pdb
 
 # all model import statements
 from sklearn import svm # use svm.SVC kernel = 'linear' or 'rbf'
@@ -22,6 +22,7 @@ from sklearn.cross_validation import *
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_curve, roc_curve, confusion_matrix
 from sklearn.preprocessing import Imputer, StandardScaler, RobustScaler
+from sklearn.utils import shuffle, resample
 
 import yaml
 import numpy as np
@@ -98,11 +99,11 @@ def build_outcomes_plus_features(model_options, subset_n=None):
             table_name = 'outcome', schema = 'model', nrows = -1,
             columns = ['student_lookup', outcome_name,
             model_options['cohort_grade_level_begin']])
-        
+
         # drop students without student_lookup, outcome, or cohort identifier
         # can use subset=[colnames] to drop based on certain columns only
         outcomes_with_student_lookup.dropna(inplace=True)
-        
+
         # sub-sampling for test purposes
         # half postive examples, half negative
         if subset_n:
@@ -392,6 +393,17 @@ def clf_loop(clfs, params, train_X, train_y, val_X, val_y, test_X, test_y,
     :returns: length of time to run full loop
     :rtype: float
     """
+
+    downsample_param = 0.
+    upsample_param = 0.
+    sample_wt_ratio = 0.
+    if 'downsample_param' in options:
+        downsample_param = options['downsample_param']
+    elif 'upsample_param' in options:
+        upsample_param = options['upsample_param']
+    elif 'sample_wt_ratio' in options:
+        sample_wt_ratio = options['sample_wt_ratio']
+
     tuple_score = build_tuple_scorer(criterion_list)
     n_criteria = len(criterion_list)
     with Timer('clf_loop') as qq:
@@ -403,19 +415,93 @@ def clf_loop(clfs, params, train_X, train_y, val_X, val_y, test_X, test_y,
                     clf.set_params(**p)
                     cv_scores_avg = np.empty((len(cv_folds), n_criteria))
                     for i, (train_list, val_list) in enumerate(cv_folds):
-                        clf.fit(train_X.iloc[train_list], 
+                        if downsample_param:
+                            train_X_downsampled, train_y_downsampled = \
+                                downsample(downsample_param,
+                                X = train_X.iloc[train_list],
+                                y = train_y.iloc[train_list])
+                            clf.fit(train_X_downsampled,
+                                train_y_downsampled)
+                        elif upsample_param:
+                            train_X_upsampled, train_y_upsampled = \
+                                upsample(upsample_param,
+                                X = train_X.iloc[train_list],
+                                y = train_y.iloc[train_list])
+                            clf.fit(train_X_upsampled,
+                                train_y_upsampled)
+                        elif sample_wt_ratio:
+                            wts_array = get_sample_weights(sample_wt_ratio,
+                                y = train_y.iloc[train_list])
+                            clf.fit(train_X.iloc[train_list],
+                                train_y.iloc[train_list],
+                                sample_weight = wts_array)
+                        else:
+                            clf.fit(train_X.iloc[train_list],
                                 train_y.iloc[train_list])
                         cv_score = tuple_score(clf,
                             train_X.iloc[val_list], train_y.iloc[val_list])
                         cv_scores_avg[i] = list(cv_score)
                     cv_scores_avg = np.mean(cv_scores_avg, axis=0)
-                    clf.fit(train_X, train_y)
+
+                    if downsample_param:
+                        train_X_downsampled, train_y_downsampled = \
+                            downsample(downsample_param,
+                            X = train_X, y = train_y)
+                        clf.fit(train_X_downsampled,
+                            train_y_downsampled)
+                    elif upsample_param:
+                        train_X_upsampled, train_y_upsampled = \
+                            upsample(upsample_param,
+                            X = train_X, y = train_y)
+                        clf.fit(train_X_upsampled,
+                            train_y_upsampled)
+                    elif sample_wt_ratio:
+                        wts_array = get_sample_weights(sample_wt_ratio,
+                            y = train_y)
+                        clf.fit(train_X, train_y, sample_weight = wts_array)
+                    else:
+                        clf.fit(train_X, train_y)
                     run_time = t.time_check()
                 write_out_predictions(options, model_name, clf, run_time,
                     cv_scores_avg, parameter_values, save_location,
                     train_X, train_y,val_X, val_y, test_X, test_y)
     return qq.time_check()
 
+def get_sample_weights(sample_wt_ratio, y):
+    # currently this option is implemented in LogisticRegression only with
+    # the solvers {‘newton-cg’, ‘lbfgs’, ‘sag’} not the default 'liblinear'
+    # none of these solvers support L1 penalty
+    ratio = np.array([sample_wt_ratio, 1-sample_wt_ratio])
+    y = y.astype(int)
+    wts = ratio/np.bincount(y)
+    wts_array = wts[y]
+    return wts_array
+
+def upsample(upsample_param, X, y):
+    n_negative = len(y)-float(sum(y))
+    pct_negative = n_negative/len(y)
+    if (pct_negative < upsample_param):
+        return X, y
+    n_resampled_positive = round(n_negative/upsample_param - n_negative)
+    negatives_ix = np.where(y==0)[0]
+    # sklearn.utils.resample doesn't work here because n_samples > n_max_samples
+    positives_ix = np.random.choice(np.where(y)[0], replace=True,
+        size = n_resampled_positive)
+    shuffled_ix = shuffle(np.append(positives_ix,negatives_ix))
+    return X.iloc[shuffled_ix], y.iloc[shuffled_ix]
+
+def downsample(downsample_param, X, y):
+    n_positive = float(sum(y))
+    pct_positive = n_positive/len(y)
+    if (pct_positive > 1. - downsample_param):
+        return X, y
+    ratio = downsample_param / (1. - downsample_param)
+    n_resampled_negative = round(ratio * n_positive)
+    negatives_ix = resample(np.where(y==0)[0], replace=False,
+        n_samples = n_resampled_negative)
+    positives_ix = np.where(y)[0]
+    shuffled_ix = shuffle(np.append(positives_ix,negatives_ix))
+    return X.iloc[shuffled_ix], y.iloc[shuffled_ix]
 
 def write_out_predictions(model_options, model_name, clf, run_time,
         average_cv_scores, params, save_location,
@@ -425,10 +511,10 @@ def write_out_predictions(model_options, model_name, clf, run_time,
     (1) saves a pkl file to mtn/data
     (2) saves a markdown report (from save_reports.py)
     (3) writes information to the database (from write_to_database.py)
-    
+
     :param dict model_options:
     :param str model_name: model nickname
-    :param estimator clf: sklearn estimator object 
+    :param estimator clf: sklearn estimator object
     :param float run_time: time for the model run
     :param np.array average_cv_scores: score for each cv_criterion
     :param str save_location: path to save reports to
@@ -446,19 +532,19 @@ def write_out_predictions(model_options, model_name, clf, run_time,
         val_set_scores = clf.predict_proba(val_X)[:,1]
         train_set_scores = clf.predict_proba(train_X)[:,1]
     else:
-        test_set_scores = clf.decision_function(test_X)        
+        test_set_scores = clf.decision_function(test_X)
         val_set_scores = clf.decision_function(val_X)
         train_set_scores = clf.decision_function(train_X)
 
     assert (test_set_scores.size==test_y.size),\
-        "dimensions of test predictions don't match" 
+        "dimensions of test predictions don't match"
 
     assert (val_set_scores.size==val_y.size),\
-        "dimensions of val predictions don't match" 
+        "dimensions of val predictions don't match"
 
     assert (train_set_scores.size==train_y.size),\
         "dimensions of train predictions don't match"
-        
+
     # increment counter
     count = next_id(model_options['user'])
 
@@ -551,7 +637,7 @@ def run_all_models(model_options, clfs, params, save_location):
     train_y = train[model_options['outcome_name']]
     test_y = test[model_options['outcome_name']]
     val_y = val[model_options['outcome_name']]
-    
+
     # imputation for missing values in features
     train_X, val_X, test_X = impute_missing_values(train_X, val_X, test_X,
         model_options['missing_impute_strategy'])
@@ -585,8 +671,8 @@ def run_all_models(model_options, clfs, params, save_location):
         cohort_kfolds = []
         for train_list, test_list in cohort_kfolds_plus_future:
             test_year = pd.unique(cohort_kfolds_plus_future.labels[test_list])
-            train_years_after_test = \
-                cohort_kfolds_plus_future.labels[train_list] > test_year
+            train_years_after_test = cohort_kfolds_plus_future.labels[train_list] > \
+                                     test_year
             train_indices_after_test = np.where(train_years_after_test)
             train_list = np.delete(train_list, train_indices_after_test)
             fold = (train_list, test_list)
