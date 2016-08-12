@@ -8,3 +8,4 @@ Descriptives/*/.cache/*
 */__pycache__/*
 Reports/*npy*
 Reports/*pkl*
+*.pyc
