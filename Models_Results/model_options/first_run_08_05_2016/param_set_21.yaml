@@ -1,0 +1,64 @@
+batch_name:
+  first_run_08_05_2016
+model_classes_selected: 
+  - logit 
+  - DT 
+  - RF 
+  - ET 
+  - AB 
+  - SVM 
+  - GB 
+  - NB 
+  - SGD 
+  - KNN 
+  
+user_description: First large run looping through many models on 08/5/2016 
+file_save_name: param_set_21
+write_predictions_to_database: True
+user: ht
+debug: False
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: leave_cohort_out
+cohort_grade_level_begin: cohort_10th
+prediction_grade_level: 10
+feature_grade_range: 
+  - 8
+  - 9
+  
+
+cohorts_test: 
+  - 2013
+  
+cohorts_val: 
+  - 2012
+  
+cohorts_training:
+  - 2008
+  - 2009
+  - 2010
+  - 2011
+  
+random_seed: 1470451973.6339378
+validation_criterion: 
+  - custom_precision_5
+  - custom_precision_10
+  - custom_recall_5
+  - f1
+  
+features_included:
+  absence: 
+    - absence*
+    - absence_unexcused*
+    - tardy*
+    - tardy_unexcused*
+    - medical*
+    - absence_consec*
+    - tardy_consec*
+    
+  
+outcome_name: is_dropout
+missing_impute_strategy: median_plus_dummies
+feature_scaling: standard
+
+subset_n:  !!null 
