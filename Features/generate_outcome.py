@@ -18,20 +18,22 @@ def main():
     snapshots = "all_snapshots"
     current_year = 2016
     prediction_grade_range = list(range(5,10))
+    prediction_outcome_name = 'future'
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            insert_outcome_category_future = """
+            insert_outcome_category_predictions = """
             update {source_schema}.{source_table}
-                set outcome_category = 'future'
+                set outcome_category = '{predictions}'
                 where student_lookup in
                 (select student_lookup from {source_schema}.{source_table}
                 where "{last_year}" >= {min_grade} and
-                "{last_year}" <= {max_grade})
+                "{last_year}" <= {max_grade} and outcome_category is null)
             """.format(source_schema=source_schema, source_table=source_table,
-                last_year=current_year-1,
+                last_year=current_year-1, predictions = prediction_outcome_name,
                 min_grade = min(prediction_grade_range),
                 max_grade = max(prediction_grade_range))
+            cursor.execute(insert_outcome_category_predictions)
 
             sql_drop_table = """drop table if exists {schema}.{table};""".format(schema=schema, table=table)
             cursor.execute(sql_drop_table)
@@ -42,18 +44,18 @@ def main():
             (   select distinct student_lookup,
                 case
                     when outcome_category='on-time' then 0
-                    when outcome_category not like 'future' then 1
+                    when outcome_category not like '{predictions}' then 1
                 end as not_on_time,
                 case
                     when outcome_category='dropout' then 1
-                    when outcome_category not like 'future' then 0
+                    when outcome_category not like '{predictions}' then 0
                 end as is_dropout,
                 case
                     when outcome_category='on-time' or outcome_category='late' then 0
                     when outcome_category='dropout' then 1
                 end as definite
                 case
-                    when outcome_category = 'future' then 1
+                    when outcome_category = '{predictions}' then 1
                 end as current_students
                 from {source_schema}.{source_table}
                 where outcome_category is not null
@@ -62,7 +64,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_10th
                 from {source_schema}.{snapshots}
                 where grade = 10
-                and outcome_category not like 'future'
+                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_tenth
             using(student_lookup)
@@ -70,7 +72,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_9th
                 from {source_schema}.{snapshots}
                 where grade = 9
-                and outcome_category not like 'future'
+                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_ninth
             using(student_lookup)
@@ -78,7 +80,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_8th
                 from {source_schema}.{snapshots}
                 where grade = 8
-                and outcome_category not like 'future'
+                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_eighth
             using(student_lookup)
@@ -86,7 +88,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_7th
                 from {source_schema}.{snapshots}
                 where grade = 7
-                and outcome_category not like 'future'
+                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_seventh
             using(student_lookup)
@@ -94,18 +96,18 @@ def main():
             (   select student_lookup, min(school_year) as cohort_6th
                 from {source_schema}.{snapshots}
                 where grade = 6
-                and outcome_category not like 'future'
+                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_sixth
             using(student_lookup)
             order by cohort_10th;
             """.format(schema=schema, table=table,
             source_schema=source_schema, source_table=source_table,
-            snapshots=snapshots)
+            snapshots=snapshots, predictions=prediction_outcome_name)
             cursor.execute(sql_create_table)
 
             for grade in prediction_grade_range:
-                update_2016_cohorts = """
+                update_current_cohorts = """
                 update {schema}.{table}
                     set cohort_{grade_plus}th = {current_year}
                     where student_lookup in
@@ -115,7 +117,7 @@ def main():
                     source_schema=source_schema, source_table=source_table,
                     grade=grade, grade_plus=grade+1,
                     last_year=current_year-1, current_year=current_year)
-
+                cursor.execute(update_current_cohorts)
 
             connection.commit()
             print("Table {schema}.{table} created! ".format(
@@ -124,7 +126,8 @@ def main():
             # create index
             sql_create_index = "create index {schema}_{table}_lookup on {schema}.{table}(student_lookup)".format(schema=schema, table=table)
             cursor.execute(sql_create_index); connection.commit()
-            print("""- Index created on {schema}.{table}(student_lookup)!""".format(schema=schema, table=table))
+            print("- Index created on {schema}.{table}(student_lookup)!".format(
+                schema=schema, table=table))
 
 if __name__=='__main__':
     main()
