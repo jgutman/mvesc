@@ -28,16 +28,19 @@ def main():
             (   select distinct student_lookup,
                 case
                     when outcome_category='on-time' then 0
-                    else 1
+                    when outcome_category not like 'future' then 1
                 end as not_on_time,
                 case
                     when outcome_category='dropout' then 1
-                    else 0
+                    when outcome_category not like 'future' then 0
                 end as is_dropout,
-                case 
+                case
                     when outcome_category='on-time' or outcome_category='late' then 0
                     when outcome_category='dropout' then 1
                 end as definite
+                case
+                    when outcome_category = 'future' then 1
+                end as current_students
                 from {source_schema}.{source_table}
                 where outcome_category is not null
             ) as all_outcomes
@@ -45,6 +48,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_10th
                 from {source_schema}.{snapshots}
                 where grade = 10
+                and outcome_category not like 'future'
                 group by student_lookup
             ) as cohorts_tenth
             using(student_lookup)
@@ -52,6 +56,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_9th
                 from {source_schema}.{snapshots}
                 where grade = 9
+                and outcome_category not like 'future'
                 group by student_lookup
             ) as cohorts_ninth
             using(student_lookup)
@@ -59,6 +64,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_8th
                 from {source_schema}.{snapshots}
                 where grade = 8
+                and outcome_category not like 'future'
                 group by student_lookup
             ) as cohorts_eighth
             using(student_lookup)
@@ -66,6 +72,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_7th
                 from {source_schema}.{snapshots}
                 where grade = 7
+                and outcome_category not like 'future'
                 group by student_lookup
             ) as cohorts_seventh
             using(student_lookup)
@@ -73,6 +80,7 @@ def main():
             (   select student_lookup, min(school_year) as cohort_6th
                 from {source_schema}.{snapshots}
                 where grade = 6
+                and outcome_category not like 'future'
                 group by student_lookup
             ) as cohorts_sixth
             using(student_lookup)
@@ -81,8 +89,21 @@ def main():
             source_schema=source_schema, source_table=source_table,
             snapshots=snapshots)
             cursor.execute(sql_create_table)
+
+            prediction_grade_range = list(range(5,10))
+            for grade in prediction_grade_range:
+                update_2016_cohorts = """
+                update {schema}.{table}
+                    set cohort_{grade_plus}th = {current_year}
+                    where student_lookup in
+                    (select student_lookup from clean.wrk_tracking_students
+                    where "{last_year}" = {grade})
+                """.format(schema=schema, table=table, grade_plus=grade+1,
+                    current_year=2016, last_year=2015, grade=grade)
+            
+
             connection.commit()
-            print("""- Table "{schema}"."{table}" created! """.format(
+            print("Table {schema}.{table} created! ".format(
             schema=schema, table=table))
 
             # create index
