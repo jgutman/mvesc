@@ -21,11 +21,9 @@ def main():
         with connection.cursor() as cursor:
             sql_drop_table = """drop table if exists {schema}.{table};""".format(schema=schema, table=table)
             cursor.execute(sql_drop_table)
-            sql_drop_temp_table = """drop table if exists temp_{table};""".format(table=table)
-            cursor.execute(sql_drop_temp_table)
 
             sql_create_table = """
-            create temp table temp_{table} as
+            create table {schema}.{table} as
             select * from
             (   select distinct student_lookup,
                 case
@@ -35,21 +33,21 @@ def main():
                 case
                     when outcome_category='dropout' then 1
                     else 0
-                end as is_dropout
+                end as is_dropout,
+                case 
+                    when outcome_category='on-time' or outcome_category='late' then 0
+                    when outcome_category='dropout' then 1
+                end as definite
                 from {source_schema}.{source_table}
                 where outcome_category is not null
-            ) as all_outcomes""".format(table=table,
-            source_schema=source_schema, source_table=source_table)
-            cursor.execute(sql_create_table)
-
-            # create index
-            sql_create_index = "create index temp_{table}_lookup on temp_{table}(student_lookup)".format(table=table)
-            cursor.execute(sql_create_index)
-
-
-            sql_join_cohort="""
-            create table {schema}.{table} as
-            select * from temp_{table}
+            ) as all_outcomes
+            left join
+            (   select student_lookup, min(school_year) as cohort_10th
+                from {source_schema}.{snapshots}
+                where grade = 10
+                group by student_lookup
+            ) as cohorts_tenth
+            using(student_lookup)
             left join
             (   select student_lookup, min(school_year) as cohort_9th
                 from {source_schema}.{snapshots}
@@ -58,17 +56,31 @@ def main():
             ) as cohorts_ninth
             using(student_lookup)
             left join
+            (   select student_lookup, min(school_year) as cohort_8th
+                from {source_schema}.{snapshots}
+                where grade = 8
+                group by student_lookup
+            ) as cohorts_eighth
+            using(student_lookup)
+            left join
+            (   select student_lookup, min(school_year) as cohort_7th
+                from {source_schema}.{snapshots}
+                where grade = 7
+                group by student_lookup
+            ) as cohorts_seventh
+            using(student_lookup)
+            left join
             (   select student_lookup, min(school_year) as cohort_6th
                 from {source_schema}.{snapshots}
                 where grade = 6
                 group by student_lookup
             ) as cohorts_sixth
             using(student_lookup)
-            order by cohort_9th;
+            order by cohort_10th;
             """.format(schema=schema, table=table,
             source_schema=source_schema, source_table=source_table,
             snapshots=snapshots)
-            cursor.execute(sql_join_cohort)
+            cursor.execute(sql_create_table)
             connection.commit()
             print("""- Table "{schema}"."{table}" created! """.format(
             schema=schema, table=table))

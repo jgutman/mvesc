@@ -220,7 +220,7 @@ def clean_column(cursor, values, old_column_name, table_name,
                 params['item{0}'.format(count)] = '%{}%'.format(old_name)
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
-        clean_col_query += "then  %(item{0})s \n".format(count)
+        clean_col_query += "then '{}' \n".format(new_name)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
     clean_col_query += "else {0} end; ".format(old_column_name)
