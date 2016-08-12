@@ -23,8 +23,18 @@ def generate_yaml(template_options, yaml_location=None):
                 template_options['features'][table] = all_features[table]
             elif type(features)==dict and list(features.keys())[0] == 'except':
                 feature_list = all_features[table]
-                for f in features['except']:
-                    feature_list.remove(f)
+                if type(features['except'][0]) == int:
+                    for gr in features['except']:
+                        to_remove = []
+                        for f in feature_list:
+                            if int(f.split('_')[-1]) == gr:
+                                to_remove.append(f)
+                        for f in to_remove:
+                            feature_list.remove(f)
+                    template_options['features'][table] = feature_list
+                else: 
+                    for f in features['except']:
+                        feature_list.remove(f)
                     template_options['features'][table] = feature_list
     
     if type(template_options['cv_criterions']) != list:
@@ -41,43 +51,38 @@ def generate_yaml(template_options, yaml_location=None):
 
 def main():
     template_options = {
-        'batch_name' : 'testing_yaml_creation',# for an entire batch, fldr name
+        'batch_name' : 'testing_new_options',# for an entire batch, fldr name
         'model_classes': ['logit','DT'],
-        'description': 'testing yaml creation',
-        'name': 'yaml_creation', # specific to a particular set of options
+        'description': 'testing writing all features to a single table and ' \
+            'all scores to a single table and new cv_scorer and '\
+            'new test score feature names',
+        'name': 'test', # specific to a particular set of options
         'write_to_database': True,
         'user': 'ht',
         'test_set_type': 'temporal_cohort',
         'cv_scheme': 'leave_cohort_out',
         # if cv_scheme = 'k_fold', need  'n_folds' key
-        'prediction_grade': 10,
-        'feature_grade_range': range(6,10),
-        'cohorts_test': [2012],
-        'cohorts_val': [2011],
-        'cohorts_train': [2009,2010],
+        'prediction_grade': 8,
+        'feature_grade_range': range(6,8),
+        'cohorts_test': [2010],
+        'cohorts_val': [2009],
+        'cohorts_training': [2007,2008],
         'random_seed': 2851,
-        'cv_criterions': ['custom_precision_10','custom_recall_10'],
+        'cv_criterions': ['custom_precision_10_20','custom_recall_5_15'],
         'features': {'grades':
                      {'except':['gpa*']},
                      'demographics': 'all',
-                     'mobility': 'all'
+                     'mobility': 'all',
+                     'oaa_normalized': 
+                     {'except': [8]}
                  },
         'outcome': 'definite',
         'imputation': 'median_plus_dummies',
         'scaling': 'robust',
-        'debug': True,
-        'sample_n': 500
+        'debug': True
     }    
     
-    time_scales = zip([range(2009,2011),range(2008,2011),range(2007,2011),
-                       range(2006,2011)], 
-                      [range(6,10),range(7,10),range(8,10),range(9,10)])
-    for years, grades in time_scales:
-        template_options['cohorts_training'] = years
-        template_options['feature_grade_range'] = grades
-        template_options['name'] = '{0}_years_data_{1}_cohorts'.\
-                                   format(len(grades),len(years))
-        generate_yaml(template_options)
+    generate_yaml(template_options)
 
 if __name__ == "__main__":
     main()

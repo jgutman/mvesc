@@ -1,7 +1,8 @@
 import pandas as pd
 from mvesc_utility_functions import postgres_pgconnection_generator, \
 postgres_engine_generator
-from save_reports import precision_at_k, recall_at_k, Top_features
+from save_reports import Top_features
+from custom_scorers import precision_at_k, recall_at_k, precision_recall_range
 from sklearn.metrics import precision_recall_curve, roc_curve, f1_score, \
     confusion_matrix, precision_score, average_precision_score, accuracy_score
 
@@ -88,6 +89,7 @@ def summary_to_db(saved_outputs):
 
     values = dict()
     values['model_name'] = saved_outputs['model_name']
+    values['batch_name'] = model_options['batch_name']
     values['label'] = model_options['outcome_name']
  
     features = list(model_options['features_included'].keys())
@@ -125,7 +127,9 @@ def summary_to_db(saved_outputs):
     values['train_recall_5'] = recall_at_k(train_y, train_scores, .05)
     values['train_recall_10'] = recall_at_k(train_y, train_scores, .1)
     values['train_recall_5_15'] = precision_recall_range(train_y, train_scores,
-                                                         .05, .15)
+                                                         .05, .15, 'recall')
+    values['train_precision_5_15'] = precision_recall_range(train_y, train_scores,
+                                                         .05, .15, 'precision')
 
     values['val_precision_3'] = precision_at_k(val_y, val_scores, .03)
     values['val_precision_5'] = precision_at_k(val_y, val_scores, .05)
@@ -134,7 +138,9 @@ def summary_to_db(saved_outputs):
     values['val_recall_5'] = recall_at_k(val_y, val_scores, .05)
     values['val_recall_10'] = recall_at_k(val_y, val_scores, .1)
     values['val_recall_5_15'] = precision_recall_range(val_y, val_scores,
-                                                       .05, .15)
+                                                       .05, .15, 'recall')
+    values['val_precision_5_15'] = precision_recall_range(val_y, val_scores,
+                                                       .05, .15, 'precision')
     values['test_precision_3'] = precision_at_k(test_y, test_scores, .03)
     values['test_precision_5'] = precision_at_k(test_y, test_scores, .05)
     values['test_precision_10'] = precision_at_k(test_y, test_scores, .1)
@@ -142,7 +148,9 @@ def summary_to_db(saved_outputs):
     values['test_recall_5'] = recall_at_k(test_y, test_scores, .05)
     values['test_recall_10'] = recall_at_k(test_y, test_scores, .1)
     values['test_recall_5_15'] = precision_recall_range(test_y, test_scores,
-                                                        .05, .15)
+                                                        .05, .15, 'recall')
+    values['test_precision_5_15'] = precision_recall_range(test_y, test_scores,
+                                                        .05, .15, 'precision')
     model_name = values['model_name']
     try:
         get_top_features = getattr(Top_features, model_name)
@@ -164,6 +172,7 @@ def summary_to_db(saved_outputs):
     values['debug'] = model_options['debug']
     values['time'] = saved_outputs['time']
     columns = [('model_name', 'text'),
+               ('batch_name', 'text'),
                ('filename', 'text'),
                ('random_seed', 'int'),
                ('label', 'text'),
@@ -185,6 +194,8 @@ def summary_to_db(saved_outputs):
                ('train_precision_3','float'),
                ('train_precision_5','float'),
                ('train_precision_10','float'),
+               ('train_recall_5_15', 'float'),
+               ('train_precision_5_15', 'float'),
                ('train_recall_3','float'),
                ('train_recall_5','float'),
                ('train_recall_10','float'),
@@ -194,12 +205,16 @@ def summary_to_db(saved_outputs):
                ('val_recall_3','float'),
                ('val_recall_5','float'),
                ('val_recall_10','float'),
+               ('val_recall_5_15', 'float'),
+               ('val_precision_5_15', 'float'),
                ('test_precision_3','float'),
                ('test_precision_5','float'),
                ('test_precision_10','float'),
                ('test_recall_3','float'),
                ('test_recall_5','float'),
                ('test_recall_10','float'),
+               ('test_recall_5_15', 'float'),
+               ('test_precision_5_15', 'float'),
                ('feature_1', 'text'),
                ('feature_1_weight','float'),
                ('feature_2', 'text'),
@@ -208,9 +223,6 @@ def summary_to_db(saved_outputs):
                ('feature_3_weight', 'float'),
                ('time', 'float'),
                ('debug', 'bool')]
-# ('train_recall_5_15', 'float')
-# ('val_recall_5_15', 'float')
-# ('test_recall_5_15', 'float')
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
@@ -226,7 +238,8 @@ def summary_to_db(saved_outputs):
 
 def write_scores_to_db(saved_outputs):
     """
-    Writes all the feature scores and student predictions to tables in the database
+    Writes all the feature scores and student predictions to a table
+    in the database
 
     :param dict saved_outputs: output from a model in estimate_prediction_model
     """
@@ -247,12 +260,11 @@ def write_scores_to_db(saved_outputs):
     val['predicted_label'] = saved_outputs['val_set_preds']
     val['split'] = val_label
     results = pd.concat([test,val,train])
-
-    filename = saved_outputs['file_name']
+    results['filename'] = saved_outputs['file_name']
 
     engine = postgres_engine_generator()
-    results.to_sql(filename,  engine,
-                   schema='predictions', if_exists = 'replace')
+    results.to_sql('predictions',  engine,
+                   schema='model', if_exists = 'append')
     print('student predictions written to database')
 
     # importance scores for each feature
@@ -265,6 +277,7 @@ def write_scores_to_db(saved_outputs):
         top_features = get_top_features(saved_outputs['estimator'],
                                         saved_outputs['features'], -1)
         features = pd.DataFrame(top_features, columns=['feature','importance'])
-        features.to_sql(filename, engine, schema='feature_scores',
-                        if_exists = 'replace')
+        features['filename'] = saved_outputs['file_name']
+        features.to_sql('feature_scores', engine, schema='model',
+                        if_exists = 'append')
         print('feature importances written to database')
