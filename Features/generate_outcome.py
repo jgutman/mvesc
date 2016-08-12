@@ -53,7 +53,7 @@ def main():
                 case
                     when outcome_category='on-time' or outcome_category='late' then 0
                     when outcome_category='dropout' then 1
-                end as definite
+                end as definite,
                 case
                     when outcome_category = '{predictions}' then 1
                 end as current_students
@@ -64,7 +64,6 @@ def main():
             (   select student_lookup, min(school_year) as cohort_10th
                 from {source_schema}.{snapshots}
                 where grade = 10
-                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_tenth
             using(student_lookup)
@@ -72,7 +71,6 @@ def main():
             (   select student_lookup, min(school_year) as cohort_9th
                 from {source_schema}.{snapshots}
                 where grade = 9
-                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_ninth
             using(student_lookup)
@@ -80,7 +78,6 @@ def main():
             (   select student_lookup, min(school_year) as cohort_8th
                 from {source_schema}.{snapshots}
                 where grade = 8
-                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_eighth
             using(student_lookup)
@@ -88,7 +85,6 @@ def main():
             (   select student_lookup, min(school_year) as cohort_7th
                 from {source_schema}.{snapshots}
                 where grade = 7
-                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_seventh
             using(student_lookup)
@@ -96,14 +92,12 @@ def main():
             (   select student_lookup, min(school_year) as cohort_6th
                 from {source_schema}.{snapshots}
                 where grade = 6
-                and outcome_category not like '{predictions}'
                 group by student_lookup
             ) as cohorts_sixth
-            using(student_lookup)
-            order by cohort_10th;
+            using(student_lookup);
             """.format(schema=schema, table=table,
-            source_schema=source_schema, source_table=source_table,
-            snapshots=snapshots, predictions=prediction_outcome_name)
+                source_schema=source_schema, source_table=source_table,
+                snapshots=snapshots, predictions=prediction_outcome_name)
             cursor.execute(sql_create_table)
 
             for grade in prediction_grade_range:
