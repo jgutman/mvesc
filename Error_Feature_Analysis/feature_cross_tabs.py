@@ -223,7 +223,7 @@ def loop_through_top_models(cursor, models_and_features,
     """
     crosstabs_by_model_and_feature = dict()
 
-    for (table_name, model_name, label, feature_tables,
+    for (filename, model_name, label, feature_tables,
             feature_grade_range) in models_and_features:
         print('working on {}:{}'.format(model_name, label))
         feature_table_list = feature_tables.split(", ")
@@ -239,9 +239,10 @@ def loop_through_top_models(cursor, models_and_features,
             select * from
             (select student_lookup, true_label, predicted_label,
             predicted_label = true_label as correct
-            from predictions."{table}"
-            where split = '{test_set}') preds
-            """.format(table = table_name, test_set = test_set)
+            from model.predictions
+            where split = '{test_set}'
+            and filename = {model}) preds
+            """.format(model = filename, test_set = test_set)
 
             for features in feature_table_list:
                 get_model_predictions += """ left join
@@ -263,7 +264,7 @@ def loop_through_top_models(cursor, models_and_features,
             predictions = make_df_categorical(predictions)
 
             crosstabs = build_crosstabs(predictions)
-            key = (table_name, model_name, label, test_set)
+            key = (filename, model_name, label, test_set)
             crosstabs_by_model_and_feature[key] = crosstabs
     return crosstabs_by_model_and_feature
 
