@@ -49,4 +49,16 @@ outcome_name: {{outcome}}
 missing_impute_strategy: {{imputation}}
 feature_scaling: {{scaling}}
 
-subset_n: {% if subset_n %} {{subset_n}} {% else %} !!null {% endif %}
+subset_n: {% if subset_n %} {{subset_n}} 
+{% else %} !!null 
+{% endif %}
+downsample_param: {% if downsample_param %} {{downsample_param}} 
+{% else %} !!null 
+{% endif %}
+upsample_param: {% if upsample_param %} {{upsample_param}} 
+{% else %} !!null
+{% endif %}
+sample_wt_ratio: {% if sample_wt_ratio %} {{sample_wt_ratio}} 
+{% else %} !!null
+{% endif %}
+

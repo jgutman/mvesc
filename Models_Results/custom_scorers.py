@@ -1,6 +1,5 @@
 from sklearn.metrics import make_scorer, get_scorer
 from sklearn.metrics import precision_score, recall_score, roc_auc_score
-from save_reports import precision_at_k, recall_at_k
 import numpy as np
 import pandas as pd
 

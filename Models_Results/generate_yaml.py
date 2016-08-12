@@ -34,6 +34,12 @@ def generate_yaml(template_options, yaml_location=None):
     debug (bool)
     features (dict or string 'all')
 
+    optional keys: 
+    downsample_param (float) - (all the weight of the negative majority class)
+    upsample_param (float)
+    sample_wt_ratio (float)
+    subset_n (int)
+
     the features dictionary should have table names as keys, 
     with each value being either:
        - the string 'all'
@@ -147,7 +153,8 @@ def main():
         'outcome': 'definite',
         'imputation': 'median_plus_dummies',
         'scaling': 'robust',
-        'debug': True
+        'debug': True,
+        'upsample_param': .9
     }    
     
     generate_yaml(template_options)
