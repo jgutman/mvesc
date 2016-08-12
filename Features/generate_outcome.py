@@ -13,7 +13,7 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 def main():
-    schema, table = "model", "outcome2"
+    schema, table = "model", "outcome"
     source_schema, source_table = "clean", "wrk_tracking_students"
     snapshots = "all_snapshots"
     current_year = 2016
