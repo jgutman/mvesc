@@ -22,8 +22,6 @@ import os
 import json
 from contextlib import contextmanager
 import os
-import matplotlib.pyplot as plt
-import matplotlib
 
 ############ ETL Functions ############
 def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
@@ -222,7 +220,7 @@ def clean_column(cursor, values, old_column_name, table_name,
                 params['item{0}'.format(count)] = '%{}%'.format(old_name)
             count +=1
         clean_col_query = clean_col_query[:-len(or_clause)]
-        clean_col_query += "then  %(item{0})s \n".format(count)
+        clean_col_query += "then '{}' \n".format(new_name)
         params['item{0}'.format(count)] = str(new_name)
         count += 1
     clean_col_query += "else {0} end; ".format(old_column_name)
@@ -259,56 +257,6 @@ def df2num(rawdf):
         reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
         numeric_df.drop(reference_cols, axis=1, inplace=True)
     return numeric_df
-
-
-############ Plots #############
-def barplot_feature_importance(table, schema='feature_scores', topN=10, save=True, savedir='./', figname=None,
-                            name_column='feature', value_column='importance', 
-                            xlabel='', ylabel='', title='', fontsize=16, figsize=(12, 8),
-                            style='ggplot', kind='barh', dpi=500):
-    """
-    Bar Plot of any table in mvesc postgres
-    Designed for feature importance: only need to specificy table name
-    Other tables: specify table, schema, name_column, value_column
-    Example:
-    1. RF/ET feature importance table: barplot_feature_importance('table')
-    2. Other tables: barplot_feature_importance('table', schema='schema', name_column='label', value_column='')
-    
-    :param str table: table name in postgres
-    :param str schema: schema name
-    :param int topN: number of top features to plot
-    :param bool save: whether to save the fig
-    :param str savedir: directory to save the fig
-    :param str figname: figure name
-    :param str name_column: column name of the label
-    :param str value_column: column name of the values
-    :param str xlabel, ylabel, title:
-    :param int fontsize: fontsize for labels and titles
-    :param tuple int figsize: figure size
-    :param str style: plot style, 'ggplot', 'fivethirtyeight', etc
-    :param str kind: bar plot kind, `bar`, `barh`
-    :param int dpi: resolution, the larger the better
-    :return str fn: figure name; if save==False, return None  
-    """
-    plt.style.use(style)
-    with postgres_pgconnection_generator() as conn:
-        feature_importances = read_table_to_df(conn, table, schema=schema)
-
-    df = feature_importances[[value_column]]
-    df.index = feature_importances[name_column]
-    df = df.sort_values(by=[value_column], ascending=False)
-    df = df.iloc[:topN, :]
-    ax = df.iloc[::-1,:].plot(kind=kind, title=title, figsize=figsize, fontsize=fontsize, legend=False)
-    plt.ylabel(ylabel, fontsize=fontsize)
-    plt.xlabel(xlabel, fontsize=fontsize)
-    plt.tight_layout()
-    if save==True:
-        if figname==None:
-            fn = os.path.join(savedir, 'feature_importance_'+table+'.png')
-        else:
-            fn = str(figname)
-        plt.savefig(fn, dpi=dpi)
-    return(fn)
 
 ############ Upload file or directory to postgres (not useful in most cases)###############
 def read_csv_noheader(filepath):
