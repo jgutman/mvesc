@@ -17,7 +17,7 @@ template_options = {
    'write_to_database': True,
    'user': 'ht',
    'test_set_type': 'temporal_cohort',
-   'cv_criterions': ['custom_precision_5_15','custom_recall_5_10'],
+   'cv_criterions': ['custom_precision_5_15','custom_recall_5_15'],
    'n_folds': 5,
    'prediction_grade': 6, 
    'cohorts_test': [2010],
@@ -44,14 +44,14 @@ almost_all = {
    'absence': 'all',
    'intervention': 'all',
    'mobility': 'all',
-   'oaa_normalized': {'except': ['like_pl','like_percentile']}
+   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]}
    'snapshots': 'all'
    }
 basic = {
    'grades': {'except':['like__gpa','like_classes']},
    'demographics': 'all',
    'absence': ['absence*','absence_unexcused*','tardy*','tardy_unexcused*'],
-   'oaa_normalized': {'except': ['like_pl','like_percentile']}
+   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]}
    'snapshots': 'all'
    }
 
