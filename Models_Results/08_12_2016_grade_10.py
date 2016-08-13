@@ -43,7 +43,7 @@ almost_all = {
    'absence': 'all',
    'intervention': 'all',
    'mobility': 'all',
-   'oaa_normalized': {'except': ['like_pl','like_percentile']}
+   'oaa_normalized': {'except': ['like_pl','like_percentile']},
    'snapshots': 'all'
    }
 basic = {

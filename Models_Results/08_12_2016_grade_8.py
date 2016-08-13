@@ -50,7 +50,7 @@ basic = {
    'grades': {'except':['like__gpa','like_classes']},
    'demographics': 'all',
    'absence': ['absence*','absence_unexcused*','tardy*','tardy_unexcused*'],
-   'oaa_normalized': {'except': ['like_pl','like_percentile', 8]}
+   'oaa_normalized': {'except': ['like_pl','like_percentile', 8]},
    'snapshots': 'all'
    }
 
