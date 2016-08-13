@@ -12,14 +12,14 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-   'batch_name' : '08_12_2016_grade_10', 
+   'batch_name' : '08_12_2016_grade_10',
    'model_classes': ['logit','DT','RF','ET','SVM'],
    'write_to_database': True,
    'user': 'ht',
    'test_set_type': 'temporal_cohort',
    'cv_criterions': ['custom_precision_5_15','custom_recall_5_15'],
    'n_folds': 5,
-   'prediction_grade': 10, 
+   'prediction_grade': 10,
    'cohorts_test': [2013],
    'cohorts_val': [2012],
    'debug': False,
@@ -50,7 +50,7 @@ basic = {
    'grades': {'except':['like__gpa','like_classes']},
    'demographics': 'all',
    'absence': ['absence*','absence_unexcused*','tardy*','tardy_unexcused*'],
-   'oaa_normalized': {'except': ['like_pl','like_percentile']}
+   'oaa_normalized': {'except': ['like_pl','like_percentile']},
    'snapshots': 'all'
    }
 
