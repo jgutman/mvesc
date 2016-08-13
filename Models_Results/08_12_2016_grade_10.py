@@ -31,8 +31,8 @@ template_options = {
 outcome_list = ['not_on_time', 'definite', 'definite_plus_ogt']
 max_year = min(template_options['cohorts_val'])
 max_grade = template_options['prediction_grade']
-cohorts = [range(2008, max_year), range(2009, max_year)]
-grade_ranges = [range(max_grade-2,max_grade),range(max_grade-3,max_grade)]
+cohorts = [range(2007, max_year), range(2008, max_year)]
+grade_ranges = [range(max_grade-1,max_grade),range(max_grade-2,max_grade)]
 time_scales = list(zip(cohorts,grade_ranges)) # change with prediction grade
 
 downsample_list = [None, .8, .9]

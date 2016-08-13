@@ -12,7 +12,7 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-   'batch_name' : '08_12_2016_grade_10',
+   'batch_name' : '08_12_2016_grade_7',
    'model_classes': ['logit','DT','RF','ET','SVM'],
    'write_to_database': True,
    'user': 'ht',
@@ -20,8 +20,8 @@ template_options = {
    'cv_criterions': ['custom_precision_5_15','custom_recall_5_15'],
    'n_folds': 5,
    'prediction_grade': 7,
-   'cohorts_test': [2011],
-   'cohorts_val': [2010],
+   'cohorts_test': [2010],
+   'cohorts_val': [2009],
    'debug': False,
    'imputation': 'median_plus_dummies',
    'scaling': 'robust',
@@ -31,8 +31,8 @@ template_options = {
 outcome_list = ['not_on_time', 'definite', 'definite_plus_ogt']
 max_year = min(template_options['cohorts_val'])
 max_grade = template_options['prediction_grade']
-cohorts = [range(2008, max_year), range(2009, max_year)]
-grade_ranges = [range(max_grade-2,max_grade),range(max_grade-3,max_grade)]
+cohorts = [range(2007, max_year), range(2008, max_year)]
+grade_ranges = [range(max_grade-1,max_grade),range(max_grade-2,max_grade)]
 time_scales = list(zip(cohorts,grade_ranges)) # change with prediction grade
 
 downsample_list = [None, .8, .9]
