@@ -68,8 +68,8 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
          for outcome in outcome_list:
             template_options['outcome'] = outcome
             for years, grades in time_scales:
-               if len(years)==1 and 'cohort' in cv_scheme:
-                  continue
+               #if len(years)==1 and 'cohort' in cv_scheme:
+                #  continue
                template_options['cohorts_training']=years
                template_options['feature_grade_range']=grades
                # innermost layer of loop
