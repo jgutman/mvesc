@@ -233,7 +233,8 @@ def clean_column(cursor, values, old_column_name, table_name,
     cursor.execute(clean_col_query, params)
 
 ############ Functions to data frame processing ###################
-def df2num(rawdf, drop_reference = True, dummify = True):
+def df2num(rawdf, drop_reference = True, dummify = True,
+        drop_entirely_null = True):
     """ Convert data frame with numeric variables and strings
     to numeric dataframe, and drops reference category optionally
 
@@ -248,7 +249,8 @@ def df2num(rawdf, drop_reference = True, dummify = True):
     (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
 
     """
-    rawdf.dropna(axis='columns', how='all', inplace=True)
+    if drop_entirely_null:
+        rawdf.dropna(axis='columns', how='all', inplace=True)
     if not dummify:
         return rawdf
     numeric_df = rawdf.select_dtypes(include=[np.number])
