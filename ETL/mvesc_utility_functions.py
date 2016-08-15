@@ -225,7 +225,7 @@ def clean_column(cursor, values, old_column_name, table_name, \
         count += 1
     clean_col_query += "else {0} end; ".format(old_column_name)
 
-    if replace:
+    if replace and old_column_name != new_column_name:
         clean_col_query += """
         alter table {schema}.{table} rename column "{old}" to "{new}"
         """.format(schema=schema_name, table=table_name,
