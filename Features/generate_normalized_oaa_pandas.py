@@ -9,23 +9,6 @@ import yaml
 ## Makes normalization and corrections in Pandas and writes it to Postgres
 ## Note: This is relatively slow because of (1) for loop and (2) writing to Postgres
 
-def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
-    """ dump dataframe object to postgres database
-    
-    :param pandas.DataFrame df: dataframe
-    :param int nrows: number of rows to write to table;
-    :return str table_name: table name of the sql table
-    :rtype str: the name of the created table name
-    """
-    # create a postgresql engine to wirte to postgres
-    engine = postgres_engine_generator()
-    
-    #write the data frame to postgres
-    if nrows==-1:
-        df.to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    else:
-        df.iloc[:nrows, :].to_sql(table_name, engine, schema=schema, index=False, if_exists=if_exists)
-    return table_name
 
 def get_table_of_student_in_grade_which_year(students_with_outcomes):
     """ Looks at clean.all_snapshots and gets which year each student was in a grade.
@@ -53,7 +36,7 @@ def get_table_of_student_in_grade_which_year(students_with_outcomes):
     wide_year_took_oaa = year_took_oaa.pivot(columns='grade', values='school_year')
     wide_year_took_oaa.columns = ['was_in_grade_{}'.format(int(x)) for x in wide_year_took_oaa.columns]
     wide_year_took_oaa.reset_index(inplace=True)
-    print('combinations of student_lookup and years table has been created')
+    print(' - combinations of student_lookup and years table has been created')
     
     # set index on oaa_raw
     # copy the wide table to fill in null values
@@ -76,7 +59,7 @@ def get_table_of_student_in_grade_which_year(students_with_outcomes):
             if pd.isnull(row['was_in_grade_{}'.format(right_col-1)]):
                 wide_year_took_oaa['was_in_grade_{}'.format(right_col-1)][index]\
                 = wide_year_took_oaa['was_in_grade_{}'.format(right_col)][index] - 1
-    print('filled in missing spaces using -1')
+    print(' - filled in missing spaces using -1')
 
     return wide_year_took_oaa
 
@@ -109,7 +92,7 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
 
     # record test names to use later
     list_of_year_test_types = uniqueColNames[6:]
-    print("List of Tests to Include")
+    print(" - List of Tests to Include")
     print(list_of_year_test_types)
 
     # mapping for converting the non-numeric values
@@ -145,7 +128,7 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
     # write table as oaaogt_numeric
     # df2postgres(oaa_raw, 'oaaogt_numeric', schema = 'clean', if_exists = 'replace')
     # print confirmation
-    print('oaaogt_numeric has been created')
+    print(' - oaaogt_numeric has been created')
     # set index on oaa_raw
     oaa_raw.set_index('student_lookup', drop = False, inplace = True)
     # return list of columns
@@ -244,9 +227,9 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_df, list_of_year_test_t
     # reset index
     oaa_normalized.reset_index('student_lookup', inplace = True)
 
-    print("OAA Normalized and Placement Table Made")
+    print(" - OAA Normalized and Placement Table Made")
     df2postgres(oaa_normalized, table_name, schema = 'model', if_exists = 'replace')
-    print("OAA Normalized Uploaded to Postgres")
+    print(" - OAA Normalized Uploaded to Postgres")
     return(oaa_normalized)
 
 # def aggregate_duplicate_normalized_oaa_scores(cursor, table_name, schema = 'model',
@@ -281,14 +264,34 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_df, list_of_year_test_t
 
 #     print("Finished collapsing duplicate student_lookups in normalized oaa scores")
 
+def wordGrade_to_numGrade(column):
+    """ Map from clumn name with word-number to numeric number, 
+    e.g. third_read_ss->read_ss_gr_3
+    
+    :param str column: column name
+    :return str new_column: new column name
+    :rtype str
+    """
+    grade = column.split('_')[0]
+    word2num = {'eighth':8, 'fifth':5, 'fourth':4, 'seventh':7, 'sixth':6, 'third':3}
+    if grade in word2num:
+        subject = column.split('_')[1:]
+        new_column = '_'.join(subject)+'_gr_'+str(word2num[grade])
+        return(new_column)
+    else:
+        return('')
+
 
 def main():
+    # constant parameters
     # only keep students with outcomes
+    schema, table = 'model', 'oaa_normalized'
     with postgres_pgconnection_generator() as connection:
             # read in clean.oaaogt table
-            students_with_outcomes = pd.read_sql_query("""select distinct student_lookup                                     
-        from clean.wrk_tracking_students                                   
-        where outcome_category is not null;""", connection, )
+            students_with_outcomes = pd.read_sql_query("""
+            select distinct student_lookup 
+            from clean.wrk_tracking_students
+            where outcome_category is not null;""", connection)
     # set index for merging
     students_with_outcomes.set_index('student_lookup', drop=False, inplace = True)
 
@@ -302,15 +305,22 @@ def main():
     # generate and upload table
     oaa_normalized = generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric_no_dup, 
                                                     list_of_year_test_types,
-                                                    table_name = 'oaa_normalized')
+                                                    table_name = table)
+    
+    # update column names [third ~ eighth] to gr_[3-8]
+    with postgres_pgconnection_generator() as conn:
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            oaa  = read_table_to_df(conn, table_name=table, schema=schema)
+            columns = oaa.columns[1:]
+            dict_newcolumns = {c:wordGrade_to_numGrade(c) for c in columns}
+            for c in dict_newcolumns:
+                sqlcmd = """ALTER TABLE {s}.{t} RENAME COLUMN {c} TO {nc};
+                """.format(s=schema, t=table, c=c, nc=dict_newcolumns[c])
+                #print(sqlcmd)
+                cursor.execute(sqlcmd)
+        conn.commit()
 
-    # no longer neeed because we implemented aggregation in pandas
-#     # fix the duplicate rows in SQL
-#     with postgres_pgconnection_generator() as connection:
-#         with connection.cursor() as cursor:
-#             aggregate_duplicate_normalized_oaa_scores(cursor,
-#                                                       table_name = 'oaa_normalized', schema = 'model')
-#             connection.commit()
 
 if __name__ == '__main__':
     main()
