@@ -42,7 +42,7 @@ def build_test_feature_set(options, current_year = 2016):
     # build dataframe containing student_lookup
     # and all features as numeric non-categorical values
     test_outcomes.set_index('student_lookup', inplace=True)
-    test_outcomes = df2num(test_outcomes)
+    test_outcomes = df2num(test_outcomes, drop_reference = False)
     return test_outcomes
 
 def test_impute_and_scale(test_outcomes, options):
@@ -51,7 +51,7 @@ def test_impute_and_scale(test_outcomes, options):
             options['cohort_grade_level_begin'],
             options['cohorts_test'], options['cohorts_val'],
             options['cohorts_training'])
-    
+    test_outcomes
 
 def main():
     model_name = 'RF'
