@@ -1,0 +1,2523 @@
+param_set_0.yaml written!
+logit: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.17 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 5.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.073 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.092 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.8 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 9.4e+01 seconds elapsed
+param set 0 finished: run for 94.40829706192017 seconds so far
+param_set_1.yaml written!
+logit: 2.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.24 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.4e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.089 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 1 finished: run for 215.10246443748474 seconds so far
+param_set_2.yaml written!
+logit: 1.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.28 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.6e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.085 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 5.1 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.5e+02 seconds elapsed
+param set 2 finished: run for 365.1800584793091 seconds so far
+param_set_3.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.31 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.2e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.081 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.091 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 9.6e+01 seconds elapsed
+param set 3 finished: run for 461.75110054016113 seconds so far
+param_set_4.yaml written!
+logit: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.13 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 5.1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.06 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.09 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.1 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 4 finished: run for 574.7645034790039 seconds so far
+param_set_5.yaml written!
+logit: 2.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.17 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 6.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.074 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.14 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 9.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 5 finished: run for 684.8424789905548 seconds so far
+param_set_6.yaml written!
+logit: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.33 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 9.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.3e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 2.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.083 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.21 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.3e+01 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.4e+02 seconds elapsed
+param set 6 finished: run for 829.158340215683 seconds so far
+param_set_7.yaml written!
+logit: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.27 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.4e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.081 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.09 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 9.6 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.9e+02 seconds elapsed
+param set 7 finished: run for 1015.6871585845947 seconds so far
+param_set_8.yaml written!
+logit: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.21 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.097 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.08 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 8 finished: run for 1132.8159368038177 seconds so far
+param_set_9.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.053 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.066 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.6 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 6.6e+01 seconds elapsed
+param set 9 finished: run for 1199.620801448822 seconds so far
+param_set_10.yaml written!
+logit: 1.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.25 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 8.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.073 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.14 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.3 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1e+02 seconds elapsed
+param set 10 finished: run for 1304.4937090873718 seconds so far
+param_set_11.yaml written!
+logit: 3.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.26 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.2e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.084 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 11 finished: run for 1433.285147190094 seconds so far
+param_set_12.yaml written!
+logit: 2.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.25 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.3e+02 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.078 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 5.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.2e+02 seconds elapsed
+param set 12 finished: run for 1650.6487667560577 seconds so far
+param_set_13.yaml written!
+logit: 2.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.33 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 9.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.7e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.1 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.081 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 13 finished: run for 1763.3955869674683 seconds so far
+param_set_14.yaml written!
+logit: 1.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.21 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.08 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.16 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.2 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 8.3e+01 seconds elapsed
+param set 14 finished: run for 1847.5526123046875 seconds so far
+param_set_15.yaml written!
+logit: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.22 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 8.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.075 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.17 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 15 finished: run for 1969.6247034072876 seconds so far
+param_set_16.yaml written!
+logit: 1.1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.35 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 1.1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.6e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.079 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1e+01 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.6e+02 seconds elapsed
+param set 16 finished: run for 2125.7290444374084 seconds so far
+param_set_17.yaml written!
+logit: 6.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.27 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 1.2e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 2.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.082 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 17 finished: run for 2256.076955318451 seconds so far
+param_set_18.yaml written!
+logit: 4.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.3e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.07 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.077 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.8 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 9.9e+01 seconds elapsed
+param set 18 finished: run for 2355.466764688492 seconds so far
+param_set_19.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.15 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 4.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 5.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.078 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.092 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 9e+01 seconds elapsed
+param set 19 finished: run for 2445.672844648361 seconds so far
+param_set_20.yaml written!
+logit: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.14 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.88 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.095 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.11 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 5.6 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1e+02 seconds elapsed
+param set 20 finished: run for 2549.018781900406 seconds so far
+param_set_21.yaml written!
+logit: 2.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.33 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.12 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.19 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 8.6 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 21 finished: run for 2678.357387304306 seconds so far
+param_set_22.yaml written!
+logit: 2.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.25 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 4.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.086 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.29 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 9.8e+01 seconds elapsed
+param set 22 finished: run for 2776.6894595623016 seconds so far
+param_set_23.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.19 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 7.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.1 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.2 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 8.6e+01 seconds elapsed
+param set 23 finished: run for 2863.8147265911102 seconds so far
+param_set_24.yaml written!
+logit: 0.53 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.13 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.86 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.053 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.17 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 0.72 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 8.8e+01 seconds elapsed
+param set 24 finished: run for 2952.8532247543335 seconds so far
+param_set_25.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.16 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.85 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.072 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.8e+02 seconds elapsed
+param set 25 finished: run for 3231.8592250347137 seconds so far
+param_set_26.yaml written!
+logit: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.24 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.082 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.09 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.1e+01 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.7e+02 seconds elapsed
+param set 26 finished: run for 3505.8864204883575 seconds so far
+param_set_27.yaml written!
+logit: 3.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.22 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.078 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.088 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.2 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.6e+02 seconds elapsed
+param set 27 finished: run for 3761.9698009490967 seconds so far
+param_set_28.yaml written!
+logit: 2.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.28 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.069 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.075 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 5.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.3e+02 seconds elapsed
+param set 28 finished: run for 3991.51073884964 seconds so far
+param_set_29.yaml written!
+logit: 0.71 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 4.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.47 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.59 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.054 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.057 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.7e+02 seconds elapsed
+param set 29 finished: run for 4165.626606225967 seconds so far
+param_set_30.yaml written!
+logit: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.08 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 30 finished: run for 4294.462447166443 seconds so far
+param_set_31.yaml written!
+logit: 1.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 1e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.084 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 31 finished: run for 4405.059071779251 seconds so far
+param_set_32.yaml written!
+logit: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.3e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.094 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.094 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 32 finished: run for 4515.548341989517 seconds so far
+param_set_33.yaml written!
+logit: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.19 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.5e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.073 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.15 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 33 finished: run for 4626.8673276901245 seconds so far
+param_set_34.yaml written!
+logit: 0.62 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.12 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.63 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.054 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.057 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.2 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 6.9e+01 seconds elapsed
+param set 34 finished: run for 4697.296383142471 seconds so far
+param_set_35.yaml written!
+logit: 1.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.23 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.083 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.12 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1e+02 seconds elapsed
+param set 35 finished: run for 4800.767600774765 seconds so far
+param_set_36.yaml written!
+logit: 6.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.33 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 9.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 4.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.1 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.089 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.1e+01 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 36 finished: run for 4929.138376951218 seconds so far
+param_set_37.yaml written!
+logit: 4.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.24 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.087 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.089 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 37 finished: run for 5038.707793951035 seconds so far
+param_set_38.yaml written!
+logit: 2.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.27 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.071 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.16 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 5.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 8.6e+01 seconds elapsed
+param set 38 finished: run for 5125.317698717117 seconds so far
+param_set_39.yaml written!
+logit: 0.62 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.12 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.71 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.058 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.06 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.8 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 6.6e+01 seconds elapsed
+param set 39 finished: run for 5191.6747624874115 seconds so far
+param_set_40.yaml written!
+logit: 1.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.13 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.81 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.075 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.1 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 40 finished: run for 5325.364953517914 seconds so far
+param_set_41.yaml written!
+logit: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.28 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 9.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.076 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.14 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.8 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 41 finished: run for 5448.723681926727 seconds so far
+param_set_42.yaml written!
+logit: 2.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.21 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.071 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.085 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.6 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 42 finished: run for 5576.882649421692 seconds so far
+param_set_43.yaml written!
+logit: 0.94 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.92 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.086 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.1 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 8.7e+01 seconds elapsed
+param set 43 finished: run for 5664.832895755768 seconds so far
+param_set_44.yaml written!
+logit: 0.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 4.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.35 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.051 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.062 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 0.81 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 44 finished: run for 5785.233538150787 seconds so far
+param_set_45.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.14 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.93 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.066 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.082 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.2e+02 seconds elapsed
+param set 45 finished: run for 5909.078205347061 seconds so far
+param_set_46.yaml written!
+logit: 2.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 6.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.076 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 6.7 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.1e+02 seconds elapsed
+param set 46 finished: run for 6015.1117062568665 seconds so far
+param_set_47.yaml written!
+logit: 4.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.072 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.11 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 7.2 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1e+02 seconds elapsed
+param set 47 finished: run for 6119.23419880867 seconds so far
+param_set_48.yaml written!
+logit: 1.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.31 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 7.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.062 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.068 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 3.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.9e+02 seconds elapsed
+param set 48 finished: run for 6306.81475186348 seconds so far
+param_set_49.yaml written!
+logit: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 4.5 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.34 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.74 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.05 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.074 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 1.1 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.3e+02 seconds elapsed
+param set 49 finished: run for 6539.8128490448 seconds so far
+param_set_50.yaml written!
+logit: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.13 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.85 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.74 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.1 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.16 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 2.7e+02 seconds elapsed
+param set 50 finished: run for 6810.635380268097 seconds so far
+param_set_51.yaml written!
+logit: 1.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.21 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 9.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 2.1e+02 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.084 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.18 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 3e+02 seconds elapsed
+param set 51 finished: run for 7112.563224077225 seconds so far
+param_set_52.yaml written!
+logit: 2.3 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.29 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 8.6 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 6.2e+01 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 1.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.072 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.081 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.4 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 1.3e+02 seconds elapsed
+param set 52 finished: run for 7245.973659515381 seconds so far
+param_set_53.yaml written!
+logit: 1.2 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.24 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.85 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.068 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.067 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 2.0 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 7.2e+01 seconds elapsed
+param set 53 finished: run for 7318.256617307663 seconds so far
+param_set_54.yaml written!
+logit: 0.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 2.9 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.7 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 3.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.51 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.05 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.055 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 0.46 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 6.5e+01 seconds elapsed
+param set 54 finished: run for 7384.16139960289 seconds so far
+param_set_55.yaml written!
+logit: 1.4 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+DT: 0.13 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+RF: 3.1 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+ET: 2.8 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+AB: 5.0 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+SVM: 0.87 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+GB: 0.74 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+NB: 0.067 seconds elapsed
+student predictions written to database
+top features not implemented for NB
+top features not implemented for NB
+row added
+SGD: 0.082 seconds elapsed
+student predictions written to database
+feature importances written to database
+row added
+KNN: 4.5 seconds elapsed
+student predictions written to database
+top features not implemented for KNN
+top features not implemented for KNN
+row added
+clf_loop: 7.8e+01 seconds elapsed
+param set 55 finished: run for 7462.938449621201 seconds so far
+param_set_56.yaml written!
+{'scaling': 'standard', 'cv_criterions': ['custom_precision_5', 'custom_precision_10', 'custom_recall_5', 'f1'], 'test_set_type': 'temporal_cohort', 'feature_grade_range': range(8, 10), 'write_to_database': True, 'name': 'param_set_56', 'debug': False, 'cohorts_test': [2013], 'n_folds': 5, 'cohorts_training': range(2008, 2012), 'description': 'Running k-fold cv with grades features', 'batch_name': 'grades_features_08_08_2016', 'features': {'grades': ['gpa*', 'language_gpa*', 'stem_gpa*', 'humanities_gpa*', 'art_gpa*', 'health_gpa*', 'future_prep_gpa*', 'interventions_gpa*', 'language_gpa*', 'num_language_classes*', 'num_stem_classes*', 'num_humanities_classes*', 'num_art_classes*', 'num_health_classes*', 'num_future_prep_classes*', 'num_interventions_classes*', 'num_language_classes*', 'percent_passed_pf_classes*', 'num_pf_classes*', 'gpa_district*']}, 'model_classes': ['logit', 'DT', 'RF', 'ET', 'AB', 'SVM', 'GB', 'NB', 'SGD', 'KNN'], 'random_seed': 1470692943.830014, 'cv_scheme': 'k_fold', 'cohorts_val': [2012], 'prediction_grade': 10, 'outcome': 'definite', 'imputation': 'mean_plus_dummies', 'user': 'ht'}
+batch grades_features_08_08_2016: 7.5e+03 seconds elapsed
