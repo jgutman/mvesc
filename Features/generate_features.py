@@ -32,10 +32,7 @@ generate_demographic_features.main()
 print("--- working on generating model.snapshots table ... ")
 generate_snapshot_features.main()
 print("--- working on generating model.absence table ... ")
-# call functions
-# generate_consec_absence_columns.main() # slow, does not require snapshots
 generate_absence_features.main()
-
 print("--- working on generating model.mobility table ... ")
 generate_mobility_features.main()
 print("--- working on generating model.grades table ... ")
