@@ -61,4 +61,10 @@ upsample_param: {% if upsample_param %} {{upsample_param}}
 sample_wt_ratio: {% if sample_wt_ratio %} {{sample_wt_ratio}} 
 {% else %} !!null
 {% endif %}
+drop_reference: {% if drop_reference %} {{drop_reference}} 
+{% else %} True
+{% endif %}
+dummify: {% if dummify %} {{dummify}} 
+{% else %} True
+{% endif %}
 

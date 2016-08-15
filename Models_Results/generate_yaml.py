@@ -39,6 +39,8 @@ def generate_yaml(template_options, yaml_location=None):
     upsample_param (float)
     sample_wt_ratio (float)
     subset_n (int)
+    drop_reference (bool)
+    dummify (bool)
 
     the features dictionary should have table names as keys, 
     with each value being either:
@@ -154,7 +156,8 @@ def main():
         'imputation': 'median_plus_dummies',
         'scaling': 'robust',
         'debug': True,
-        'upsample_param': .9
+        'upsample_param': .9,
+        'drop_reference': False
     }    
     
     generate_yaml(template_options)
