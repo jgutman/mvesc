@@ -27,6 +27,7 @@ print('oaaogt cleaned')
 #snapshots
 cleaning_all_snapshots.main()
 deduplication.main()
+execute_sql_script("all_absences_add_grade_column.sql")
 print('all_snapshots cleaned')
 
 #intervention
