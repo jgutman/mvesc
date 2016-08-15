@@ -1,0 +1,166 @@
+batch_name:
+  all_features_08_08_2016
+model_classes_selected: 
+  - logit 
+  - DT 
+  - RF 
+  - ET 
+  - AB 
+  - SVM 
+  - GB 
+  - NB 
+  - SGD 
+  - KNN 
+  
+user_description: Running k-fold cv with grades features
+file_save_name: param_set_2
+write_predictions_to_database: True
+user: ht
+debug: False
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: leave_cohort_out
+cohort_grade_level_begin: cohort_10th
+prediction_grade_level: 10
+feature_grade_range: 
+  - 7
+  - 8
+  - 9
+  
+
+cohorts_test: 
+  - 2013
+  
+cohorts_val: 
+  - 2012
+  
+cohorts_training:
+  - 2009
+  - 2010
+  - 2011
+  
+random_seed: 1470686297.822667
+validation_criterion: 
+  - custom_precision_5
+  - custom_precision_10
+  - custom_recall_5
+  - f1
+  
+features_included:
+  snapshots: 
+    - disadvantagement*
+    - disability*
+    - district*
+    - gifted*
+    - iss*
+    - oss*
+    - limited_english*
+    - special_ed*
+    - status*
+    - days_absent*
+    - days_absent_excused*
+    - days_absent_unexcused*
+    - days_present*
+    - discipline_incidents*
+    - section_504_plan*
+    
+  absence: 
+    - absence*
+    - absence_unexcused*
+    - tardy*
+    - tardy_unexcused*
+    - medical*
+    - absence_consec*
+    - tardy_consec*
+    
+  oaa_normalized: 
+    - third_read_normalized
+    - third_read_percentile
+    - third_read_pl
+    - third_math_normalized
+    - third_math_percentile
+    - third_math_pl
+    - fourth_read_normalized
+    - fourth_read_percentile
+    - fourth_read_pl
+    - fourth_math_normalized
+    - fourth_math_percentile
+    - fourth_math_pl
+    - fifth_read_normalized
+    - fifth_read_percentile
+    - fifth_read_pl
+    - fifth_math_normalized
+    - fifth_math_percentile
+    - fifth_math_pl
+    - fifth_socstudies_normalized
+    - fifth_socstudies_pl
+    - fifth_science_normalized
+    - fifth_science_percentile
+    - fifth_science_pl
+    - sixth_read_normalized
+    - sixth_read_percentile
+    - sixth_read_pl
+    - sixth_math_normalized
+    - sixth_math_percentile
+    - sixth_math_pl
+    - seventh_read_normalized
+    - seventh_read_percentile
+    - seventh_read_pl
+    - seventh_math_normalized
+    - seventh_math_percentile
+    - seventh_math_pl
+    - eighth_read_normalized
+    - eighth_read_percentile
+    - eighth_read_pl
+    - eighth_math_normalized
+    - eighth_math_percentile
+    - eighth_math_pl
+    - eighth_science_normalized
+    - eighth_science_percentile
+    - eighth_science_pl
+    
+  demographics: 
+    - ethnicity
+    - gender
+    
+  mobility: 
+    - n_addresses_to*
+    - n_districts_to*
+    - n_cities_to*
+    - n_records_to*
+    - avg_address_change_to*
+    - avg_district_change_to*
+    - avg_city_change_to*
+    - street_transition_in*
+    - district_transition_in*
+    - city_transition_in*
+    - mid_year_withdraw*
+    
+  grades: 
+    - gpa*
+    - language_gpa*
+    - stem_gpa*
+    - humanities_gpa*
+    - art_gpa*
+    - health_gpa*
+    - future_prep_gpa*
+    - interventions_gpa*
+    - language_gpa*
+    - num_language_classes*
+    - num_stem_classes*
+    - num_humanities_classes*
+    - num_art_classes*
+    - num_health_classes*
+    - num_future_prep_classes*
+    - num_interventions_classes*
+    - num_language_classes*
+    - percent_passed_pf_classes*
+    - num_pf_classes*
+    - gpa_district*
+    
+  
+outcome_name: not_on_time
+missing_impute_strategy: median_plus_dummies
+feature_scaling: robust
+
+subset_n:  !!null 
