@@ -51,7 +51,7 @@ def test_impute_and_scale(test_outcomes, options):
             options['cohort_grade_level_begin'],
             options['cohorts_test'], options['cohorts_val'],
             options['cohorts_training'])
-    test_outcomes
+    test_outcomes = test_outcomes[train.columns]
 
 def main():
     model_name = 'RF'
