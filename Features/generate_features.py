@@ -1,6 +1,17 @@
 # Inital v0 of a script to take in options file and generate
 #	the corresponding outcomes and features for prediction.
 # Generates all possible features we're considering
+
+# use this to get the 'execute_sql_script' function
+import os, sys
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
+sys.path.insert(0,parentdir)
+from mvesc_utility_functions import execute_sql_script
+
 import generate_demographic_features
 import generate_snapshot_features
 import generate_mobility_features
@@ -42,3 +53,7 @@ print("--- working on generating model.grades table ... ")
 generate_gpa.main()
 print("--- working on generating model.oaa_normalized table ... ")
 generate_normalized_oaa_pandas.main() # a bit slow due to for loop and writing to postgres from pandas
+
+# use feature utilities to execute the sql file
+print("--- adding a new outcome to the model.outcome table based on ogt, absences, gpa")
+execute_sql_script('add_new_outcome_on_ogt.sql')

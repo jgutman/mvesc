@@ -2,7 +2,7 @@
 -- MAKE OGT_PASSFAIL TABLE --
 -----------------------------
 
--- convert oaaogt to numeric
+-- convert clean.oaaogt columns to numeric
 drop table if exists ogt_temp;
 create temp table ogt_temp as (
 	select student_lookup, 
@@ -29,6 +29,7 @@ create temp table ogt_temp as (
 	from clean.oaaogt
 );
 
+-- Add in indicators for if a student took a test and passed tests (> 399)
 drop table if exists ogt_pass_temp;
 create temp table ogt_pass_temp as (
 	select student_lookup,
@@ -76,6 +77,7 @@ create temp table ogt_pass_temp as (
 	from ogt_temp
 );
 
+-- Count the number of passed and taken OGT tests per student
 alter table ogt_pass_temp add num_ogt_passed int;
 update ogt_pass_temp set
 	num_ogt_passed = ogt_read_pass + ogt_math_pass + ogt_write_pass +
@@ -85,6 +87,7 @@ update ogt_pass_temp set
 	num_ogt_took = ogt_read_took + ogt_math_took + ogt_write_took +
 		ogt_science_took + ogt_socstudies_took;
 
+-- Add passfail table to model folder
 drop table if exists model.ogt_passfail;
 create table model.ogt_passfail as (
 	select student_lookup, num_ogt_passed, num_ogt_took from ogt_pass_temp
