@@ -35,22 +35,21 @@ time_scales = list(zip(prediction_grade_list, cohorts_test_list))
 downsample_list = [None, .8, .9]
 
 
-almost_all = {
-   'grades': 'all',
-   'demographics': 'all',
-   'absence': 'all',
-   'intervention': 'all',
-   'mobility': 'all',
-   'oaa_normalized': {'except': ['like_pl','like_percentile']},
-   'snapshots': 'all'
-   }
-
 with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
    c = 0; #counter for yaml naming
    for weight in downsample_list:
       template_options['downsample_param'] = weight
       for outcome in outcome_list:
          template_options['outcome'] = outcome
+         almost_all = {
+            'grades': 'all',
+            'demographics': 'all',
+            'absence': 'all',
+            'intervention': 'all',
+            'mobility': 'all',
+            'oaa_normalized': {'except': ['like_pl','like_percentile']},
+            'snapshots': 'all'
+         }
          for grade, test in time_scales:
             template_options['prediction_grade'] = grade
             template_options['cohorts_test'] = [test ]
