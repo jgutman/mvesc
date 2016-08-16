@@ -110,7 +110,8 @@ def test_impute_and_scale(test_outcomes, options):
         "train and current_students have different columns"
     return test_outcomes
 
-def make_and_save_predictions(future_predictions, clf, filename):
+def make_and_save_predictions(future_predictions, clf, filename,
+        current_year = 2016):
     """
     Takes a feature design matrix for current students with student lookup as
     index, and a classifier, and writes these soft/hard predictions on these
@@ -121,6 +122,7 @@ def make_and_save_predictions(future_predictions, clf, filename):
             corresponding to the features in the model and index student_lookup
         sklearn estimator clf: some binary classifier
         str filename: the filename for clf to write to the database
+        int current_year: current_year to include in predictions table_name
     returns: writes predictions for the model to the database
     rtype: None
     """
@@ -136,7 +138,12 @@ def make_and_save_predictions(future_predictions, clf, filename):
         'future_scores' : future_set_scores,
         'future_preds' : clf.predict(future_predictions)
     }
-    write_scores_to_db(saved_outputs, importance_scores = False)
+    if current_year:
+        new_table = 'predictions_' + str(current_year)
+    else:
+        new_table = 'predictions'
+    write_scores_to_db(saved_outputs, table_name = new_table,
+        importance_scores = False)
 
 def write_model_predictions_to_db(model_name, filename, current_year = 2016):
     """
@@ -157,7 +164,8 @@ def write_model_predictions_to_db(model_name, filename, current_year = 2016):
     clf, options = read_in_model(filename, model_name)
     future_predictions = build_test_feature_set(options, current_year)
     future_predictions = test_impute_and_scale(future_predictions, options)
-    make_and_save_predictions(future_predictions, clf, filename)
+    make_and_save_predictions(future_predictions, clf, filename,
+        current_year)
 
 def main():
     parser = OptionParser()

@@ -236,12 +236,14 @@ def summary_to_db(saved_outputs):
         connection.commit()
     print('row added')
 
-def write_scores_to_db(saved_outputs, importance_scores = True):
+def write_scores_to_db(saved_outputs, table_name = 'predictions',
+        importance_scores = True):
     """
     Writes all the feature scores and student predictions to a table
     in the database
 
     :param dict saved_outputs: output from a model in estimate_prediction_model
+    :param str table_name: name of table in model schema to output predictions
     :param boolean importance_scores: whether to generate and write
         feature importance scores for the model in saved_outputs
     :rtype: None
@@ -287,7 +289,7 @@ def write_scores_to_db(saved_outputs, importance_scores = True):
 
     # maybe we should output these predictions to multiple tables ?
     engine = postgres_engine_generator()
-    results.to_sql('predictions',  engine,
+    results.to_sql(table_name,  engine,
                    schema='model', if_exists = 'append')
     print('student predictions written to database')
 
