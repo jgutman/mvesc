@@ -242,7 +242,11 @@ def write_scores_to_db(saved_outputs, importance_scores = True):
     in the database
 
     :param dict saved_outputs: output from a model in estimate_prediction_model
+    :param boolean importance_scores: whether to generate and write
+        feature importance scores for the model in saved_outputs
+    :rtype: None
     """
+    # regular model predictions to write to db
     if 'test_y' in saved_outputs:
         # scores and predictions for each student
         test_label = pd.Series('test', index=saved_outputs['test_y'].index)
@@ -263,6 +267,7 @@ def write_scores_to_db(saved_outputs, importance_scores = True):
         results = pd.concat([test,val,train])
         results['filename'] = saved_outputs['file_name']
 
+    # predictions for current students without true labels
     elif 'future_index' in saved_outputs:
         # current students: true_label = NULL
         # split = current
@@ -276,10 +281,11 @@ def write_scores_to_db(saved_outputs, importance_scores = True):
         results['predicted_label'] = saved_outputs['future_preds']
         results['filename'] = saved_outputs['file_name']
 
-    else:
+    else: # error
         print("saved_outputs does not contain necessary keys, no results  written to database")
         return None
 
+    # maybe we should output these predictions to multiple tables ?
     engine = postgres_engine_generator()
     results.to_sql('predictions',  engine,
                    schema='model', if_exists = 'append')

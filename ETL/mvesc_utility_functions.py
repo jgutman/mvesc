@@ -239,14 +239,21 @@ def df2num(rawdf, drop_reference = True, dummify = True,
     to numeric dataframe, and drops reference category optionally
 
     :param pd.dataframe rawdf: raw data frame
-    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
+    :param boolean drop_reference: whether to drop the most frequent category
+    :param boolean dummify: whether to dummify string variables or leave as is
+    :param boolean drop_entirely_null: whether to remove features that are
+        null for everybody in the dataset
+
+    :returns pd.dataframe df: a data frame with strings converted to dummies, 
+        null columns removed, and other columns unchanged
     :rtype: pd.dataframe
     Rules:
     - 1. numeric columns unchanged;
-    - 2. strings converted to dummeis;
+    - 2. strings converted to dummies;
     - 3. the most frequent string is taken as reference
     - 4. new column name is: "ColumnName_Category"
-    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
+        (e.g., column 'gender' with 80 'M' and 79 'F' and 10 NULL;
+        the dummy column is 'gender_F', or 'gender_isnull')
 
     """
     if drop_entirely_null:
