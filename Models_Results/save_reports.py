@@ -44,7 +44,10 @@ class Top_features():
         coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
-        return top_coefs[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def SVM(model, columns, k):
         coefs = model.coef_
@@ -59,31 +62,46 @@ class Top_features():
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def GB(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def ET(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def AB(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
     def SGD(model, columns, k):
         coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
-        return top_coefs[:k]
+        if k == -1:
+            return top_feat
+        else:
+            return top_feat[:k]
 
 
 
