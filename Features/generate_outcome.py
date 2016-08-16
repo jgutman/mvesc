@@ -13,7 +13,7 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 def main():
-    schema, table = "model", "outcome2"
+    schema, table = "model", "outcome"
     source_schema, source_table = "clean", "wrk_tracking_students"
     snapshots = "all_snapshots"
     current_year = 2016
@@ -56,7 +56,9 @@ def main():
                 end as definite,
                 case
                     when outcome_category = '{predictions}' then 1
-                end as current_students
+                end as current_students,
+                outcome_bucket,
+                outcome_category
                 from {source_schema}.{source_table}
                 where outcome_category is not null
             ) as all_outcomes

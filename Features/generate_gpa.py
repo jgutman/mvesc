@@ -42,6 +42,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                 lower(mark) like 'a%' or  lower(mark) like 'b%' or  
                 lower(mark) like 'c%' or  lower(mark) like 'd%' or  
                 lower(mark) like 'f%';
+
             alter table letter_grades alter column mark 
                 type text using lower(mark);
             delete from letter_grades where 
@@ -101,25 +102,86 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             select * from  letter_standard_grades;
             """)
 
+            print('grades standardized')
+
+            # function for custom ordering
+            cursor.execute("""
+            create or replace function idx(anyarray, anyelement)
+            returns int as
+            $$
+            select i from (
+            select generate_series(array_lower($1,1),array_upper($1,1))
+            ) g(i)
+            where $2 like $1[i]
+            limit 1;
+            $$ language SQL immutable;
+            """)
+
             # selecting final grades and weighting by length
             cursor.execute("""
             create temp table avg_grades as
-            select student_lookup, course_code, avg(mark) as avg_mark, 
-                sum(percent_of_year) as course_length
+            select student_lookup, course_code, 
+            case when sum(percent_of_year) = 0 then null 
+                 else sum(mark*percent_of_year)/sum(percent_of_year) end 
+                 as avg_mark, 
+            sum(percent_of_year) as course_length
             from standard_grades
             group by student_lookup, course_code;
             
-            create temp table final_grades as
+            drop table if exists clean.final_grades;
+            create table clean.final_grades as 
             select distinct on (s.student_lookup, s.course_code) 
-                s.student_lookup, s.course_code, s.course_name,
-                case when clean_term = 'final' then mark else avg_mark end 
-                as final_mark,
-            course_length, s.grade
-            from standard_grades as s
-            left join avg_grades  as a
-            on s.student_lookup = a.student_lookup 
-            and s.course_code = a.course_code;
+            s.student_lookup, s.course_code, s.course_name,  
+            case when clean_term = 'final' then mark else avg_mark end       
+            as final_mark,                          
+            coalesce(nullif(course_length,0),1) as course_length,
+            s.grade, s.district
+            from standard_grades as s                               
+            left join avg_grades  as a 
+            on s.student_lookup = a.student_lookup               
+            and s.course_code = a.course_code
+            order by s.student_lookup, 
+                s.course_code,idx(array['final'], clean_term);
             """)
+
+            # district gpas
+            cursor.execute("""
+            create temp table district_mean as
+            select district, sum(final_mark * course_length)/sum(course_length) 
+                as district_gpa_mean
+            from clean.final_grades 
+            group by district;
+
+            create temp table district_grades as
+            select m.district, m.district_gpa_mean, 
+            n.district_gpa_std from district_mean as m left join (
+            select
+            sqrt(sum(course_length * (final_mark - district_gpa_mean)^2)
+                 /(sum(course_length)-1)) as district_gpa_std, d.district
+            from clean.final_grades as f
+            left join district_mean as d
+            on f.district = d.district
+            group by d.district
+            ) as n on n.district = m.district;
+            """)
+
+            cursor.execute( """
+            create temp table district_zscores as 
+            select student_lookup, grade, course_length,
+                (final_mark - district_gpa_mean)/district_gpa_std 
+                   as district_zscore
+            from clean.final_grades as f
+            left join
+            district_grades as d
+            on f.district = d.district
+            """)
+            
+            print('district stats calculated')
+
+            # adding subjects to final grades table
+            clean_column(cursor, 'class_subjects.json', 'course_name',
+                         'final_grades', new_column_name = 'subject',
+                         replace = 0, exact = 0)
 
             # yearly gpa
             gpa_query = """
@@ -136,7 +198,7 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                      then course_length end)
                 end as gpa_gr_{grade}, """.format(grade=grade)
             gpa_query = gpa_query[:-2] + """
-                from final_grades
+                from clean.final_grades
                 group by student_lookup;
                 """
             cursor.execute(gpa_query)
@@ -145,7 +207,35 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             """)
             gpa_col_list = ["gpa_gr_{}".format(gr)
                            for gr in grade_range]
-            
+
+            print('gpa calculated')
+
+            # district z-scores for gpa
+            district_gpa_query = """
+            create temp table district_gpa_zscores as
+            select student_lookup, """
+            for grade in grade_range:
+                district_gpa_query += """
+                case
+                when sum(case when grade = {grade} then course_length end) = 0 
+                     then 0
+                else sum(case when grade = {grade} then 
+                         district_zscore * course_length end)/
+                     sum(case when grade = {grade} then course_length end)
+                end as gpa_district_gr_{grade}, """.format(grade=grade)
+            district_gpa_query = district_gpa_query[:-2] + """
+                from district_zscores
+                group by student_lookup;
+                """
+            cursor.execute(district_gpa_query)
+            district_gpa_zscores_col_list = ['gpa_district_gr_{}'.format(g) 
+                                             for g in grade_range]
+            cursor.execute("""
+            create index district_index on district_gpa_zscores(student_lookup)
+            """)
+
+            print('normalized gpa calculated')
+
             # getting pass/fail classes
             cursor.execute("""
             create temp table pass_fail as
@@ -190,11 +280,64 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             pf_col_list += ["num_pf_classes_gr_{}".format(gr)
                            for gr in grade_range]
             
+
+            print('pass/fail classes calculated')
+
+            # grouping by subject
+            subject_list = ['language', 'stem','humanities','art','health',
+                            'future_prep','interventions']
+            subject_gpa_query = """
+            create temp table subject_gpa_counts as
+            select student_lookup, """
+            for grade in grade_range:
+                for i, subject in enumerate(subject_list):
+                    subject_gpa_query += """ 
+                    case
+                    when sum(case when grade = {grade} and subject = %({i})s
+                                  then course_length end) = 0 
+                    then 0
+                    else sum(case when grade = {grade} and subject = %({i})s
+                    then final_mark * course_length end)/
+                         sum(case when grade = {grade} and subject = %({i})s
+                                  then course_length end)
+                    end as {subject}_gpa_gr_{grade}, 
+                    sum(case when grade = {grade} and subject = %({i})s
+                             then 1 else 0 end) 
+                        as num_{subject}_classes_gr_{grade}, """\
+                        .format(grade=grade, subject=subject, i=i)
+            subject_gpa_query = subject_gpa_query[:-2] + """
+            from clean.final_grades
+            group by student_lookup;
+            """
+            subject_dict = dict(zip([str(i) for i in range(len(subject_list))],
+                                    subject_list))
+            cursor.execute(subject_gpa_query, subject_dict)
+            cursor.execute('select * from subject_gpa_counts limit 0')
+            subject_gpa_counts_cols = [i[0] for i in cursor.description]
+            subject_gpa_counts_cols.remove('student_lookup')
+            cursor.execute(""" 
+            create index subject_lookup_index on 
+            subject_gpa_counts(student_lookup)
+            """)
+
+
+            print('subject gpa calculated')
+
+
+            #cursor.execute("drop table clean.final_grades;")
+
+            update_column_with_join(cursor,table, 
+                                    column_list=subject_gpa_counts_cols,
+                                    source_table='subject_gpa_counts')
             update_column_with_join(cursor,table, column_list=gpa_col_list,
                                     source_table='gpa')
             update_column_with_join(cursor, table, 
                                     column_list=pf_col_list,
                                     source_table='pf_features')
+            update_column_with_join(cursor, table,
+                                    column_list = district_gpa_zscores_col_list,
+                                    source_table = 'district_gpa_zscores')
+            print(' - All features added to grades table!')
                                         
         connection.commit()
 

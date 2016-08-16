@@ -18,11 +18,15 @@ feature_grade_range:
   {% for g in feature_grade_range %}- {{g}}
   {% endfor %}
 
-{% if cv_scheme == "n_folds" %} n_folds: {{n_folds}}
+{% if cv_scheme == "k_fold" %}n_folds: {{n_folds}}
 {% endif %}
 
-cohorts_held_out: 
-  {% for c in cohorts_held_out %}- {{c}}
+cohorts_test: 
+  {% for c in cohorts_test %}- {{c}}
+  {% endfor %}
+
+cohorts_val: 
+  {% for c in cohorts_val %}- {{c}}
   {% endfor %}
 
 cohorts_training:
@@ -31,6 +35,9 @@ cohorts_training:
 
 random_seed: {{random_seed}}
 validation_criterion: {{cv_criterion}}
+  {% for c in cv_criterions %}- {{c}}
+  {% endfor %}
+
 features_included:
   {% for t in features %}{{t}}: 
     {% for f in features[t] %}- {{f}}
@@ -41,3 +48,17 @@ features_included:
 outcome_name: {{outcome}}
 missing_impute_strategy: {{imputation}}
 feature_scaling: {{scaling}}
+
+subset_n: {% if subset_n %} {{subset_n}} 
+{% else %} !!null 
+{% endif %}
+downsample_param: {% if downsample_param %} {{downsample_param}} 
+{% else %} !!null 
+{% endif %}
+upsample_param: {% if upsample_param %} {{upsample_param}} 
+{% else %} !!null
+{% endif %}
+sample_wt_ratio: {% if sample_wt_ratio %} {{sample_wt_ratio}} 
+{% else %} !!null
+{% endif %}
+
