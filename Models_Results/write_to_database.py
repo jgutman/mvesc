@@ -118,6 +118,7 @@ def summary_to_db(saved_outputs):
     values['cv_scheme'] = model_options['parameter_cross_validation_scheme']
     values['imputation'] = model_options['missing_impute_strategy']
     values['scaling'] = model_options['feature_scaling']
+    values['downsample'] = model_options['downsample_param']
     values['train_acc'] = accuracy_score(train_y, train_preds)
     values['val_acc'] = accuracy_score(val_y, val_preds)
     values['test_acc'] = accuracy_score(test_y, test_preds)
@@ -181,6 +182,7 @@ def summary_to_db(saved_outputs):
                ('cv_score', 'float'),
                ('imputation','text'),
                ('scaling', 'text'),
+               ('downsample', 'text'),
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
                ('train_set', 'text'),
