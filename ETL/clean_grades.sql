@@ -9,49 +9,49 @@ case
 when lower(term) like '%year%final%' or  lower(term) like '%final%' or  lower(term_type) like '%final%' then 'final'
 when lower(term) like '%1%sem%' then 'semester 1'
 when lower(term) like '%2%sem%' then 'semester 2'
-when lower(term) like '%9%week%' or lower(term) like '%nine%week%' or 
-     lower(term) like '%quarter%' or lower(term) like '%grad%per%' 
+when lower(term) like '%9%week%' or lower(term) like '%nine%week%' or
+     lower(term) like '%quarter%' or lower(term) like '%grad%per%'
      then case
-     	  when lower(term) like '%1%' then 'quarter 1'	
+     	  when lower(term) like '%1%' then 'quarter 1'
 	  when lower(term) like '%2%' then 'quarter 2'
      	  when lower(term) like '%3%' then 'quarter 3'
 	  when lower(term) like '%4%' then 'quarter 4'
 	  else 'quarter'
      end
-when lower(term) like '%6%week%' or lower(term) like '%six%week%' 
+when lower(term) like '%6%week%' or lower(term) like '%six%week%'
      then case
-     	  when lower(term) like '%1%' then 'six weeks 1' 
-	  when lower(term) like '%2%' then 'six weeks 2' 
-	  when lower(term) like '%3%' then 'six weeks 3' 
-	  when lower(term) like '%4%' then 'six weeks 4' 
-	  when lower(term) like '%5%' then 'six weeks 5' 
-	  when lower(term) like '%6%' then 'six weeks 6' 
+     	  when lower(term) like '%1%' then 'six weeks 1'
+	  when lower(term) like '%2%' then 'six weeks 2'
+	  when lower(term) like '%3%' then 'six weeks 3'
+	  when lower(term) like '%4%' then 'six weeks 4'
+	  when lower(term) like '%5%' then 'six weeks 5'
+	  when lower(term) like '%6%' then 'six weeks 6'
       end
-when lower(term) in ('1st','2nd','3rd','4th') 
+when lower(term) in ('1st','2nd','3rd','4th')
      and lower(term_type) = 'term' or lower(term_type) = 'quarter'
-      then case 
+      then case
       when lower(term) like '%1%' then 'quarter 1'
       when lower(term) like '%2%' then 'quarter 2'
       when lower(term) like '%3%' then 'quarter 3'
       when lower(term) like '%4%' then 'quarter 4'
       end
-      when lower(term) in ('1st','2nd','3rd','4th') 
+      when lower(term) in ('1st','2nd','3rd','4th')
           and lower(term_type) = 'interim'
-      then case 
+      then case
  	    when lower(term) like '%1%' then 'mid-quarter 1'
 	    when lower(term) like '%2%' then 'mid-quarter 2'
 	    when lower(term) like '%3%' then 'mid-quarter 3'
 	    when lower(term) like '%4%' then 'mid-quarter 4'
             end
-        when lower(term) in ('1st','2nd','3rd','4th') 
-  	 and lower(term_type) = 'exam' 
-    then case 
+        when lower(term) in ('1st','2nd','3rd','4th')
+  	 and lower(term_type) = 'exam'
+    then case
     	 when lower(term) like '%1%' then 'exam quarter 1'
 	 when lower(term) like '%2%' then 'exam quarter 2'
 	 when lower(term) like '%3%' then 'exam quarter 3'
 	when lower(term) like '%4%' then 'exam quarter 4'
 	end
-end 
+end;
 --select distinct clean_term, count(clean_term) from clean.all_grades group by clean_term;
 
 alter table clean.all_grades add column percent_of_year float;
@@ -62,7 +62,7 @@ case -- 2 semesters, 4 9-weeks, 6 6-weeks in a year
      when clean_term like 'semester%' then .5
      when clean_term like 'quarter%' then .25
      when clean_term like 'six weeks%' then 1/6.0
-end
+end;
 
 
 
