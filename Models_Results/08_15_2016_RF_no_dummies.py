@@ -54,7 +54,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
             template_options['prediction_grade'] = grade
             template_options['cohorts_test'] = [test ]
             template_options['cohorts_val'] = [test - 1]
-            template_options['cohorts_training'] = [test - 2]
+            template_options['cohorts_training'] = range(2007, test-1)
             template_options['feature_grade_range'] = [grade - 1]
             if grade not in almost_all['oaa_normalized']['except']:
                almost_all['oaa_normalized']['except'].append(grade)

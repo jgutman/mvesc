@@ -26,7 +26,7 @@ template_options = {
 }
 
 
-outcome_list = ['not_on_time', 'definite', 'definite_plus_ogt']
+outcome_list = ['definite_plus_ogt', 'not_on_time', 'definite']
 
 prediction_grade_list = list(reversed([6,7,8,9,10]))
 cohorts_test_list = list(reversed([2009,2010,2011,2012,2013]))
@@ -54,7 +54,7 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
             template_options['prediction_grade'] = grade
             template_options['cohorts_test'] = [test]
             template_options['cohorts_val'] = [test - 1]
-            template_options['cohorts_training'] = [test - 2]
+            template_options['cohorts_training'] = range(2007, test-1)
             template_options['feature_grade_range'] = [grade - 1]
             if grade not in almost_all['oaa_normalized']['except']:
                almost_all['oaa_normalized']['except'].append(grade)
