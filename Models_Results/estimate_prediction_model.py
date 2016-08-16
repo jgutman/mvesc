@@ -557,7 +557,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
                     user = model_options['user'],
                     number = count),
         'estimator' : clf,
-        'estimator_features' : list(train_X.columns)
+        'estimator_features' : list(train_X.columns),
         'model_options' : model_options,
         'cross_validation_scores': average_cv_scores,
         'test_y' : test_y,
