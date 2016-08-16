@@ -44,7 +44,7 @@ def define_clfs_params(filename):
     model_options[model_classes_selected] determines which of these models
     are actually run
 
-    :param str filename: name of a yaml file containing parameter values 
+    :param str filename: name of a yaml file containing parameter values
     for each model
     :returns: a dictionary of models and a dictionary of parameter values
     :rtype: pair of dicts
@@ -69,12 +69,12 @@ def define_clfs_params(filename):
 
     with open(filename, 'r') as f:
         grid = yaml.load(f)
-    
+
     return clfs, grid
 
 def build_outcomes_plus_features(model_options, subset_n=None):
     """
-    Returns a pandas dataframe containing the student_lookup, cohort 
+    Returns a pandas dataframe containing the student_lookup, cohort
     identifier, outcome variable, and all numerical or binarized features.
     Reads in the features and outcomes from database according to the
     specification given in model_options dictionary.
@@ -146,7 +146,7 @@ def build_outcomes_plus_features(model_options, subset_n=None):
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
                                cohorts_test, cohorts_val, cohorts_training):
-    """ 
+    """
     Splits the given joint_df of features & outcomes and
     returns a train/test dataset
     :param pd.DataFrame joint_df: data frame withcohort, outcome, and features
@@ -162,7 +162,7 @@ def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
     if (cohorts_training=='all'):
         train = joint_df[~joint_df[cohort_grade_level_begin]\
                          .isin(cohorts_val + cohorts_test)]
-        assert (np.max(train[cohort_grade_level_begin]) 
+        assert (np.max(train[cohort_grade_level_begin])
                 < min(cohorts_val+cohorts_test)), \
             "Training years do not completely precede test years"
     else:
@@ -181,7 +181,7 @@ def parse_features(features_included_raw, feature_grade_range):
 
     :param dict features_included_raw: dictionary of tables and columns
     read in from model_options
-    :param list feature_grade_range: list of grades to include 
+    :param list feature_grade_range: list of grades to include
     """
     features_included = dict()
     for table, feature_list in features_included_raw.items():
@@ -213,10 +213,10 @@ def read_in_yaml(filename=os.path.join(base_pathname,
                          'write_predictions_to_database', 'user', 'debug',
                          'model_test_holdout',
                          'parameter_cross_validation_scheme',
-                         'cohort_grade_level_begin', 
+                         'cohort_grade_level_begin',
                          'prediction_grade_level', 'feature_grade_range',
                          'cohorts_training', 'cohorts_val', 'cohorts_test',
-                         'random_seed', 'validation_criterion', 
+                         'random_seed', 'validation_criterion',
                          'features_included', 'outcome_name',
                          'missing_impute_strategy', 'feature_scaling'))
     assert (all([key in model_options.keys() for key in required_keys])), \
@@ -506,7 +506,7 @@ def downsample(downsample_param, X, y):
 def write_out_predictions(model_options, model_name, clf, run_time,
         average_cv_scores, params, save_location,
         train_X, train_y, val_X, val_y, test_X, test_y):
-    """ 
+    """
     Saves the output of a model in 3 ways:
     (1) saves a pkl file to mtn/data
     (2) saves a markdown report (from save_reports.py)
@@ -557,6 +557,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
                     user = model_options['user'],
                     number = count),
         'estimator' : clf,
+        'estimator_features' : list(train_X.columns)
         'model_options' : model_options,
         'cross_validation_scores': average_cv_scores,
         'test_y' : test_y,
@@ -581,10 +582,10 @@ def write_out_predictions(model_options, model_name, clf, run_time,
                            pkl_dir, file_name), 'wb') as f:
         pickle.dump(saved_outputs, f)
 
-    # write features and predictions to database 
+    # write features and predictions to database
     if model_options['write_predictions_to_database']:
         write_scores_to_db(saved_outputs)
-        
+
     # generate markdown report and images
 #    write_model_report(save_location, saved_outputs)
 
@@ -593,7 +594,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
 
 
 def run_all_models(model_options, clfs, params, save_location):
-    """ 
+    """
     Runs all the models based on the given options
 
     :param dict model_options:
@@ -698,7 +699,7 @@ def run_all_models(model_options, clfs, params, save_location):
 
 def main(args=None):
     """
-    Takes command line arguments for the model_options file (-m), 
+    Takes command line arguments for the model_options file (-m),
     grid_options (-g), and the output path (-o),
     and provides defaults for each of these values
     """
