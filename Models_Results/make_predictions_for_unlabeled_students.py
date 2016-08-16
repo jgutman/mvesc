@@ -10,7 +10,6 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 
-from mvesc_utility_functions import *
 from estimate_prediction_model import *
 from write_to_database import write_scores_to_db
 
@@ -105,7 +104,7 @@ def main():
     parser.add_option('-f','--filename', dest='filename_list',
         help="filename for model to generate predictions",
         action="append")
-    (options, args) = parser.parse_args(args)
+    (options, args) = parser.parse_args()
 
     filename_list = ['08_12_2016_grade_8_param_set_11_RF_ht_18728']
     if options.filename_list:
