@@ -1,6 +1,7 @@
 import os, sys
 import pickle
 from optparse import OptionParser
+import re
 
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
@@ -11,6 +12,7 @@ sys.path.insert(0, parentdir)
 
 from mvesc_utility_functions import *
 from estimate_prediction_model import *
+from write_to_database import write_scores_to_db
 
 def read_in_model(filename, model_name,
         pkl_dir = '/mnt/data/mvesc/Models_Results/pkls'):
@@ -48,7 +50,7 @@ def build_test_feature_set(options, current_year = 2016):
 
 def test_impute_and_scale(test_outcomes, options):
     all_past_data = build_outcomes_plus_features(options)
-    train, val, None = temporal_cohort_test_split(all_past_data,
+    train, val, val = temporal_cohort_test_split(all_past_data,
             options['cohort_grade_level_begin'],
             options['cohorts_test'], options['cohorts_val'],
             options['cohorts_training'])
@@ -77,15 +79,42 @@ def test_impute_and_scale(test_outcomes, options):
         "train and current_students have different columns"
     return test_outcomes
 
-def make_and_save_predictions(future_predictions, clf, options):
-    
+def make_and_save_predictions(future_predictions, clf, filename):
+    # generate soft predictions
+    if hasattr(clf, "predict_proba"):
+        future_set_scores = clf.predict_proba(future_predictions)[:,1]
+    else:
+        future_set_scores = clf.decision_function(future_predictions)
 
-def main():
-    model_name = 'RF'
-    filename = '08_12_2016_grade_8_param_set_11_RF_ht_18728'
+    saved_outputs = {
+        'file_name' : filename,
+        'future_index' : future_predictions.index,
+        'future_scores' : future_set_scores,
+        'future_preds' : clf.predict(future_predictions)
+    }
+    write_scores_to_db(saved_outputs, importance_scores = False)
+
+def write_model_predictions_to_db(model_name, filename):
     clf, options = read_in_model(filename, model_name)
     future_predictions = build_test_feature_set(options)
     future_predictions = test_impute_and_scale(future_predictions, options)
+    make_and_save_predictions(future_predictions, clf, filename)
+
+def main():
+    parser = OptionParser()
+    parser.add_option('-f','--filename', dest='filename_list',
+        help="filename for model to generate predictions",
+        action="append")
+    (options, args) = parser.parse_args(args)
+
+    filename_list = ['08_12_2016_grade_8_param_set_11_RF_ht_18728']
+    if options.filename_list:
+        filename_list = options.filename_list
+
+    for filename in filename_list:
+        model_name = filename.split('_')[-3]
+        write_model_predictions_to_db(model_name, filename)
+        print("predictions written for {}, {}".format(model_name, filename))
 
 if __name__ == '__main__':
     main()
