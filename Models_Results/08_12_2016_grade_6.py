@@ -12,16 +12,16 @@ import time
 
 # setting options that will stay constant for this batch
 template_options = {
-   'batch_name' : '08_12_2016_grade_6', 
+   'batch_name' : '08_12_2016_grade_6',
    'model_classes': ['logit','DT','RF','ET','SVM'],
    'write_to_database': True,
    'user': 'ht',
    'test_set_type': 'temporal_cohort',
    'cv_criterions': ['custom_precision_5_15','custom_recall_5_15'],
    'n_folds': 5,
-   'prediction_grade': 6, 
-   'cohorts_test': [2010],
-   'cohorts_val': [2009],
+   'prediction_grade': 6,
+   'cohorts_test': [2009],
+   'cohorts_val': [2008],
    'debug': False,
    'imputation': 'median_plus_dummies',
    'scaling': 'robust',
@@ -31,8 +31,8 @@ template_options = {
 outcome_list = ['not_on_time', 'definite', 'definite_plus_ogt']
 max_year = min(template_options['cohorts_val'])
 max_grade = template_options['prediction_grade']
-cohorts = [range(2008, max_year)]
-grade_ranges = [range(max_grade-2,max_grade)]
+cohorts = [range(2007, max_year)]
+grade_ranges = [range(max_grade-1,max_grade)]
 time_scales = list(zip(cohorts,grade_ranges)) # change with prediction grade
 
 
@@ -44,14 +44,14 @@ almost_all = {
    'absence': 'all',
    'intervention': 'all',
    'mobility': 'all',
-   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]}
+   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]},
    'snapshots': 'all'
    }
 basic = {
    'grades': {'except':['like__gpa','like_classes']},
    'demographics': 'all',
    'absence': ['absence*','absence_unexcused*','tardy*','tardy_unexcused*'],
-   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]}
+   'oaa_normalized': {'except': ['like_pl','like_percentile',6,7,8]},
    'snapshots': 'all'
    }
 
@@ -68,8 +68,8 @@ with Timer('batch {}'.format(template_options['batch_name'])) as batch_timer:
          for outcome in outcome_list:
             template_options['outcome'] = outcome
             for years, grades in time_scales:
-               if len(years)==1 and 'cohort' in cv_scheme:
-                  continue
+               #if len(years)==1 and 'cohort' in cv_scheme:
+                #  continue
                template_options['cohorts_training']=years
                template_options['feature_grade_range']=grades
                # innermost layer of loop
