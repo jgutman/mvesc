@@ -96,8 +96,7 @@ def main():
                 where grade = 6
                 group by student_lookup
             ) as cohorts_sixth
-            using(student_lookup)
-            order by cohort_10th;
+            using(student_lookup);
             """.format(schema=schema, table=table,
                 source_schema=source_schema, source_table=source_table,
                 snapshots=snapshots, predictions=prediction_outcome_name)
