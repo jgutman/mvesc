@@ -77,12 +77,15 @@ def test_impute_and_scale(test_outcomes, options):
         "train and current_students have different columns"
     return test_outcomes
 
+def make_and_save_predictions(future_predictions, clf, options):
+    
+
 def main():
     model_name = 'RF'
     filename = '08_12_2016_grade_8_param_set_11_RF_ht_18728'
     clf, options = read_in_model(filename, model_name)
-    test_outcomes = build_test_feature_set(options)
-    test_outcomes = test_impute_and_scale(test_outcomes, options)
+    future_predictions = build_test_feature_set(options)
+    future_predictions = test_impute_and_scale(future_predictions, options)
 
 if __name__ == '__main__':
     main()
