@@ -586,7 +586,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
 
     # write features and predictions to database
     if model_options['write_predictions_to_database']:
-        write_scores_to_db(saved_outputs)
+        write_scores_to_db(saved_outputs, table_name = 'predictions_new')
 
     # generate markdown report and images
 #    write_model_report(save_location, saved_outputs)
