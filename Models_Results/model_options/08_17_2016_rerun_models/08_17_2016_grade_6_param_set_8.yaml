@@ -1,7 +1,6 @@
 batch_name:
   08_17_2016_grade_6
 model_classes_selected:
-  - logit
   - RF
 
 user_description: fourth pass for grade 6
@@ -135,5 +134,5 @@ downsample_param:  0.8
 upsample_param:  !!null
 sample_wt_ratio:  !!null
 
-drop_reference: False 
+drop_reference: False
 dummify: True

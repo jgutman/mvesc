@@ -1,7 +1,6 @@
 batch_name:
   08_17_2016_grade_10
 model_classes_selected:
-  - logit
   - RF
 
 user_description: fourth pass for grade 10
