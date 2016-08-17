@@ -87,16 +87,15 @@ def test_impute_and_scale(test_outcomes, options):
             options['cohort_grade_level_begin'],
             options['cohorts_test'], options['cohorts_val'],
             options['cohorts_training'])
-    train = train.drop([options['outcome_name'],
-            options['cohort_grade_level_begin']],axis=1)
-    val = val.drop([options['outcome_name'],
-            options['cohort_grade_level_begin']],axis=1)
+    column_set = options['estimator_features']
+    train = train.filter(column_set)
+    val = val.filter(column_set)
 
     category_missing = [col for col in train.columns if
                     col not in test_outcomes.columns]
     for col in category_missing:
         test_outcomes[col] = 0
-    test_outcomes = test_outcomes.filter(train.columns)
+    test_outcomes = test_outcomes.filter(column_set)
 
     # imputation for missing values in features
     train, val, test_outcomes = impute_missing_values(train, val, test_outcomes,
@@ -179,7 +178,7 @@ def main():
         help="current year to generate predictions for", type="int")
     (options, args) = parser.parse_args()
 
-    filename_list = ['08_12_2016_grade_8_param_set_11_RF_ht_18728']
+    filename_list = ['08_17_2016_grade_9_param_set_16_logit_jg_122']
     current_year = 2016
     if options.filename_list:
         filename_list = options.filename_list
