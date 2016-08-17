@@ -188,3 +188,6 @@ def main():
         eng = postgres_engine_generator()
         individual_scores_factors.to_sql(table, eng, schema = schema, if_exists=if_exists, index=False)
         print('- Processed ', filename)
+
+if __name__=='__main__':
+    main()
