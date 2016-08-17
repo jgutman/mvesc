@@ -63,7 +63,7 @@ gather_multiple_criteria = function(df, vec_to_gather, vec_to_group_on){
 collect_and_ggplot_obj = function(ref, vec_to_gather, vec_to_group_on,
                                   xvar, color_var, extra_var) {
   # Takes in a db reference and collects a subset of columns to group on
-  collected = ref %>% select_(.dots = c(vec_to_gather, xvar, color_var, extra_var)) %>%
+  collected = ref %>% select(one_of(c(vec_to_gather, xvar, color_var, extra_var))) %>%
     collect() %>% ungroup()
   
   # gather this table and summarize on the vec_to_gather
