@@ -68,7 +68,7 @@ def build_test_feature_set(options, current_year = 2016, return_raw = False):
     test_outcomes_processed = df2num(test_outcomes, drop_reference = False,
         dummify = True, drop_entirely_null = False)
     if return_raw:
-        return test_outcomes_processed, test_outcomes
+        return test_outcomes, test_outcomes_processed
     return test_outcomes_processed
 
 def test_impute_and_scale(test_outcomes, options):
