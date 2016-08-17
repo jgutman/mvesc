@@ -1,0 +1,19 @@
+> /home/jtorrenc/mvesc/Models_Results/08_15_2016_logit_no_reference.py(1)<module>()
+-> import os, sys
+(Pdb) 10 ['like_pl', 'like_percentile', 10]
+08_15_2016_logit_no_reference_param_set_0.yaml written!
+
+Program interrupted. (Use 'cont' to resume).
+> <string>(14)__new__()
+(Pdb) 
+{'debug': False, 'imputation': 'median_plus_dummies', 'cv_scheme': 'k_fold', 'cohorts_test': [2013], 'n_folds': 5, 'downsample_param': None, 'drop_reference': False, 'model_classes': ['logit'], 'scaling': 'robust', 'features': {'grades': ['gpa*', 'language_gpa*', 'stem_gpa*', 'humanities_gpa*', 'art_gpa*', 'health_gpa*', 'future_prep_gpa*', 'interventions_gpa*', 'num_stem_classes*', 'num_humanities_classes*', 'num_art_classes*', 'num_health_classes*', 'num_future_prep_classes*', 'num_interventions_classes*', 'num_language_classes*', 'percent_passed_pf_classes*', 'num_pf_classes*', 'gpa_district*'], 'absence': ['absence*', 'absence_unexcused*', 'tardy*', 'tardy_unexcused*', 'medical*', 'absence_consec*', 'tardy_consec*', 'absence_wkd_1*', 'absence_wkd_2*', 'absence_wkd_3*', 'absence_wkd_4*', 'absence_wkd_5*', 'tardy_wkd_1*', 'tardy_wkd_2*', 'tardy_wkd_3*', 'tardy_wkd_4*', 'tardy_wkd_5*'], 'intervention': ['extracurr_program*', 'post_secondary*', 'academic_inv*', 'atheletics*', 'placement*', 'spec_instruc*', 'vocational*', 'academic_intracurr*', 'school_program*', 'titlei*'], 'oaa_normalized': ['read_normalized_gr_3', 'math_normalized_gr_3', 'read_normalized_gr_4', 'math_normalized_gr_4', 'read_normalized_gr_5', 'math_normalized_gr_5', 'socstudies_normalized_gr_5', 'science_normalized_gr_5', 'read_normalized_gr_6', 'math_normalized_gr_6', 'read_normalized_gr_7', 'math_normalized_gr_7', 'read_normalized_gr_8', 'math_normalized_gr_8', 'science_normalized_gr_8'], 'snapshots': ['disadvantagement*', 'disability*', 'district*', 'gifted*', 'iss*', 'oss*', 'limited_english*', 'special_ed*', 'status*', 'discipline_incidents*', 'section_504_plan*'], 'demographics': ['ethnicity', 'gender'], 'mobility': ['n_addresses_to*', 'n_districts_to*', 'n_cities_to*', 'n_records_to*', 'avg_address_change_to*', 'avg_district_change_to*', 'avg_city_change_to*', 'street_transition_in*', 'district_transition_in*', 'city_transition_in*', 'mid_year_withdraw*']}, 'outcome': 'definite_plus_ogt', 'cohorts_val': [2012], 'description': 'trying not dropping reference', 'cv_criterions': ['custom_precision_5_15', 'custom_recall_5_15'], 'test_set_type': 'temporal_cohort', 'batch_name': '08_15_2016_logit_no_reference', 'prediction_grade': 10, 'name': '08_15_2016_logit_no_reference_param_set_0', 'cohorts_training': range(2007, 2012), 'random_seed': 1471359442.5918076, 'feature_grade_range': [9], 'write_to_database': True, 'user': 'ht'}
+batch 08_15_2016_logit_no_reference: 1.5 seconds elapsed
+Uncaught exception. Entering post mortem debugging
+Running 'cont' or 'step' will restart the program
+> /usr/lib/python3.4/bdb.py(67)dispatch_line()
+-> if self.quitting: raise BdbQuit
+(Pdb) --KeyboardInterrupt--
+(Pdb) Post mortem debugger finished. The 08_15_2016_logit_no_reference.py will be restarted
+> /home/jtorrenc/mvesc/Models_Results/08_15_2016_logit_no_reference.py(1)<module>()
+-> import os, sys
+(Pdb) 

@@ -141,7 +141,9 @@ def build_outcomes_plus_features(model_options, subset_n=None):
     # build dataframe containing student_lookup, outcome, cohort,
     # and all features as numeric non-categorical values
     joint_label_features.set_index('student_lookup', inplace=True)
-    joint_label_features = df2num(joint_label_features)
+    joint_label_features = df2num(joint_label_features,
+                                  model_options['drop_reference'],
+                                  model_options['dummify'])
     return joint_label_features
 
 def temporal_cohort_test_split(joint_df, cohort_grade_level_begin,
