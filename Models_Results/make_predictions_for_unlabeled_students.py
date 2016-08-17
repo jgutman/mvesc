@@ -29,6 +29,7 @@ def read_in_model(filename, model_name,
     with open(os.path.join(pkl_dir, full_filename), 'rb') as model:
         model_pkl = pickle.load(model)
     clf, options = model_pkl['estimator'], model_pkl['model_options']
+    options['estimator_features'] = model_pkl['estimator_features']
     return clf, options
 
 def build_test_feature_set(options, current_year = 2016):
@@ -88,14 +89,14 @@ def test_impute_and_scale(test_outcomes, options):
             options['cohorts_test'], options['cohorts_val'],
             options['cohorts_training'])
     column_set = options['estimator_features']
-    train = train.filter(column_set)
-    val = val.filter(column_set)
+    train = train.filter(train.columns[2:])
+    val = val.filter(val.columns[2:])
 
     category_missing = [col for col in train.columns if
                     col not in test_outcomes.columns]
     for col in category_missing:
         test_outcomes[col] = 0
-    test_outcomes = test_outcomes.filter(column_set)
+    test_outcomes = test_outcomes.filter(train.columns)
 
     # imputation for missing values in features
     train, val, test_outcomes = impute_missing_values(train, val, test_outcomes,
@@ -104,6 +105,9 @@ def test_impute_and_scale(test_outcomes, options):
     # feature scaling
     train, val, test_outcomes = scale_features(train, val, test_outcomes,
         options['feature_scaling'])
+
+    train = train.filter(column_set)
+    test_outcomes = test_outcomes.filter(column_set)
 
     assert (all(train.columns == test_outcomes.columns)),\
         "train and current_students have different columns"
@@ -178,7 +182,16 @@ def main():
         help="current year to generate predictions for", type="int")
     (options, args) = parser.parse_args()
 
-    filename_list = ['08_17_2016_grade_9_param_set_16_logit_jg_122']
+    filename_list = ['08_17_2016_grade_6_param_set_8_RF_jg_155',
+        '08_17_2016_grade_7_param_set_17_RF_jg_138',
+        '08_17_2016_grade_8_param_set_16_RF_jg_144',
+        '08_17_2016_grade_9_param_set_16_RF_jg_179',
+        '08_17_2016_grade_10_param_set_16_RF_jg_151',
+        '08_17_2016_grade_6_param_set_8_logit_jg_97',
+        '08_17_2016_grade_7_param_set_17_logit_jg_98',
+        '08_17_2016_grade_8_param_set_16_logit_jg_111',
+        '08_17_2016_grade_9_param_set_16_logit_jg_111',
+        '08_17_2016_grade_10_param_set_22_logit_jg_122']
     current_year = 2016
     if options.filename_list:
         filename_list = options.filename_list
