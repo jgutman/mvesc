@@ -32,7 +32,7 @@ def read_in_model(filename, model_name,
     options['estimator_features'] = model_pkl['estimator_features']
     return clf, options
 
-def build_test_feature_set(options, current_year = 2016):
+def build_test_feature_set(options, current_year = 2016, return_raw = False):
     """
     Build and dummify a feature design matrix according to the features in the
     model options and the students at the prediction grade level in the current
@@ -65,9 +65,11 @@ def build_test_feature_set(options, current_year = 2016):
     # build dataframe containing student_lookup
     # and all features as numeric non-categorical values
     test_outcomes.set_index('student_lookup', inplace=True)
-    test_outcomes = df2num(test_outcomes, drop_reference = False,
+    test_outcomes_processed = df2num(test_outcomes, drop_reference = False,
         dummify = True, drop_entirely_null = False)
-    return test_outcomes
+    if return_raw:
+        return test_outcomes_processed, test_outcomes
+    return test_outcomes_processed
 
 def test_impute_and_scale(test_outcomes, options):
     """
@@ -114,7 +116,7 @@ def test_impute_and_scale(test_outcomes, options):
     return test_outcomes
 
 def make_and_save_predictions(future_predictions, clf, filename,
-        current_year = 2016):
+        current_year = 2016, write_to_db = True):
     """
     Takes a feature design matrix for current students with student lookup as
     index, and a classifier, and writes these soft/hard predictions on these
@@ -144,9 +146,12 @@ def make_and_save_predictions(future_predictions, clf, filename,
     if current_year:
         new_table = 'predictions_' + str(current_year)
     else:
-        new_table = 'predictions'
-    write_scores_to_db(saved_outputs, table_name = new_table,
-        importance_scores = False)
+        new_table = 'predictions_new'
+
+    if write_to_db:
+        write_scores_to_db(saved_outputs, table_name = new_table,
+            importance_scores = False)
+    return(saved_outputs)
 
 def write_model_predictions_to_db(model_name, filename, current_year = 2016):
     """
