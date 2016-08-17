@@ -91,3 +91,6 @@ subset_n:  !!null
 downsample_param:  0.8
 upsample_param:  !!null
 sample_wt_ratio:  !!null
+
+drop_reference: False
+dummify: True
