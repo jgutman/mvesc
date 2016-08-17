@@ -44,7 +44,10 @@ class Top_features():
         coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
-        return top_coefs[:k]
+        if k == -1:
+            return top_coefs
+        else:
+            return top_coefs[:k]
 
     def SVM(model, columns, k):
         coefs = model.coef_
@@ -59,31 +62,46 @@ class Top_features():
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_importances
+        else:
+            return top_importances[:k]
 
     def GB(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_importances
+        else:
+            return top_importances[:k]
 
     def ET(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_importances
+        else:
+            return top_importances[:k]
 
     def AB(model, columns, k):
         importances = model.feature_importances_
         top_importances = sorted(zip(columns, importances),
                                  key=lambda x: x[1], reverse=True)
-        return top_importances[:k]
+        if k == -1:
+            return top_importances
+        else:
+            return top_importances[:k]
 
     def SGD(model, columns, k):
         coefs = model.coef_
         top_coefs = sorted(zip(columns,coefs.tolist()[0]),
                            key=lambda x: x[1], reverse=True)
-        return top_coefs[:k]
+        if k == -1:
+            return top_coefs
+        else:
+            return top_coefs[:k]
 
 
 
@@ -93,7 +111,7 @@ def plot_precision_recall_n(y_true, y_scores, save_location,
     Adapted from Rayid's magicloops code, this plots precision and recall
     vs. the percent of population marked as 1
 
-    :param pd.Series y_true: 
+    :param pd.Series y_true:
     :param pd.Series y_prob:
     :param str save_location:
     :param str run_name:
@@ -102,7 +120,7 @@ def plot_precision_recall_n(y_true, y_scores, save_location,
     if type(y_scores) == pd.core.frame.DataFrame:
         y_scores = y_scores[0]
     elif type(y_scores) != pd.core.series.Series:
-        try: 
+        try:
             y_scores = pd.Series(y_scores)
         except:
             print('y_scores must be a Series or a DataFrame')
@@ -138,7 +156,7 @@ def plot_score_distribution(soft_predictions, save_location,
     """
     This plots the distribution of scores from a model
 
-    :param pd.Series soft_predictions: 
+    :param pd.Series soft_predictions:
     :param str save_location:
     :param str run_name:
     :param str model_name:
@@ -162,8 +180,8 @@ def plot_precision_recall(soft_predictions, test_y, save_location,
     """
     This plots precision vs. recall
 
-    :param pd.Series soft_predictions: 
-    :param pd.Series test_y: 
+    :param pd.Series soft_predictions:
+    :param pd.Series test_y:
     :param str save_location:
     :param str run_name:
     :param str model_name:
@@ -184,8 +202,8 @@ def plot_precision_recall_threshold(soft_predictions, test_y, save_location,
     """
     This plots precision and recall vs. threshold
 
-    :param pd.Series soft_predictions: 
-    :param pd.Series test_y: 
+    :param pd.Series soft_predictions:
+    :param pd.Series test_y:
     :param str save_location:
     :param str run_name:
     :param str model_name:
@@ -208,8 +226,8 @@ def plot_confusion_matrix(soft_predictions, test_y, threshold, save_location,
     """
     This plots the confusion matrix
 
-    :param pd.Series soft_predictions: 
-    :param pd.Series test_y: 
+    :param pd.Series soft_predictions:
+    :param pd.Series test_y:
     :param str save_location:
     :param str run_name:
     :param str model_name:
@@ -237,7 +255,7 @@ def markdown_report(f, save_location, saved_outputs):
     Generates a markdown file with information and images about the run
 
     :param file object f: markdown file
-    :param str save_location: dir to save images 
+    :param str save_location: dir to save images
     :param dict saved_outputs: dictionary with many outputs from the model run
     """
     model_options = saved_outputs['model_options']

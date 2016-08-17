@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from mvesc_utility_functions import postgres_pgconnection_generator, \
 postgres_engine_generator
 from save_reports import Top_features
@@ -91,7 +92,7 @@ def summary_to_db(saved_outputs):
     values['model_name'] = saved_outputs['model_name']
     values['batch_name'] = model_options['batch_name']
     values['label'] = model_options['outcome_name']
- 
+
     features = list(model_options['features_included'].keys())
     features.sort()
     features = ", ".join(features)
@@ -117,6 +118,7 @@ def summary_to_db(saved_outputs):
     values['cv_scheme'] = model_options['parameter_cross_validation_scheme']
     values['imputation'] = model_options['missing_impute_strategy']
     values['scaling'] = model_options['feature_scaling']
+    values['downsample'] = model_options['downsample_param']
     values['train_acc'] = accuracy_score(train_y, train_preds)
     values['val_acc'] = accuracy_score(val_y, val_preds)
     values['test_acc'] = accuracy_score(test_y, test_preds)
@@ -180,6 +182,7 @@ def summary_to_db(saved_outputs):
                ('cv_score', 'float'),
                ('imputation','text'),
                ('scaling', 'text'),
+               ('downsample', 'text'),
                ('feature_categories', 'text'),
                ('feature_grades', 'text'),
                ('train_set', 'text'),
@@ -235,48 +238,75 @@ def summary_to_db(saved_outputs):
         connection.commit()
     print('row added')
 
-def write_scores_to_db(saved_outputs):
+def write_scores_to_db(saved_outputs, table_name = 'predictions',
+        importance_scores = True):
     """
     Writes all the feature scores and student predictions to a table
     in the database
 
     :param dict saved_outputs: output from a model in estimate_prediction_model
+    :param str table_name: name of table in model schema to output predictions
+    :param boolean importance_scores: whether to generate and write
+        feature importance scores for the model in saved_outputs
+    :rtype: None
     """
-    # scores and predictions for each student
-    test_label = pd.Series('test', index=saved_outputs['test_y'].index)
-    val_label = pd.Series('val', index=saved_outputs['val_y'].index)
-    train_label = pd.Series('train', index=saved_outputs['train_y'].index)
-    test = saved_outputs['test_y'].to_frame('true_label')
-    test['predicted_score'] = saved_outputs['test_set_soft_preds']
-    test['predicted_label'] = saved_outputs['test_set_preds']
-    test['split'] = test_label
-    train = saved_outputs['train_y'].to_frame('true_label')
-    train['predicted_score'] = saved_outputs['train_set_soft_preds']
-    train['predicted_label'] = saved_outputs['train_set_preds']
-    train['split'] = train_label
-    val = saved_outputs['val_y'].to_frame('true_label')
-    val['predicted_score'] = saved_outputs['val_set_soft_preds']
-    val['predicted_label'] = saved_outputs['val_set_preds']
-    val['split'] = val_label
-    results = pd.concat([test,val,train])
-    results['filename'] = saved_outputs['file_name']
+    # regular model predictions to write to db
+    if 'test_y' in saved_outputs:
+        # scores and predictions for each student
+        test_label = pd.Series('test', index=saved_outputs['test_y'].index)
+        val_label = pd.Series('val', index=saved_outputs['val_y'].index)
+        train_label = pd.Series('train', index=saved_outputs['train_y'].index)
+        test = saved_outputs['test_y'].to_frame('true_label')
+        test['predicted_score'] = saved_outputs['test_set_soft_preds']
+        test['predicted_label'] = saved_outputs['test_set_preds']
+        test['split'] = test_label
+        train = saved_outputs['train_y'].to_frame('true_label')
+        train['predicted_score'] = saved_outputs['train_set_soft_preds']
+        train['predicted_label'] = saved_outputs['train_set_preds']
+        train['split'] = train_label
+        val = saved_outputs['val_y'].to_frame('true_label')
+        val['predicted_score'] = saved_outputs['val_set_soft_preds']
+        val['predicted_label'] = saved_outputs['val_set_preds']
+        val['split'] = val_label
+        results = pd.concat([test,val,train])
+        results['filename'] = saved_outputs['file_name']
 
+    # predictions for current students without true labels
+    elif 'future_index' in saved_outputs:
+        # current students: true_label = NULL
+        # split = current
+        # predicted_score and predicted label from saved_outputs
+        # filename = saved_outputs['filename']
+        # index = saved_outputs.index student_lookup
+        results = pd.Series('current',
+            index = saved_outputs['future_index']).to_frame('split')
+        results['true_label'] = np.nan
+        results['predicted_score'] = saved_outputs['future_scores']
+        results['predicted_label'] = saved_outputs['future_preds']
+        results['filename'] = saved_outputs['file_name']
+
+    else: # error
+        print("saved_outputs does not contain necessary keys, no results  written to database")
+        return None
+
+    # maybe we should output these predictions to multiple tables ?
     engine = postgres_engine_generator()
-    results.to_sql('predictions',  engine,
+    results.to_sql(table_name,  engine,
                    schema='model', if_exists = 'append')
     print('student predictions written to database')
 
-    # importance scores for each feature
-    model_name = saved_outputs['model_name']
-    try:
-        get_top_features = getattr(Top_features, model_name)
-    except AttributeError:
-        print('top features not implemented for {}'.format(model_name))
-    else:
-        top_features = get_top_features(saved_outputs['estimator'],
-                                        saved_outputs['features'], -1)
-        features = pd.DataFrame(top_features, columns=['feature','importance'])
-        features['filename'] = saved_outputs['file_name']
-        features.to_sql('feature_scores', engine, schema='model',
-                        if_exists = 'append')
-        print('feature importances written to database')
+    if importance_scores:
+        # importance scores for each feature
+        model_name = saved_outputs['model_name']
+        try:
+            get_top_features = getattr(Top_features, model_name)
+        except AttributeError:
+            print('top features not implemented for {}'.format(model_name))
+        else:
+            top_features = get_top_features(saved_outputs['estimator'],
+                                            saved_outputs['features'], -1)
+            features = pd.DataFrame(top_features, columns=['feature','importance'])
+            features['filename'] = saved_outputs['file_name']
+            features.to_sql('feature_scores', engine, schema='model',
+                            if_exists = 'append')
+            print('feature importances written to database')

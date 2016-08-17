@@ -1,6 +1,6 @@
 from  mvesc_utility_functions import *
 import consolidating_tables
-import build_student_tracking 
+import build_student_tracking
 import build_cohort_tree_counts
 import cleaning_all_snapshots
 import deduplication
@@ -27,6 +27,7 @@ print('oaaogt cleaned')
 #snapshots
 cleaning_all_snapshots.main()
 deduplication.main()
+execute_sql_script("all_absences_add_grade_column.sql")
 print('all_snapshots cleaned')
 
 #intervention
@@ -39,11 +40,12 @@ build_student_tracking.main()
 
 # additional script for adding labels to tracking table
 build_cohort_tree_counts.main()
-print('additional tables built')
+print('tracking table plus outcome buckets built')
+
+# additional script for building intermediate tables for consecutive absences
+generate_consec_absence_columns.main()
+print('consecutive absence tables built')
 
 # create index for all tables in clean schema for faster joining and searching
 create_index.call_main()
 print('indices created or checked for tables in schema `clean`')
-
-
-
