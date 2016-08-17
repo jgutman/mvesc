@@ -225,37 +225,148 @@ def clean_column(cursor, values, old_column_name, table_name,
         count += 1
     clean_col_query += "else {0} end; ".format(old_column_name)
 
-    if replace:
+    if replace and old_column_name != new_column_name:
         clean_col_query += """
         alter table {schema}.{table} rename column "{old}" to "{new}"
         """.format(schema=schema_name, table=table_name,
                     old=old_column_name, new=new_column_name)
     cursor.execute(clean_col_query, params)
 
+############ Functions to explore model/feature results ###########
+def barplot_df(dfbar, figname=None, save=False, savedir='./',
+               name_column='feature', value_column='importance',
+               xlabel='Importance', ylabel='Feature', title='', fontsize=16, figsize=(8, 6),
+               style='ggplot', kind='barh', dpi=500):
+    """
+    Bar Plot of a data frame: the reason to have this is to save time to make better plots
+
+    :param pd.dataframe df: data frame has at least 1 column of labels and 1 column of numeric values
+    :param str figname: figure name; None means default name
+    :param bool save: whether to save the fig
+    :param str savedir: directory to save the fig
+    :param str name_column: column name of the label
+    :param str value_column: column name of the values
+    :param str xlabel, ylabel, title:
+    :param int fontsize: fontsize for labels and titles
+    :param tuple int figsize: figure size
+    :param str style: plot style, 'ggplot', 'fivethirtyeight', etc
+    :param str kind: bar plot kind, `bar`, `barh`
+    :param int dpi: resolution, the larger the better
+    :return str fn: figure name; if save==False, return None
+    """
+    plt.style.use(style)
+    df = dfbar[[value_column]]
+    df.index = dfbar[name_column]
+    df = df.sort_values(by=[value_column], ascending=False)
+    ax = df.iloc[::-1,:].plot(kind=kind, title=title, figsize=figsize, fontsize=fontsize, legend=False)
+    plt.ylabel(ylabel, fontsize=fontsize)
+    plt.xlabel(xlabel, fontsize=fontsize)
+    plt.tight_layout()
+    if save==True:
+        if figname==None:
+            fn = os.path.join(savedir, 'feature_importance.png')
+        else:
+            fn = str(figname)
+        plt.savefig(fn, dpi=dpi)
+        return(fn)
+    else:
+        return(None)
+
+def read_model_topN_feature_importance(filename, topN=10, schema='model', table='feature_scores'):
+    """
+    Read top N feature importance from features scores table
+    :param str filename: filename in the filename column
+    :param int topN: top N features to read
+    :param str schema: schema name
+    :param str table: table name
+    :return df
+    :rtype pd.DataFrame
+    """
+    with postgres_pgconnection_generator() as conn:
+        conn.autocommit =True
+        sqlcmd="""
+        select * from {s}.{t}
+        where filename like '%{f}%'
+        order by importance desc
+        limit {topN};
+        """.format(s=schema, t=table, f=filename, topN=topN)
+        df = pd.read_sql_query(sqlcmd, conn)
+    return df
+
+def barplot_feature_importance(filename, topN=10, schema='model', table='feature_scores',
+                               figname=None, save=False, savedir='./',
+                               name_column='feature', value_column='importance',
+                               xlabel='Importance', ylabel='Feature', title='',
+                               fontsize=16, figsize=(8, 6),
+                               style='ggplot', kind='barh', dpi=500):
+    """
+    Barplot feature importance for a specific filename in table `model.feature_scores`
+
+    :param str filename: filename in the filename column
+    :param int topN: top N features to read
+    :param str schema: schema name
+    :param str table: table name
+    :param str figname: figure name; None means default name
+    :param bool save: whether to save the fig
+    :param str savedir: directory to save the fig
+    :param str name_column: column name of the label
+    :param str value_column: column name of the values
+    :param str xlabel, ylabel, title:
+    :param int fontsize: fontsize for labels and titles
+    :param tuple int figsize: figure size
+    :param str style: plot style, 'ggplot', 'fivethirtyeight', etc
+    :param str kind: bar plot kind, `bar`, `barh`
+    :param int dpi: resolution, the larger the better
+    :return str saved_figname: if save=True, return figure name; if save==False, return None
+    :rtype str
+    """
+    df = read_model_topN_feature_importance(filename, topN=topN, schema=schema, table=table)
+    saved_figname = barplot_df(df, figname=figname, save=save, savedir=savedir,
+               name_column=name_column, value_column=value_column,
+               xlabel=xlabel, ylabel=ylabel, title=title,
+               fontsize=fontsize, figsize=figsize,
+               style=style, kind=kind, dpi=dpi)
+    return(saved_figname)
+
+
 ############ Functions to data frame processing ###################
-def df2num(rawdf):
-    """ Convert data frame with numeric variables and strings to numeric dataframe
+def df2num(rawdf, drop_reference = True, dummify = True,
+        drop_entirely_null = True):
+    """ Convert data frame with numeric variables and strings
+    to numeric dataframe, and drops reference category optionally
 
     :param pd.dataframe rawdf: raw data frame
-    :returns pd.dataframe df: a data frame with strings converted to dummies, other columns unchanged
+    :param boolean drop_reference: whether to drop the most frequent category
+    :param boolean dummify: whether to dummify string variables or leave as is
+    :param boolean drop_entirely_null: whether to remove features that are
+        null for everybody in the dataset
+
+    :returns pd.dataframe df: a data frame with strings converted to dummies,
+        null columns removed, and other columns unchanged
     :rtype: pd.dataframe
     Rules:
     - 1. numeric columns unchanged;
-    - 2. strings converted to dummeis;
+    - 2. strings converted to dummies;
     - 3. the most frequent string is taken as reference
     - 4. new column name is: "ColumnName_Category"
-    (e.g., column 'gender' with 80 'M' and 79 'F'; the dummy column left is 'gender_F')
+        (e.g., column 'gender' with 80 'M' and 79 'F' and 10 NULL;
+        the dummy column is 'gender_F', or 'gender_isnull')
 
     """
-    rawdf.dropna(axis='columns', how='all', inplace=True)
+    if drop_entirely_null:
+        rawdf.dropna(axis='columns', how='all', inplace=True)
+    if not dummify:
+        return rawdf
     numeric_df = rawdf.select_dtypes(include=[np.number])
     str_columns = [col for col in rawdf.columns if col not in numeric_df.columns]
     if len(str_columns) > 0:
         dummy_col_df = pd.get_dummies(rawdf[str_columns], dummy_na=True)
         numeric_df = numeric_df.join(dummy_col_df)
-        most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
-        reference_cols = ["{}_{}".format(key, value) for key, value in most_frequent_values.items()]
-        numeric_df.drop(reference_cols, axis=1, inplace=True)
+        if drop_reference:
+            most_frequent_values = rawdf[str_columns].mode().loc[0].to_dict()
+            reference_cols = ["{}_{}".format(key, value) for key, value in
+                most_frequent_values.items()]
+            numeric_df.drop(reference_cols, axis=1, inplace=True)
     return numeric_df
 
 ############ Upload file or directory to postgres (not useful in most cases)###############

@@ -1,0 +1,11 @@
+model_name prediction_grade             label                                        filename
+1       logit                6 definite_plus_ogt   08_12_2016_grade_6_param_set_8_logit_ht_16587
+2       logit                7 definite_plus_ogt  08_12_2016_grade_7_param_set_17_logit_ht_19082
+3       logit                8 definite_plus_ogt  08_12_2016_grade_8_param_set_16_logit_ht_19857
+4       logit                9 definite_plus_ogt  08_12_2016_grade_9_param_set_22_logit_ht_22737
+5       logit               10 definite_plus_ogt 08_12_2016_grade_10_param_set_22_logit_ht_23459
+6          RF                6 definite_plus_ogt      08_12_2016_grade_6_param_set_8_RF_ht_16693
+7          RF                7 definite_plus_ogt     08_12_2016_grade_7_param_set_17_RF_ht_19180
+8          RF                8 definite_plus_ogt     08_12_2016_grade_8_param_set_16_RF_ht_19978
+9          RF                9 definite_plus_ogt     08_12_2016_grade_9_param_set_16_RF_ht_21297
+10         RF               10 definite_plus_ogt    08_12_2016_grade_10_param_set_16_RF_ht_22199
