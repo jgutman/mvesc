@@ -141,7 +141,7 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
     individual_scores_factors['model'] = model_name
     individual_scores_factors['model_file'] = filename
     individual_scores_factors = reorder_columns(individual_scores_factors, topK)
-    individual_scores_factors.sort_values(by=['risk_score', 'district', 'school_code'],inplace=True, ascending=False)
+    individual_scores_factors.sort_values(by=['district', 'school_code', 'risk_score'],inplace=True, ascending=False)
     return individual_scores_factors
 
 def reorder_columns(df, topK):
@@ -207,8 +207,6 @@ def main():
     schema, table = 'model', 'individual_risks_logit'
     dir_pkls = '/mnt/data/mvesc/Models_Results/pkls'
     if_exists = 'append'
-    threshold_percentiles = [0.95, 0.85, 0.70]
-    risk_levels = ['High', 'Medium', 'Low', 'Safe']
 
     random_seed = 62571
 
