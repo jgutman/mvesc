@@ -1,13 +1,8 @@
 ### Summarizing Third Batch Run 08_12 ###
 
-reports_ref = load_table_ref('~/mvesc/Reports/batch_third_0812/',
+reports_ref = load_table_ref('~/mvesc/Reports/batch_08_17_2016/',
                              'custom_precision_5_15',
-                             '08_12_2016',
-                             where_statement = "where batch_name like '08_12_2016%'")
-
-# further filter reports_ref
-reports_ref = reports_ref %>% filter(feature_categories == 
-                                       'absence, demographics, grades, intervention, mobility, oaa_normalized, snapshots')
+                             where_statement = "where batch_name like '08_17_2016%'")
 
 # For Jackie, get the filenames of the top RF models
 # output CSV of the filenames for the top 30 performing models for each
@@ -34,8 +29,7 @@ by_grade_label_top1 <- reports_ref %>%
   filter(model_name != 'DT')
 for (metric in c('precision', 'recall')) {
   plot_obj <- by_grade_label_top1 %>%
-    collect_and_ggplot_obj(c(paste0('val_', metric, '_5_15'), 
-                             paste0('test_', metric, '_5_15')), 
+    collect_and_ggplot_obj(c(paste0('val_', metric, '_5_15')), 
                            vec_to_group_on,
                            xvar = "prediction_grade",
                            color_var = "model_name",
@@ -43,55 +37,53 @@ for (metric in c('precision', 'recall')) {
   # plot
   g <- plot_obj + geom_point(size = 4) + facet_wrap(~label, scales = 'free_y') + geom_line() +
     ylab(paste0('avg_', metric, '_5_15')) +
-    ggtitle(paste0("Top 1 Model for avg_", metric, "_5_15 by Model Type"))
-  ggsave(g, filename = paste0('compare_model_by_prediction_grade_avg_', 
+    ggtitle(paste0("Top 1 Model for val_", metric, "_5_15 by Model Type"))
+  ggsave(g, filename = paste0('compare_model_by_prediction_grade_val_', 
                               metric,'.pdf'), w = 8, h = 8)
 }
 
 
-# Compare the Top 5 Performing Models #
-top5_by_model <- reports_ref %>%
-  grab_top_performing('cv_score', 5, vec_to_group_on) %>%
-  filter(model_name != "DT") %>%
-  collect_and_ggplot_obj(c("cv_score"), c(vec_to_group_on, "rank"),
-                         xvar = 'rank', color_var = 'model_name',
-                         extra_var = c("label"))
-g <- top5_by_model + geom_point(size = 4) + 
-  facet_wrap(~prediction_grade + label, ncol = 3) +
-  ylab('CV_prec_5_15 score') + ggtitle('Top 5 performing by model & grade')
-g
+## Get the full recall and prec curves
+top_rf_logit = reports_ref %>%
+  filter(model_name %in% c('RF', 'logit'),
+         label == 'definite_plus_ogt') %>%
+  grab_top_performing('cv_score', 1, c('model_name',
+                                       'prediction_grade')) %>% 
+  select(filename, model_name) %>%
+  collect()
 
-### Plot Train, Val, and Test Performance ###
+each_pred_list = list()
+for (row in 1:nrow(top_rf_logit)){
+  pred_file = tbl(pg_db, dplyr::sql('SELECT * FROM model.predictions_new')) %>%
+    filter(filename == top_rf_logit$filename[row]) %>% 
+    select(-one_of("predicted_label", "filename")) %>% collect()
+  # add model_name and pred_grade
+  pred_file$prediction_grade = top_rf_logit$prediction_grade[row]
+  pred_file$model_name = top_rf_logit$model_name[row]
+  # store in the list
+  each_pred_list[[row]] = pred_file
+}
+combined_preds <- ldply(each_pred_list)
+saveRDS(combined_preds, file = 'top1_each_grade_rf_logit.rds')
 
+# get rid of student_
+only_overlap = combined_preds %>% arrange(student_lookup) %>% 
+  filter(model_name == 'RF') %>%
+  select(student_lookup, prediction_grade, predicted_score) %>% 
+  spread(prediction_grade, predicted_score, fill = NA)
+print(dim(only_overlap))
+only_overlap_lookups = only_overlap %>% drop_na() %>% select(student_lookup)
+print(dim(only_overlap_lookups))
 
-### Comparing the downsampling rates ###
-# MISSING COLUMN IN DOWNSAMPLING
-# downsample_compare <- reports_ref %>%
-#   grab_top_performing('val_precision_5_15', 1, 
-#                       c(vec_to_group_on, 'downsample')) %>%
-#   filter(model_name != 'DT', label == 'definite_plus_ogt') %>%
-#   collect_and_ggplot_obj(vec_to_gather = c('val_precision_5_15',
-#                                            'test_precision_5_15'),
-#                          vec_to_group_on = c('model_name', 'prediction_grade',
-#                                              'downsample'),
-#                          xvar = 'prediction_grade',
-#                          color_var = 'downsample',
-#                          extra_var = 'label')
+combined_overlap_only = left_join(only_overlap_lookups,
+                                  combined_preds,
+                                  by = "student_lookup")
 
-### Comparing Feature Importance ###
-feature_compare <- reports_ref %>%
-  grab_top_performing('cv_score', 1,
-                      c(vec_to_group_on, 'feature_categories')) %>%
-  filter(model_name != 'DT', label == 'definite_plus_ogt') %>%
-  collect_and_ggplot_obj(vec_to_gather = c('train_precision_5_15'), #'test_precision_5_15'),
-                         vec_to_group_on = c('model_name', 'prediction_grade',
-                                             'feature_categories'),
-                         xvar = 'prediction_grade',
-                         color_var = 'feature_categories',
-                         extra_var = 'label')
-g <- feature_compare + geom_point(size = 4) + facet_wrap(~model_name) + geom_line() +
-  ylab(paste0('avg_precision_5_15')) +
-  ggtitle(paste0("Top 1 Model for avg_precision_5_15 by Model Type"))
+# plot density for our top models
+
+# plot rank comparisons for our top models
+
+# plot recall curves for our top models
 
 
 ### Study Model Chosen Parameters ###
@@ -111,51 +103,8 @@ g = ggplot(logit_params, aes(x = rank, y = cv_score,
   ggtitle("Logit Best Params on Top 20 for prediction grade
           (Features = all, label = 'definite_plus_ogt')")
 
-# get top 30 RF model parameters
-top_RF = reports_ref %>% 
-  filter(model_name == 'RF', label == 'definite_plus_ogt') %>%
-  grab_top_performing('cv_score', 20, c('prediction_grade')) %>%
-  select_('prediction_grade', 'parameters', 'cv_score', 'val_recall_5_15') %>%
-  collect()
-# split on parameters for logit
-RF_params = top_RF %>% separate(parameters, sep = ';',
-                                      into = c('criterion', 'depth', 'max_features',
-                                               'min_samples_split'), extra = 'drop') %>%
-  mutate(rank = row_number(desc(cv_score))) %>%
-  unite(depth_min_samples, depth, min_samples_split) %>%
-  filter(rank <= 10)
-g = ggplot(RF_params, aes(x = rank, y = cv_score, 
-                             color = max_features, shape = depth_min_samples)) +
-  geom_point(size = 4) + facet_grid(criterion~prediction_grade, scales = 'free_y') +
-  ggtitle("RF Best Params on Top 10 for prediction grade
-          (Features = all, label = 'definite_plus_ogt')")
 
-### Compare Students Across Model Predictions ###
-# get filenames of the top 1 for RF and logit on
-# label = definite_plus_ogt
-# features = all
-# prediction_grade = 7
-# ranked by = cv_score
-top_rf_logit = reports_ref %>%
-  filter(model_name %in% c('RF', 'logit'),
-         prediction_grade == 7,
-         label == 'definite_plus_ogt') %>%
-  grab_top_performing('cv_score', 1, c('model_name')) %>% collect()
-
-# get predictions for each model
-predictions_ref = tbl(pg_db, dplyr::sql('SELECT * FROM model.predictions'))
-rf_pred = predictions_ref %>% filter(filename == top_rf_logit$filename[top_rf_logit$model_name == 'RF'][[1]]) %>%
-  collect()
-logit_pred = predictions_ref %>% filter(filename == top_rf_logit$filename[top_rf_logit$model_name == 'logit'][[1]]) %>%
-  collect()
-
-# look at individual students
-if (!exists('rf_pred')) {
-  rf_pred = readRDS('top_rf_pred.rds'); logit_pred = readRDS('top_logit_pred.rds');
-}
-
-rf_pred$model_name = 'RF'; logit_pred$model_name = 'logit'
-combined_pred = rbind(rf_pred, logit_pred)
+### OLD ###
 
 ranked_pred_by_model = combined_pred %>% group_by(model_name) %>% mutate(rank = row_number(predicted_score)) %>%
   ggplot(aes(x = rank, y = predicted_score, color = model_name)) + geom_point()

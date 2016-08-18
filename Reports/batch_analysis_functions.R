@@ -2,7 +2,6 @@
 
 
 load_table_ref = function(wd_loc, criterion_name,
-                          batch_name,
                           where_statement = '',
                           table_name = 'model.reports'){
   # Load required credentials and libraries
