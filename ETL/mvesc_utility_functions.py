@@ -272,6 +272,7 @@ def barplot_df(dfbar, figname=None, save=False, savedir='./',
     else:
         return(None)
 
+
 def read_model_topN_feature_importance(filename, topN=10, schema='model', table='feature_scores'):
     """
     Read top N feature importance from features scores table
@@ -292,6 +293,7 @@ def read_model_topN_feature_importance(filename, topN=10, schema='model', table=
         """.format(s=schema, t=table, f=filename, topN=topN)
         df = pd.read_sql_query(sqlcmd, conn)
     return df
+
 
 def barplot_feature_importance(filename, topN=10, schema='model', table='feature_scores',
                                figname=None, save=False, savedir='./',
@@ -328,7 +330,6 @@ def barplot_feature_importance(filename, topN=10, schema='model', table='feature
                style=style, kind=kind, dpi=dpi)
     return(saved_figname)
 
-
 ############ Functions to data frame processing ###################
 def df2num(rawdf, drop_reference = True, dummify = True,
         drop_entirely_null = True):
@@ -351,7 +352,6 @@ def df2num(rawdf, drop_reference = True, dummify = True,
     - 4. new column name is: "ColumnName_Category"
         (e.g., column 'gender' with 80 'M' and 79 'F' and 10 NULL;
         the dummy column is 'gender_F', or 'gender_isnull')
-
     """
     if drop_entirely_null:
         rawdf.dropna(axis='columns', how='all', inplace=True)

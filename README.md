@@ -26,3 +26,5 @@ This folder contains scripts to estimate a predictive model. It takes in a human
 *Reports*
 
 This folder contains more human-readable reports of the estimated models. Many of these use data automatically derived from the results of the `Model_Results/results` folder.
+
+Tested in python 3.4.3
