@@ -32,3 +32,7 @@ This directory contains codes, scripts, and figures for specific useful pieces o
  - Distributions
  - Correlations
 
+* Model results (Python)
+ - models: random forest, logit
+ - model performance: precision, recall
+ - model predictions 
