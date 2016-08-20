@@ -1,9 +1,34 @@
-## List of Descriptives To Recreate
+# Descriptive Analysis
 
-This folder is different from the Exploratory Analysis, which was just storing our initial exploration. This folder contains code and scripts for specific useful pieces of descriptive stats. This folder will also be used for making final images for presentation and paper use.
+This directory contains codes, scripts, and figures for specific useful pieces of descriptive stats listed below. 
 
-* Cohort analysis in build\_cohort\_tree\_counts.py
-    * assumes student\_tracking\_table has already been created.
-         * see ETL/build_student_tracking.py
-    * assumes all\_graduates table has already been created.
-         * see ETL/build_graduates_table.sql
+* Absence analysis (Python)
+ - using both aggregated and daily absence data
+ - absence pattern by month, week, day
+ - consecutive absence
+ - graduate vs dropout comparison
+ 
+* Cohort analysis (Python)
+ - the goal is to better label the outcomes
+ - withdrawal types for different cohorts
+ - automatically draw trees to label outcomes
+
+* General summary (R)
+ - disability
+ - economic disadvantage
+ - status, etc
+
+* Grades analysis (Python)
+ - GPA distribution
+ - comparison of graduates and dropout
+ - comparison of graduates and no IRN
+
+* Outcome analysis (Python)
+ - label students to different buckets
+ - buckets comparison in terms of absence, GPA, etc
+
+* Test scores (Python)
+ - Ohio Achievement Accessments and Ohio Graduation Tests Analysis
+ - Distributions
+ - Correlations
+
