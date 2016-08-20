@@ -18,16 +18,16 @@ This directory contains codes, scripts, and figures for specific useful pieces o
  - economic disadvantage
  - status, etc
 
-* Grades analysis
+* Grades analysis (Python)
  - GPA distribution
  - comparison of graduates and dropout
  - comparison of graduates and no IRN
 
-* Outcome analysis
+* Outcome analysis (Python)
  - label students to different buckets
  - buckets comparison in terms of absence, GPA, etc
 
-* Test scores
+* Test scores (Python)
  - Ohio Achievement Accessments and Ohio Graduation Tests Analysis
  - Distributions
  - Correlations
