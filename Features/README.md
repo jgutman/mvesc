@@ -1,12 +1,21 @@
 # Feature Generation Modules
 
-This folder contains the scripts for extracting both features and outcome labels to be used for the prediction problem. These are stored in the database.
+This folder contains the scripts for extracting both features and outcome labels to be used for the prediction problem. 
+These are stored in the database.
 
+### How to Generate features and outcomes
+Only 2 Python scripts are needed to be run, and all the rest will be called in these 2 Python scripts.
+ * `generate_absence_features.py` 
+ * `generate_outcome.py`
+ 
 ### Label/Outcome Definitions
 
 We have several possible definition schemes for choosing outcomes. We create a column for each possible defintion in the database.
-
-(describe the different possible definitions and each one's pros and cons)
+(More description will be added later)
+ * `not_on_time`
+ * `is_dropout`
+ * `definite`
+ * `definite_plus_ogt`
 
 ### Feature Descriptions
 absence:
