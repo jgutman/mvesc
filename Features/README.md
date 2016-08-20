@@ -13,9 +13,22 @@ Only 2 Python scripts are needed to be run, and all the rest will be called in t
 We have several possible definition schemes for choosing outcomes. We create a column for each possible defintion in the database.
 (More description will be added later)
  * `not_on_time`
+    - 4-year-graduate marked as 0, otherwise 1
+    - pros: easy to define
+    - cons: too many uncertain ones marked as 1
  * `is_dropout`
+    - `dropout` indicated in withdrawal code marked as 1, otherwise 0
+    - pros: easy to define
+    - cons: too few definite labels; uncertain ones marked as 0
  * `definite`
+    - `dropout` marked as 1; 4-year-graduate marked as 0
+    - pros: easy to define; reliable to use
+    - cons: too few class 1's especially for some cohorts
+
  * `definite_plus_ogt`
+    - `dropout` and poor-ogt-performed students marked as 1; others marked as 0
+    - pros: number of 1 and 0 are most reasonable
+    - cons: need to pick threshold semi-manually
 
 ### Feature Descriptions
 absence:
