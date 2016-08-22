@@ -1,0 +1,88 @@
+batch_name:
+  08_12_2016_grade_7
+model_classes_selected: 
+  - logit 
+  - DT 
+  - RF 
+  - ET 
+  - SVM 
+  
+user_description: third pass for grade 7
+file_save_name: 08_12_2016_grade_7_param_set_35
+write_predictions_to_database: True
+user: ht
+debug: False
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: k_fold
+cohort_grade_level_begin: cohort_7th
+prediction_grade_level: 7
+feature_grade_range: 
+  - 5
+  - 6
+  
+n_folds: 5
+
+cohorts_test: 
+  - 2010
+  
+cohorts_val: 
+  - 2009
+  
+cohorts_training:
+  - 2008
+  
+random_seed: 1471105646.3933249
+validation_criterion: 
+  - custom_precision_5_15
+  - custom_recall_5_15
+  
+features_included:
+  grades: 
+    - gpa*
+    - gpa_district*
+    
+  snapshots: 
+    - disadvantagement*
+    - disability*
+    - district*
+    - gifted*
+    - iss*
+    - oss*
+    - limited_english*
+    - special_ed*
+    - status*
+    - discipline_incidents*
+    - section_504_plan*
+    
+  demographics: 
+    - ethnicity
+    - gender
+    
+  oaa_normalized: 
+    - read_normalized_gr_3
+    - math_normalized_gr_3
+    - read_normalized_gr_4
+    - math_normalized_gr_4
+    - read_normalized_gr_5
+    - math_normalized_gr_5
+    - socstudies_normalized_gr_5
+    - science_normalized_gr_5
+    - read_normalized_gr_6
+    - math_normalized_gr_6
+    
+  absence: 
+    - absence*
+    - absence_unexcused*
+    - tardy*
+    - tardy_unexcused*
+    
+  
+outcome_name: definite_plus_ogt
+missing_impute_strategy: median_plus_dummies
+feature_scaling: robust
+
+subset_n:  !!null 
+downsample_param:  0.9 
+upsample_param:  !!null
+sample_wt_ratio:  !!null
