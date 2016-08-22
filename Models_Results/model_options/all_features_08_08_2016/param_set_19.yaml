@@ -39,7 +39,11 @@ cohorts_training:
   - 2010
   - 2011
   
+<<<<<<< HEAD
 random_seed: 1470699429.3062239
+=======
+random_seed: 1470690750.255474
+>>>>>>> master
 validation_criterion: 
   - custom_precision_5
   - custom_precision_10
@@ -64,6 +68,7 @@ features_included:
     - discipline_incidents*
     - section_504_plan*
     
+<<<<<<< HEAD
   mobility: 
     - n_addresses_to*
     - n_districts_to*
@@ -81,6 +86,8 @@ features_included:
     - ethnicity
     - gender
     
+=======
+>>>>>>> master
   absence: 
     - absence*
     - absence_unexcused*
@@ -136,6 +143,26 @@ features_included:
     - eighth_science_percentile
     - eighth_science_pl
     
+<<<<<<< HEAD
+=======
+  demographics: 
+    - ethnicity
+    - gender
+    
+  mobility: 
+    - n_addresses_to*
+    - n_districts_to*
+    - n_cities_to*
+    - n_records_to*
+    - avg_address_change_to*
+    - avg_district_change_to*
+    - avg_city_change_to*
+    - street_transition_in*
+    - district_transition_in*
+    - city_transition_in*
+    - mid_year_withdraw*
+    
+>>>>>>> master
   grades: 
     - gpa*
     - language_gpa*

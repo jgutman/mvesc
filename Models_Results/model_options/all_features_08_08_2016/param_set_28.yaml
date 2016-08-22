@@ -26,11 +26,15 @@ feature_grade_range:
   - 9
   
 
+<<<<<<< HEAD
 cohorts_test: 
   - 2013
   
 cohorts_val: 
   - 2012
+=======
+cohorts_held_out: 
+>>>>>>> master
   
 cohorts_training:
   - 2007
@@ -39,6 +43,7 @@ cohorts_training:
   - 2010
   - 2011
   
+<<<<<<< HEAD
 random_seed: 1470700920.310278
 validation_criterion: 
   - custom_precision_5
@@ -46,6 +51,10 @@ validation_criterion:
   - custom_recall_5
   - f1
   
+=======
+random_seed: 1470692901.4674332
+validation_criterion: 
+>>>>>>> master
 features_included:
   snapshots: 
     - disadvantagement*
@@ -64,6 +73,7 @@ features_included:
     - discipline_incidents*
     - section_504_plan*
     
+<<<<<<< HEAD
   mobility: 
     - n_addresses_to*
     - n_districts_to*
@@ -81,6 +91,8 @@ features_included:
     - ethnicity
     - gender
     
+=======
+>>>>>>> master
   absence: 
     - absence*
     - absence_unexcused*
@@ -136,6 +148,26 @@ features_included:
     - eighth_science_percentile
     - eighth_science_pl
     
+<<<<<<< HEAD
+=======
+  demographics: 
+    - ethnicity
+    - gender
+    
+  mobility: 
+    - n_addresses_to*
+    - n_districts_to*
+    - n_cities_to*
+    - n_records_to*
+    - avg_address_change_to*
+    - avg_district_change_to*
+    - avg_city_change_to*
+    - street_transition_in*
+    - district_transition_in*
+    - city_transition_in*
+    - mid_year_withdraw*
+    
+>>>>>>> master
   grades: 
     - gpa*
     - language_gpa*
@@ -161,6 +193,10 @@ features_included:
   
 outcome_name: is_dropout
 missing_impute_strategy: mean_plus_dummies
+<<<<<<< HEAD
 feature_scaling: standard
 
 subset_n:  !!null 
+=======
+feature_scaling: standard
+>>>>>>> master

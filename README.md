@@ -2,6 +2,10 @@
 
 (see the README inside individual folders for more details)
 
+*Installation*
+
+To install pycairo, download the distribution from [https://cairographics.org/pycairo/](https://cairographics.org/pycairo/) or and install using `cd pycairo; python setup.py install`. Or, install using `pip` as `pip install git+http://git.cairographics.org/git/pycairo` Test import using `python -c "import cairo"`. Install all other dependencies using `pip install -r requirements.txt`.
+
 *ETL*
 
 This folder contains scripts to process our original raw data (e.g. SQL server backups, individual files). The output of this folder is transforming raw data into a cleaned and standardized format in our database -- ready for feature extraction and generation.
@@ -17,8 +21,10 @@ The output of this folder is the creation of multiple feature category tables in
 
 *Model_Results*
 
-This folder contains scripts to estimate a predictive model. It takes in a human-made options file as input. The output is a record of all the inputs / parameters / results of each particular iteration. 
+This folder contains scripts to estimate a predictive model. It takes in a human-made options file as input. The output is a record of all the inputs / parameters / results of each particular iteration.
 
 *Reports*
 
 This folder contains more human-readable reports of the estimated models. Many of these use data automatically derived from the results of the `Model_Results/results` folder.
+
+Tested in python 3.4.3

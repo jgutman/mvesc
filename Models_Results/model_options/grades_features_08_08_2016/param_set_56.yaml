@@ -26,6 +26,7 @@ feature_grade_range:
   - 8
   - 9
   
+<<<<<<< HEAD
 n_folds: 5
 
 cohorts_test: 
@@ -33,6 +34,10 @@ cohorts_test:
   
 cohorts_val: 
   - 2012
+=======
+
+cohorts_held_out: 
+>>>>>>> master
   
 cohorts_training:
   - 2008
@@ -40,6 +45,7 @@ cohorts_training:
   - 2010
   - 2011
   
+<<<<<<< HEAD
 random_seed: 1470694475.8490908
 validation_criterion: 
   - custom_precision_5
@@ -47,6 +53,10 @@ validation_criterion:
   - custom_recall_5
   - f1
   
+=======
+random_seed: 1470692943.830014
+validation_criterion: 
+>>>>>>> master
 features_included:
   grades: 
     - gpa*
@@ -73,6 +83,10 @@ features_included:
   
 outcome_name: definite
 missing_impute_strategy: mean_plus_dummies
+<<<<<<< HEAD
 feature_scaling: standard
 
 subset_n:  !!null 
+=======
+feature_scaling: standard
+>>>>>>> master

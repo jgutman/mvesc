@@ -40,7 +40,11 @@ cohorts_training:
   - 2010
   - 2011
   
+<<<<<<< HEAD
 random_seed: 1470694394.3461244
+=======
+random_seed: 1470692865.053081
+>>>>>>> master
 validation_criterion: 
   - custom_precision_5
   - custom_precision_10
