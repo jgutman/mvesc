@@ -40,7 +40,7 @@ def main():
 #               'Interscholastic Athletics':'atheletics',
 #               'Other':'other',
 #               'Dropout':'dropout'}
-    with open('./json/intervention_types_long2short.json', 'r') as r:
+    with open('./json/intervention_types_long2short.json', 'r') as f:
         dict_group2abbrev = json.load(f)
  
     table_df = {}
