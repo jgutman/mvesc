@@ -97,8 +97,8 @@ new_irn_df.to_csv(new_irn_csv_name, index=False)
 print('Excel file column names corrected and saved as ', new_irn_csv_name)
 print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
 /mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s public").read())
-print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
-/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s raw").read())
+#print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
+#/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s raw").read())
 
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.xls ++++++#
@@ -126,7 +126,7 @@ for sheet_name in xl.sheet_names:
     newnames = [name[:63] for name in newnames]
     newnames_dict={names[i]:newnames[i] for i in range(len(names))}
     df = df.rename(columns=newnames_dict)
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("sheet-table uploaded to mvesc: ", table_name)
 
@@ -153,7 +153,7 @@ else:
     new_colnames_dict = {df_Mobility.columns[i]:new_colnames[i] for i in range(len(new_colnames))}
     df_Mobility=df_Mobility.rename(columns=new_colnames_dict)
     df_Mobility=df_Mobility.drop('metrics', axis=1)
-    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
@@ -173,7 +173,7 @@ tab_name_json = add_file2table_jsonfile(jvsd_fn.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
@@ -194,7 +194,7 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
@@ -214,7 +214,7 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
@@ -234,7 +234,7 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
+#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
     table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
     print("table uploaded to mvesc: ", table_name)
 
