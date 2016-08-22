@@ -14,7 +14,7 @@ print('consolidated tables')
 
 #absences
 execute_sql_script("./sql/clean_absences.sql")
-execute_sql_script("./sql/call_absences_generate_mm_day_wkd.sql")
+execute_sql_script("./sql/all_absences_generate_mm_day_wkd.sql")
 print('all_absences cleaned')
 
 #grades
@@ -29,7 +29,7 @@ print('oaaogt cleaned')
 #snapshots
 cleaning_all_snapshots.main()
 deduplication.main()
-execute_sql_script("./sql/call_absences_add_grade_column.sql")
+execute_sql_script("./sql/all_absences_add_grade_column.sql")
 print('all_snapshots cleaned')
 
 #intervention
