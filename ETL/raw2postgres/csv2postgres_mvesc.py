@@ -65,7 +65,7 @@ def read_csv_noheader(filepath):
     df = df.rename(columns=colnames)
     return df
 
-def fetch_or_add_file2table_jsonfile(datafile, jsonfile='file_to_table_name.json'):
+def fetch_or_add_file2table_jsonfile(datafile, jsonfile='../json/file_to_table_name.json'):
     """ Fetch table name from json file OR Add file:table to json
     
     step 1: check whether file and table exist in json file;

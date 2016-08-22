@@ -407,7 +407,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
 
     #write the data frame to postgres
     file_name = filepath.split('/')[-1]
-    file_table_names = json.load(open('file_to_table_name.json','r')) # load json of mapping from filenames to table names
+    file_table_names = json.load(open('./json/file_to_table_name.json','r')) # load json of mapping from filenames to table names
     table_name = file_table_names[file_name] # get the table name
 
     # check existing tables in sql first to avoid errors

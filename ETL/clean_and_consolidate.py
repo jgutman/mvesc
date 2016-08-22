@@ -11,23 +11,23 @@ consolidating_tables.main()
 print('consolidated tables')
 
 #absences
-execute_sql_script("clean_absences.sql")
-execute_sql_script("all_absences_generate_mm_day_wkd.sql")
+execute_sql_script("./sql/clean_absences.sql")
+execute_sql_script("./sql/call_absences_generate_mm_day_wkd.sql")
 print('all_absences cleaned')
 
 #grades
-execute_sql_script("clean_grades.sql")
+execute_sql_script("./sql/cclean_grades.sql")
 print('all_grades cleaned')
 
 #tests
-execute_sql_script("clean_oaaogt.sql")
+execute_sql_script("./sql/cclean_oaaogt.sql")
 # add other test cleaning scripts here
 print('oaaogt cleaned')
 
 #snapshots
 cleaning_all_snapshots.main()
 deduplication.main()
-execute_sql_script("all_absences_add_grade_column.sql")
+execute_sql_script("./sql/call_absences_add_grade_column.sql")
 print('all_snapshots cleaned')
 
 #intervention
@@ -35,7 +35,7 @@ build_clean_intervention_table.main()
 print('intervention built and cleaned')
 
 #additional tables for analysis
-execute_sql_script("build_graduates_table_from_snapshots.sql")
+execute_sql_script("./sql/cbuild_graduates_table_from_snapshots.sql")
 build_student_tracking.main()
 
 # additional script for adding labels to tracking table
