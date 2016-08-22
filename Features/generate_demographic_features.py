@@ -15,7 +15,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 
 from mvesc_utility_functions import *
-from feature_utilities import update_column_with_join
+from feature_utilities import *
 
 def create_temp_table(cursor, schema='clean', table='all_snapshots',
     temp='single_gender', feature='gender'):
@@ -25,7 +25,9 @@ def create_temp_table(cursor, schema='clean', table='all_snapshots',
     # Jackie suggestion to fix double-tie:
     #   select distinct on (student_lookup) student_lookup, {feature} ... 
     #   order by rank ... instead of the delete from where rank > 1
-    query_rank_feature_by_count = """create temporary table {temp} as
+    query_rank_feature_by_count = """
+    drop table if exists {temp};
+    create temporary table {temp} as
     (select student_lookup, {feature}, max(school_year), count({feature}),
         rank() over (
             partition by student_lookup
@@ -47,20 +49,22 @@ def main():
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # drop and create table
-            sql_drop = "drop table if exists {schema}.{table};".format(schema=schema, table=table)
+#            sql_drop = "drop table if exists {schema}.{table};".format(schema=schema, table=table)
+#
+#            sql_create="""create table {schema}.{table} as
+#            ( select distinct student_lookup
+#              from clean.wrk_tracking_students
+#              where outcome_category is not null
+#            );""".format(schema=schema, table=table)
+#
+#            cursor.execute(sql_drop)
+#            cursor.execute(sql_create)
+#
+#            print(""" - Table {schema}.{table} created!""".format(schema=schema, table=table))
 
-            sql_create="""create table {schema}.{table} as
-            ( select distinct student_lookup
-              from clean.wrk_tracking_students
-              where outcome_category is not null
-            );""".format(schema=schema, table=table)
-
-            cursor.execute(sql_drop)
-            cursor.execute(sql_create)
-
-            print(""" - Table {schema}.{table} created!""".format(schema=schema, table=table))
-
-            source_schema, source_table = 'clean', 'all_snapshots'
+            create_feature_table(cursor, table, replace=True) 
+            # updated the 10 lines with this function; replace is set True to have the same function 
+            # as the above 10 lines and to avoid conflicts in join 
 
             # add ethnicity - all multiples have already been converted to
             # M for Multiracial in cleaning_all_snapshots.sql
