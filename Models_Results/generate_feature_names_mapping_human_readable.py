@@ -36,7 +36,7 @@ def main():
         all_tokens = all_tokens + nm.split('_')
     all_tokens = set(all_tokens)
     token_mapping = {
-     'avg': 'average',
+     'avg': 'average number of',
      'change':'changes',
      'consec':'consecutive',
      'ed':'education',
@@ -44,10 +44,11 @@ def main():
      'instruc':'instruction',
      'intracurr':'intracurricular', 
      'inv':'intervention',
-     'iss':'in school suspension',
+     'iss':'in-school-suspension',
      'n':'number of', 
+     'normalized':'Z-score',
      'num':'number of',
-     'oss':'out of school suspension',
+     'oss':'out-of-school-suspension',
     'percent':'percentage',
      'pf':'pass_or_fail',
      'pl':'performance level',
