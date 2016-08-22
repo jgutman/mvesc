@@ -222,7 +222,7 @@ def main():
             #print(cohort_survival_analysis(2006, 2015, 6))
             print(build_wide_format(cursor))
         connection.commit()
-    execute_sql_script(os.path.join(parentdir,
+    execute_sql_script(os.path.join(parentdir,'sql',
         'remove_duplicate_withdrawals_from_tracking.sql'))
     
     print('done!')
