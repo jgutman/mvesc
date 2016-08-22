@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, json
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
@@ -207,9 +207,8 @@ def main():
     schema, table = 'model', 'individual_risks_logit'
     dir_pkls = '/mnt/data/mvesc/Models_Results/pkls'
     if_exists = 'append'
-
-    random_seed = 62571
-
+    with open('feature_name_mapping_to_human_readable.json', 'r') as f:
+       names_mapping = json.load(f)
 
     for filename in filename_list:
         print("- Processing pkl: ", filename)
@@ -228,6 +227,14 @@ def main():
         features_processed = test_impute_and_scale(features_processed, options)
         individual_scores_factors = build_individual_risk_df(clf, topK, grade, 
                                                              features_processed, features_raw, model_name, filename)
+        # mapping feature names to human-readable names
+        colnames = list(individual_scores_factors.columns)
+        risk_factor_colnames = list(filter(lambda x: ('risk_factor' in x) and ('value' not in x), colnames))
+        risk_factor_column_indice = [colnames.index(x) for x in risk_factor_colnames]
+        for i in range(individual_scores_factors.shape[0]):
+            for colind in risk_factor_column_indice:
+                individual_scores_factors.iloc[i, colind] = names_mapping[individual_scores_factors.iloc[i, colind]]
+
         # output to postgres
         eng = postgres_engine_generator()
         individual_scores_factors.to_sql(table, eng, schema = schema, if_exists=if_exists, index=False)
