@@ -1,4 +1,3 @@
-from mvesc_utility_functions import *
 import os, sys
 
 pathname = os.path.dirname(sys.argv[0])
@@ -6,6 +5,8 @@ full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
+from mvesc_utility_functions import *
+
 
 '''
 Joint note from JG and ZZ:
