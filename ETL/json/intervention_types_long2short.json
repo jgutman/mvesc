@@ -1,15 +1,15 @@
 {
-'Post-secondary Enrollment Options Program':'post_secondary',
-'Academic Intervention':'academic_inv',
-'Specialized Instructions':'spec_instruc',
-'Placement Options':'placement',
-'Disadvantaged Pupil Programs (DPPF)':'DPPF',
-'Title I':'titlei', 
-'Vocational Programs':'vocational',
-'Extracurricular/Intracurricular Programs and Services':'extracurr_program',
-'Academic Intracurricular Descriptions (Vocational)':'academic_intracurr',
-'School Related Service Program':'school_program',
-'Interscholastic Athletics':'atheletics',
-'Other':'other',
-'Dropout':'dropout'
+"Post-secondary Enrollment Options Program":"post_secondary",
+"Academic Intervention":"academic_inv",
+"Specialized Instructions":"spec_instruc",
+"Placement Options":"placement",
+"Disadvantaged Pupil Programs (DPPF)":"DPPF",
+"Title I":"titlei", 
+"Vocational Programs":"vocational",
+"Extracurricular/Intracurricular Programs and Services":"extracurr_program",
+"Academic Intracurricular Descriptions (Vocational)":"academic_intracurr",
+"School Related Service Program":"school_program",
+"Interscholastic Athletics":"atheletics",
+"Other":"other",
+"Dropout":"dropout"
 }
