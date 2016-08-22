@@ -7,6 +7,19 @@ These are stored in the database.
 Only 2 Python scripts are needed to be run, and all the rest will be called in these 2 Python scripts.
  * `generate_absence_features.py` 
  * `generate_outcome.py`
+
+These 2 scripts depend on:
+ 1. ETL utilities functions: `~/mvesc/ETL/mvesc_utility_functions.py`
+ 2. feature utilities functions: `~/mvesc/Features/feature_utilities.py`
+ 3. all sub-scripts to generate a certain type of features:
+    * `~/mvesc/Features/generate_demographic_features.py`
+    * `~/mvesc/Features/generate_snapshot_features.py`
+    * `~/mvesc/Features/generate_mobility_features.py`
+    * `~/mvesc/Features/generate_consec_absence_columns.py`
+    * `~/mvesc/Features/generate_absence_features.py`
+    * `~/mvesc/Features/generate_gpa.py`
+    * `~/mvesc/Features/generate_normalized_oaa_pandas.py`
+    * `~/mvesc/Features/generate_intervention_features.py`
  
 ### Label/Outcome Definitions
 
