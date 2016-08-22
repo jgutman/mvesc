@@ -50,7 +50,7 @@ def main():
      'num':'number of',
      'oss':'out-of-school-suspension',
     'percent':'percentage',
-     'pf':'pass_or_fail',
+     'pf':'pass-or-fail',
      'pl':'performance level',
      'titlei':'titleI',
      'to':'',
