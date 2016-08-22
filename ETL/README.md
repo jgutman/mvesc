@@ -58,45 +58,44 @@ missing description about individual function names & brief summary of operation
 
 ### Consolidating Tables
 
-(consolidating_tables.py + snapshot_column_names.json, grade_column_names.json, and absence_column_names)
-This is a Python script used to consolidate the yearly snapshots into clean.all_snapshots, all provided grades into clean.all_grades, and all fine-grained absence data into clean.all_absences. It relies on the handmade JSON files, which maps various different spellings of raw column names to the preferred clean column names.
+(`consolidating_tables.py` + `json\snapshot_column_names.json`, `json\grade_column_names.json`, and `json\absence_column_names.json`)
+This is a Python script used to consolidate the yearly snapshots into `clean.all_snapshots`, all provided grades into `clean.all_grades`, and all fine-grained absence data into `clean.all_absences`. It relies on the handmade JSON files, which maps various different spellings of raw column names to the preferred clean column names.
 
 Output = `clean.all_snapshots`, `clean.all_grades`, `clean.all_absences`
 
 ## Cleaning & Standardizing the Consolidated Tables
 
-(`clean_absences.sql`)
+(`sql/clean_absences.sql`)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
-(`all_absences_generate_mm_day_wkd.sql`)
+(`sql/all_absences_generate_mm_day_wkd.sql`)
 This script adds useful columns processing the dates from absences
 
-(`clean_grades.sql`)
+(`sql/clean_grades.sql`)
 This script details the choices made in cleaning the student individual class marks.
 
-(`clean_oaaogt.sql`)
+(`sql/clean_oaaogt.sql`)
 This script cleans the test score data of Ohio Achievement Assessment and Ohio Graduation Tests.
 
-(`cleaning_all_snapshots.sql`, `student_status.json`)
+(`sql/cleaning_all_snapshots.sql`, `json/student_status.json`)
 This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
 
 ## 4. Creation of Helpful Additional Tables
 
 Finally, the last step of our ETL is creating some other tables to be of help going forward.
 
-(`ETL\build_graduates_table_from_snapshots.sql`)
-This is a simple table keeping only students that have a graduation date from the all_snapshots table
+(`sql/build_graduates_table_from_snapshots.sql`)
+This is a simple table keeping only students that have a graduation date from the all_snapshots table.
 
-(`ETL\build_student_tracking.py`)
+(`build_student_tracking.py`)
 This builds a table tracking (`clean.wrk_tracking_students`) the yearly (longitudinal) progress for each student. It is important to note here some choices made to deal with duplicate information.
 
-(`ETL\build_cohort_tree_counts.py`)
+(`build_cohort_tree_counts.py`)
 This adds to the table built in `build_student_tracking.py` (`clean.wrk_tracking_students`) in order to get
-coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes. (This may get moved into the `generate_features` part of the pipeline)
-
+coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes.
 
 ## 5. Future Work To Do
 
-- make the utility functions into a module
+- make the utility functions into a package
 
 ## Summarized Order of Operations
 
@@ -106,18 +105,11 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
 	- those files without headers are named with headers "col0", "col1", etc which need to be changed later;
-	- this automatically updates `file_to_table_name.json`;
+	- this automatically updates `json/file_to_table_name.json`;
 
 3. Run Excel file import process
-	- Run Python script `excel2postres_mvesc.py`
+	- Run Python script `raw2postgres/excel2postres_mvesc.py`
 	- defult option is replacing existing table because all excel files are small and easy to upload
 
 4. Run `clean_and_consolidate.py`
-        - This script will execute all necessary scripts to take care of steps 3 and 4 above.
-
-5. * Run `build_student_tracking.py` (this can eventually just be called
-	directly from `clean_and_consolidate` -- currently commented out)
-
-6. * Run `build_cohort_tree_counts` (this can eventually just be called
-	directly from `clean_and_consolidate` -- currently commented out)
-	Unless we want to add this part of outcomes assignments into pipeline instead?
+        - This script will execute all necessary scripts to take care of steps 3 and 4 above. May take a while to run because of `build_cohort_tree_counts.py` and `generate_consec_absence_intermediate_tables.py`. Those can be commented out and run separately.
