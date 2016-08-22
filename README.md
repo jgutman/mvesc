@@ -8,7 +8,7 @@ To install pycairo, download the distribution from [https://cairographics.org/py
 
 *ETL*
 
-This folder contains scripts to process our original raw data (e.g. SQL server backups, individual files). The output of this folder is transforming raw data into a cleaned and standardized format in our database -- ready for feature extraction and generation.
+This folder contains scripts to process and clean our original raw data (e.g. SQL server backups, individual files). The scripts in this folder transform raw data into a cleaned and standardized format in our database (the `clean` schema)-- ready for feature extraction and generation.
 
 *Descriptives*
 
