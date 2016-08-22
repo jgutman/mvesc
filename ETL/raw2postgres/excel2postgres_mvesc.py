@@ -39,7 +39,7 @@ def combine_colnames(col1, col2):
     return new_col
 
 
-def add_file2table_jsonfile(excelfile, table_name, jsonfile='./json/file_to_table_name.json'):
+def add_file2table_jsonfile(excelfile, table_name, jsonfile='../json/file_to_table_name.json'):
     """ Add file:table to json OR return None to avoid conflict
     
     step 1: check whether file and table exist in json file;
