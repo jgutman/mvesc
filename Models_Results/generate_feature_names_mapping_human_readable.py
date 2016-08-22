@@ -72,7 +72,7 @@ def main():
         for t in tokens:
             if t=='gr':
                 if 'to' in tokens:
-                    new_nm = new_nm + 'upto grade'
+                    new_nm = new_nm + 'upto grade '
                 else:
                     new_nm = new_nm + 'in grade '
             elif t in token_mapping:
@@ -83,11 +83,15 @@ def main():
 
     # clean up double space and weekdays
     for key in mapping:
-        mapping[key] = mapping[key].replace('  ', ' ')
+        mapping[key] = mapping[key].replace('  ', ' ').strip()
         if 'weekday' in mapping[key]:
             ind = mapping[key].find('weekday')
             wkdn = mapping[key][ind:ind+9]
             mapping[key] = mapping[key].replace(wkdn, wkd_mapping[wkdn])
+        if 'in in' in mapping[key]:
+            mapping[key] = mapping[key].replace('in in', 'between')
+            mapping[key] = mapping[key] + ' and previous school year'
+
     with open(json_filename, 'w') as f:
         json.dump(mapping, f, ensure_ascii=True, sort_keys=True, indent=4)
         
