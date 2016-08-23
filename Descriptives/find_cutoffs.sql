@@ -89,7 +89,8 @@ select dropout,
 	from attendance_compare
 	where dropout is not null
 	group by dropout;
--- 47.6% of dropouts vs. 24.2% of non-dropouts
+  -- 47.6% of dropouts vs. 24.2% of non-dropouts (12 absences)
+  -- 29.0% of dropouts vs. 7.9% of non-dropouts (18 absences)
 
 --------- attendance comparison
 select * from discipline_compare where dropout is not null;
@@ -116,7 +117,8 @@ select dropout,
 	from discipline_compare
 	where dropout is not null
 	group by dropout;
--- 41.6% of dropouts vs. 17.2% of non-dropouts
+  -- 41.6% of dropouts vs. 17.2% of non-dropouts with 2 or more incidents
+  -- 34.1% of dropouts vs. 11.2% of non-dropouts with 3 or more incidents
 
 -- get flags on three categories for all students
 drop table if exists all_flags;
