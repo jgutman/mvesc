@@ -151,7 +151,7 @@ def make_and_save_predictions(future_predictions, clf, filename,
     if current_year:
         new_table = 'predictions_' + str(current_year)
     else:
-        new_table = 'predictions_new'
+        new_table = 'predictions'
 
     if write_to_db:
         write_scores_to_db(saved_outputs, table_name = new_table,
