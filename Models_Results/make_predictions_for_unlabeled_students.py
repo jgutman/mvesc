@@ -100,6 +100,11 @@ def test_impute_and_scale(test_outcomes, options):
         test_outcomes[col] = 0
     test_outcomes = test_outcomes.filter(train.columns)
 
+    # re-set column  order 
+    train = train.filter(column_set)
+    val = val.filter(column_set)
+    test_outcomes = test_outcomes.filter(column_set)
+
     # imputation for missing values in features
     train, val, test_outcomes = impute_missing_values(train, val, test_outcomes,
         options['missing_impute_strategy'])
@@ -113,7 +118,7 @@ def test_impute_and_scale(test_outcomes, options):
 
     assert (all(train.columns == test_outcomes.columns)),\
         "train and current_students have different columns"
-    return test_outcomes
+    return test_outcomes, scaler
 
 def make_and_save_predictions(future_predictions, clf, filename,
         current_year = 2016, write_to_db = True):

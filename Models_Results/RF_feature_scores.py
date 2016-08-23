@@ -3,9 +3,9 @@ pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
-sys.path.insert(0, os.path.join(base_pathename, 'ETL'))
-sys.path.insert(0, os.path.join(base_pathename, 'ModelsResults'))
-sys.path.insert(0, os.path.join(base_pathename, 'Features'))
+sys.path.insert(0, os.path.join(base_pathname, 'ETL'))
+sys.path.insert(0, os.path.join(base_pathname, 'ModelsResults'))
+sys.path.insert(0, os.path.join(base_pathname, 'Features'))
 
 from mvesc_utility_functions import *
 from estimate_prediction_model import build_outcomes_plus_features,temporal_cohort_test_split,impute_missing_values

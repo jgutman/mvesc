@@ -9,7 +9,8 @@ from mvesc_utility_functions import *
 import pickle
 from estimate_prediction_model import *
 from make_predictions_for_unlabeled_students import *
-from RF_feature_scores import top_k
+from RF_feature_scores import build_top_k_df, cts_feature_importance, \
+    binary_feature_importance, split_columns, categorical_feature_dict
 import pandas as pd
 import numpy as np
 # global constants
@@ -170,7 +171,6 @@ def generate_csv4mvesc(table = 'individual_risks_logit', csvfile = 'current_stud
     """
     ### Generate a CSV for our partner
     schema = 'model'
-    csvfile = 'current_student_predictions_logit.csv'
     with postgres_pgconnection_generator() as conn:
         with conn.cursor() as cursor:
             sql_select = """
@@ -194,18 +194,24 @@ def main():
         action="append")
     (options, args) = parser.parse_args()
 
-    filename_list = ['08_17_2016_grade_6_param_set_8_logit_jg_97',
-                     '08_17_2016_grade_7_param_set_17_logit_jg_98',
-                     '08_17_2016_grade_8_param_set_16_logit_jg_111',
-                     '08_17_2016_grade_9_param_set_16_logit_jg_111',
-                     '08_17_2016_grade_10_param_set_22_logit_jg_122']
+    # filename_list = ['08_17_2016_grade_6_param_set_8_logit_jg_97',
+    #                  '08_17_2016_grade_7_param_set_17_logit_jg_98',
+    #                  '08_17_2016_grade_8_param_set_16_logit_jg_111',
+    #                  '08_17_2016_grade_9_param_set_16_logit_jg_111',
+    #                  '08_17_2016_grade_10_param_set_22_logit_jg_122']
+
+    filename_list = ['08_17_2016_grade_7_param_set_17_RF_jg_138'
+                     '08_17_2016_grade_8_param_set_16_RF_jg_144'
+                     '08_17_2016_grade_10_param_set_16_RF_jg_151'
+                     '08_17_2016_grade_6_param_set_8_RF_jg_155'
+                     '08_17_2016_grade_9_param_set_16_RF_jg_179' ]
+
     if options.filename_list:
         filename_list = options.filename_list
     topK = 3
     if options.topK:
         topK = int(options.topK)
         
-    schema, table = 'model', 'individual_risks_logit'
     dir_pkls = '/mnt/data/mvesc/Models_Results/pkls'
     if_exists = 'append'
     with open('feature_name_mapping_to_human_readable.json', 'r') as f:
@@ -227,7 +233,24 @@ def main():
                                                                  features_processed, features_raw, model_name, 
                                                                  filename)
         else:
-            individual_scores_factors = top_k(filename, students)
+            model_name = filename.split('_')[-3]
+            features_processed, features_raw = build_test_feature_set(options, current_year=2016, return_raw=True)
+            features_processed, scaler = test_impute_and_scale(features_processed, options)
+            cts_columns, binary_columns = split_columns(features_processed, options['estimator_features'])
+            binary_dict = categorical_feature_dict(all_features_path, binary_columns)
+            students = features_processed.index
+            I_cts = cts_feature_importance(model, students, cts_columns, features_raw, features_processed,
+                                           scaler, 1)
+            I_binary = []
+            with Timer('binary_features') as t:
+                for student in students:
+                    temp = binary_feature_importance(clf, student, binary_dict, features_processed)
+                    I_binary.append(temp)
+                    print('student {0} after {1} sec', student, t.time_check())
+            I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
+            individual_scores_factors = build_top_k_df(all_I, students, 3)
+
+        schema, table = 'model', 'individual_risks_{}'.format(model_name)
 
         # mapping feature names to human-readable names
         colnames = list(individual_scores_factors.columns)
@@ -241,7 +264,7 @@ def main():
         eng = postgres_engine_generator()
         individual_scores_factors.to_sql(table, eng, schema = schema, if_exists=if_exists, index=False)
         print('- Processed ', filename)
-    csvfile = 'current_student_predictions_logit.csv'
+    csvfile = 'current_student_predictions_{}.csv'.format(model_name)
     generate_csv4mvesc(table, csvfile)
     print("- current student predictions saved to", csvfile )
 
