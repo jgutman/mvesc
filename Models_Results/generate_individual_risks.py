@@ -13,6 +13,7 @@ from RF_feature_scores import build_top_k_df, cts_feature_importance, \
     binary_feature_importance, split_columns, categorical_feature_dict
 import pandas as pd
 import numpy as np
+import pdb
 # global constants
 threshold_percentiles = [0.95, 0.85, 0.70]
 risk_levels = ['High', 'Medium', 'Low', 'Safe']
@@ -60,9 +61,11 @@ def get_school_district(df, grade, year=2015):
             select student_lookup, grade, school_year, school_code, district
             from clean.all_snapshots
             where grade={g} and school_year={yr}
-            """.format(g=grade-1, yr=2015)
+            """.format(g=grade-1, yr=year)
             df_school_etc = pd.read_sql_query(select_current_grade, conn)
-    return df.merge(df_school_etc, on='student_lookup')
+    print('len of df_school:', len(df_school_etc.index)) 
+    print('len of df in get_school_district:', len(df.index))
+    return df.merge(df_school_etc, on='student_lookup', how='inner')
 
 def colnames_mathing_processed2raw(processed_column_names, raw_column_names):
     """
@@ -138,9 +141,10 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
         top_feature_values = pd.DataFrame(top_feature_values)
         top_feature_values = top_feature_values.rename(columns={x:x+'_value' for x in top_feature_values.columns})
         individual_scores_factors = pd.concat([individual_scores_factors, top_feature_values], axis=1)
-    
+
     # subset the data to only include current students and current grade
     individual_scores_factors = get_school_district(individual_scores_factors, grade)
+    print('len of ind_scores_factors:', len(individual_scores_factors.index))
 
     # model and its file name
     individual_scores_factors['model'] = model_name
@@ -150,7 +154,7 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
     individual_scores_factors.sort_values(by=['district', 'school_code', 'risk_score'],inplace=True, ascending=False)
     return individual_scores_factors
 
-def reorder_columns(df, topK):
+def reorder_columns(df, topK, logit=True):
     """ 
     Reorder columns names for readability
     :param pd.df: dataframe of individual scores
@@ -210,11 +214,11 @@ def main():
     #                  '08_17_2016_grade_9_param_set_16_logit_jg_111',
     #                  '08_17_2016_grade_10_param_set_22_logit_jg_122']
 
-    filename_list = ['08_17_2016_grade_7_param_set_17_RF_jg_138',
+    filename_list = ['08_17_2016_grade_6_param_set_8_RF_jg_155',
+                     '08_17_2016_grade_7_param_set_17_RF_jg_138',
                      '08_17_2016_grade_8_param_set_16_RF_jg_144',
-                     '08_17_2016_grade_10_param_set_16_RF_jg_151',
-                     '08_17_2016_grade_6_param_set_8_RF_jg_155',
-                     '08_17_2016_grade_9_param_set_16_RF_jg_179' ]
+                     '08_17_2016_grade_9_param_set_16_RF_jg_179',
+                     '08_17_2016_grade_10_param_set_16_RF_jg_151']
 
     if options.filename_list:
         filename_list = options.filename_list
@@ -250,29 +254,31 @@ def main():
             grade = options['prediction_grade_level']
             features_processed, features_raw = build_test_feature_set(options, current_year=2016, return_raw=True)
             features_processed, scaler = test_impute_and_scale(features_processed, options)
-            # not including top_k:
+            # not including top_k features
             individual_scores_factors = build_individual_risk_df(clf, topK, grade,
                                                                  features_processed, features_raw, model_name,
                                                                  filename)
             cts_columns, binary_columns = split_columns(features_processed, options['estimator_features'])
             binary_dict = categorical_feature_dict(os.path.join(base_pathname, 'Features/all_features.yaml'),
                                                    binary_columns)
-            students = individual_scores_factors.index.intersection(features_processed.index)
+            students = individual_scores_factors['student_lookup']
+            pdb.set_trace()
             I_cts = cts_feature_importance(clf, students, cts_columns, features_raw, features_processed,
                                            scaler, 1)
             I_binary = []
             with Timer('binary_features') as t:
-                for student in students:
+                for count, student in enumerate(students):
                     temp = binary_feature_importance(clf, student, binary_dict, features_processed)
                     I_binary.append(temp)
-                    print('student {0}/{1} for grade {2} after {3} sec'.format(student,
+                    print('student {0}/{1} for grade {2} after {3} sec'.format(count,
                                                                                len(students), 
                                                                                grade,
                                                                                t.time_check()))
             I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
             top_k_df = build_top_k_df(I_all, students, 3)
-            individual_scores_factors = individual_scores_factors.join(top_k_df)
-            individual_scores_factors = reorder_columns(individual_scores_factors, topK)
+            individual_scores_factors = individual_scores_factors.merge(top_k_df, left_on = 'student_lookup', 
+                                                                        right_index=True)
+            individual_scores_factors = reorder_columns(individual_scores_factors, topK, logit=False)
 
         schema, table = 'model', 'individual_risks_{}'.format(model_name)
 
@@ -290,6 +296,7 @@ def main():
         eng = postgres_engine_generator()
         individual_scores_factors.to_sql(table, eng, schema = schema, if_exists=if_exists, index=False)
         print('- Processed ', filename)
+
     csvfile = 'current_student_predictions_{}.csv'.format(model_name)
     generate_csv4mvesc(table, csvfile)
     print("- current student predictions saved to", csvfile )
