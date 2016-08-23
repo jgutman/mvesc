@@ -324,11 +324,11 @@ def main():
                                                "./json/snapshot_column_names.json"))
             print('all_snapshots table built')
             cursor.execute(all_generic_query(cursor, teachers_tables,
-                                            "teachers_column_names.json",
+                                            "./json/teachers_column_names.json",
                                             student_lookup_spelling = "studentLookup"))
             print('all_teachers table built')
             cursor.execute(all_generic_query(cursor, accommodations_tables,
-                                            "accommodations_column_names.json"))
+                                            "./json/accommodations_column_names.json"))
             print('all_accommodations table built')
         connection.commit()
 
