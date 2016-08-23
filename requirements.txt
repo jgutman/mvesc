@@ -1,3 +1,4 @@
+-e git+http://git.cairographics.org/git/pycairo#egg=pycairo
 backports-abc==0.4
 backports.shutil-get-terminal-size==1.0.0
 boltons==16.5.0
@@ -43,7 +44,6 @@ plotly==1.12.2
 postal-address==1.1.0
 psycopg2==2.6.1
 ptyprocess==0.5.1
-pycairo==1.10.1
 pycountry==1.20
 pydot==1.2.2
 Pygments==2.1.3

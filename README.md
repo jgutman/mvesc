@@ -4,7 +4,7 @@
 
 *Installation*
 
-To install pycairo, download the distribution from [https://cairographics.org/pycairo/](https://cairographics.org/pycairo/) or and install using `cd pycairo; python setup.py install`. Or, install using `pip` as `pip install git+http://git.cairographics.org/git/pycairo` Test import using `python -c "import cairo"`. Install all other dependencies using `pip install -r requirements.txt`.
+Install all other dependencies using `pip install -r requirements.txt`. Note that `pycairo` is installed directly from `git+http://git.cairographics.org/git/pycairo`. If you encounter difficulties, try installing pycairo separately with `pip install git+http://git.cairographics.org/git/pycairo`.
 
 *ETL*
 
@@ -25,6 +25,6 @@ This folder contains scripts to estimate a predictive model. It takes in a human
 
 *Reports*
 
-This folder contains more human-readable reports of the estimated models. Many of these use data automatically derived from the results of the `Model_Results/results` folder.
+This folder contains more human-readable reports of the estimated models.
 
 Tested in python 3.4.3
