@@ -151,7 +151,8 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
     return individual_scores_factors
 
 def reorder_columns(df, topK):
-    """ Reorder columns names for readable
+    """ 
+    Reorder columns names for readability
     :param pd.df: dataframe of individual scores
     :param int topK: int of topK feautres
     :return pd.df df: dataframe of new ordered df
@@ -160,8 +161,13 @@ def reorder_columns(df, topK):
     new_colnames = ['student_lookup','grade', 'school_year', 'school_code', 'district', 'risk_score', 'risk_level']
     model_names = ['model', 'model_file']
     risk_names = []
-    for i in range(1, topK+1):
-        risk_names = risk_names+['risk_factor_'+str(i), 'risk_factor_'+str(i)+'_value']
+    if logit:
+        for i in range(1, topK+1):
+            risk_names = risk_names+['risk_factor_'+str(i), 'risk_factor_'+str(i)+'_value']
+    else:
+        for i in range(1, topK+1):
+            risk_names = risk_names+['risk_factor_'+str(i), 'risk_factor_'+str(i)+'_value',
+                                     'risk_factor_{}_direction'.format(i)]
     new_colnames = new_colnames + risk_names + model_names
     return df[new_colnames]
 
@@ -259,7 +265,10 @@ def main():
                 for student in students:
                     temp = binary_feature_importance(clf, student, binary_dict, features_processed)
                     I_binary.append(temp)
-                    print('student {0} after {1} sec', student, t.time_check())
+                    print('student {0}/{1} for grade {2} after {3} sec'.format(student,
+                                                                               len(students), 
+                                                                               grade,
+                                                                               t.time_check()))
             I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
             top_k_df = build_top_k_df(I_all, students, 3)
             individual_scores_factors = individual_scores_factors.join(top_k_df)
@@ -269,7 +278,9 @@ def main():
 
         # mapping feature names to human-readable names
         colnames = list(individual_scores_factors.columns)
-        risk_factor_colnames = list(filter(lambda x: ('risk_factor' in x) and ('value' not in x), colnames))
+        risk_factor_colnames = list(filter(lambda x: ('risk_factor' in x) 
+                                           and ('value' not in x) 
+                                           and ('direction' not in x), colnames))
         risk_factor_column_indice = [colnames.index(x) for x in risk_factor_colnames]
         for i in range(individual_scores_factors.shape[0]):
             for colind in risk_factor_column_indice:

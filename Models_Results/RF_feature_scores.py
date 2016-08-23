@@ -434,8 +434,8 @@ def build_top_k_df(all_I, students, k):
     columns = []
     for i in range(k):
         columns.append('risk_factor_{}'.format(i+1))
-        columns.append('risk_factor_value_{}'.format(i+1))
-        columns.append('risk_factor_direction_{}'.format(i+1))
+        columns.append('risk_factor_{}_value'.format(i+1))
+        columns.append('risk_factor_{}_direction'.format(i+1))
     top_k = pd.DataFrame(columns=columns, index=students)
     for i, s in enumerate(students):
         top = all_I[i][np.logical_not(all_I[i]['was_null'])]\
