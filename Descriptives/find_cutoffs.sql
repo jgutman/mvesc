@@ -177,7 +177,7 @@ drop table if exists top_risk;
 create temporary table top_risk as
 select student_lookup, filename, true_label,
 	rank() over(partition by filename order by predicted_score desc) risk_rank
-	from model.predictions_new where
+	from model.predictions where
 	filename in ('08_17_2016_grade_10_param_set_22_logit_jg_123',
 		'08_17_2016_grade_10_param_set_16_RF_jg_139')
 	and split = 'test';
