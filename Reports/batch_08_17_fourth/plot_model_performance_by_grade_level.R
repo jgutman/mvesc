@@ -6,13 +6,9 @@
 #   and redundant rows with multiple cv_criterion in first batch
 #   and automatically loads appropriate packages
 #   and allows a custom where statement to get the appropriate batch
-reports_ref = load_table_ref('~/mvesc/Reports/batch_08_12_third/',
+reports_ref = load_table_ref('~/mvesc/Reports/batch_08_17_fourth/',
                              'custom_precision_5_15',
-                             "where batch_name like '08_12_2016_%'")
-# further filter reports_ref to focus on only models using
-#   only full features
-reports_ref = reports_ref %>% filter(feature_categories == 
-                                       'absence, demographics, grades, intervention, mobility, oaa_normalized, snapshots')
+                             where_statement = "where batch_name like '08_17_2016%'")
 
 # Performance of Models Over Time
 vec_to_group_on = c('model_name', 'prediction_grade', 'label')
