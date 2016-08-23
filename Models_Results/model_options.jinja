@@ -1,0 +1,70 @@
+batch_name:
+  {{batch_name}}
+model_classes_selected: 
+  {% for c in model_classes %}- {{c}} 
+  {% endfor %}
+
+user_description: {{description}}
+file_save_name: {{name}}
+write_predictions_to_database: {{write_to_database}}
+user: {{user}}
+debug: {{debug}}
+
+model_test_holdout: {{test_set_type}}
+parameter_cross_validation_scheme: {{cv_scheme}}
+cohort_grade_level_begin: cohort_{{prediction_grade}}th
+prediction_grade_level: {{prediction_grade}}
+feature_grade_range: 
+  {% for g in feature_grade_range %}- {{g}}
+  {% endfor %}
+
+{% if cv_scheme == "k_fold" %}n_folds: {{n_folds}}
+{% endif %}
+
+cohorts_test: 
+  {% for c in cohorts_test %}- {{c}}
+  {% endfor %}
+
+cohorts_val: 
+  {% for c in cohorts_val %}- {{c}}
+  {% endfor %}
+
+cohorts_training:
+  {% for c in cohorts_training %}- {{c}}
+  {% endfor %}
+
+random_seed: {{random_seed}}
+validation_criterion: {{cv_criterion}}
+  {% for c in cv_criterions %}- {{c}}
+  {% endfor %}
+
+features_included:
+  {% for t in features %}{{t}}: 
+    {% for f in features[t] %}- {{f}}
+    {% endfor %}
+
+  {% endfor %}
+
+outcome_name: {{outcome}}
+missing_impute_strategy: {{imputation}}
+feature_scaling: {{scaling}}
+
+subset_n: {% if subset_n %} {{subset_n}} 
+{% else %} !!null 
+{% endif %}
+downsample_param: {% if downsample_param %} {{downsample_param}} 
+{% else %} !!null 
+{% endif %}
+upsample_param: {% if upsample_param %} {{upsample_param}} 
+{% else %} !!null
+{% endif %}
+sample_wt_ratio: {% if sample_wt_ratio %} {{sample_wt_ratio}} 
+{% else %} !!null
+{% endif %}
+drop_reference: {% if drop_reference %} {{drop_reference}} 
+{% else %} True
+{% endif %}
+dummify: {% if dummify %} {{dummify}} 
+{% else %} True
+{% endif %}
+
