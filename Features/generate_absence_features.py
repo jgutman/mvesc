@@ -168,9 +168,9 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
     col_date, dtype_date = col+'_starting_date', 'date'
     col_cnt, dtype_cnt = col+'_consec_count', 'int'
     if col=='absence':
-        table_intermed = 'public.intermed_'+col[:3]+'_agg'
+        table_intermed = 'clean.aggregated_absence_intermediate'
     else:
-        table_intermed='public.intermed_tdy_agg'
+        table_intermed='clean.aggregated_tardy_intermediate'
     sql_add_column = """
     alter table {table} drop column if exists {column};
     alter table {table} add column {column} {dtype} default null;
