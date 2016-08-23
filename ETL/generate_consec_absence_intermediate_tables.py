@@ -124,7 +124,8 @@ def main():
             create index {s}_{t_tdy}_index_sl_dt on {s}.{t_tdy} (student_lookup, tardy_starting_date);
             """.format(s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table)
             cursor.execute(sql_index_intermed)
-            print(' - Done: generated consec tables for absence(intermed_abs_agg) and tardy(intermed_tdy_agg) in public;')
+            print(""" - Done: generated table '{s}.{t_abs}' and table '{s}.{t_tdy}'!""".format(
+                      s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table))
 
 
 if __name__=='__main__':
