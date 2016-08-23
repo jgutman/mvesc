@@ -261,7 +261,7 @@ def main():
                     I_binary.append(temp)
                     print('student {0} after {1} sec', student, t.time_check())
             I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
-            top_k_df = build_top_k_df(all_I, students, 3)
+            top_k_df = build_top_k_df(I_all, students, 3)
             individual_scores_factors = individual_scores_factors.join(top_k_df)
             individual_scores_factors = reorder_columns(individual_scores_factors, topK)
 
