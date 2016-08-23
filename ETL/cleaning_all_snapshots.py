@@ -23,7 +23,7 @@ def main():
             """)
         connection.commit()
     cleaning_grad_grades.main()
-    execute_sql_script("update_all_snapshots_with_missing_graduates.sql")
+    execute_sql_script("./sql/update_all_snapshots_with_missing_graduates.sql")
     clean_addresses.main()
 
 if __name__ == '__main__':

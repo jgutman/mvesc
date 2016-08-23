@@ -1,0 +1,91 @@
+batch_name:
+  08_12_2016_grade_8
+model_classes_selected: 
+  - logit 
+  - DT 
+  - RF 
+  - ET 
+  - SVM 
+  
+user_description: third pass for grade 8
+file_save_name: 08_12_2016_grade_8_param_set_22
+write_predictions_to_database: True
+user: ht
+debug: False
+
+model_test_holdout: temporal_cohort
+parameter_cross_validation_scheme: k_fold
+cohort_grade_level_begin: cohort_8th
+prediction_grade_level: 8
+feature_grade_range: 
+  - 7
+  
+n_folds: 5
+
+cohorts_test: 
+  - 2011
+  
+cohorts_val: 
+  - 2010
+  
+cohorts_training:
+  - 2007
+  - 2008
+  - 2009
+  
+random_seed: 1471096124.8573449
+validation_criterion: 
+  - custom_precision_5_15
+  - custom_recall_5_15
+  
+features_included:
+  demographics: 
+    - ethnicity
+    - gender
+    
+  grades: 
+    - gpa*
+    - gpa_district*
+    
+  absence: 
+    - absence*
+    - absence_unexcused*
+    - tardy*
+    - tardy_unexcused*
+    
+  oaa_normalized: 
+    - read_normalized_gr_3
+    - math_normalized_gr_3
+    - read_normalized_gr_4
+    - math_normalized_gr_4
+    - read_normalized_gr_5
+    - math_normalized_gr_5
+    - socstudies_normalized_gr_5
+    - science_normalized_gr_5
+    - read_normalized_gr_6
+    - math_normalized_gr_6
+    - read_normalized_gr_7
+    - math_normalized_gr_7
+    
+  snapshots: 
+    - disadvantagement*
+    - disability*
+    - district*
+    - gifted*
+    - iss*
+    - oss*
+    - limited_english*
+    - special_ed*
+    - status*
+    - discipline_incidents*
+    - section_504_plan*
+    
+  
+outcome_name: definite_plus_ogt
+missing_impute_strategy: median_plus_dummies
+feature_scaling: robust
+
+subset_n:  !!null 
+downsample_param:  0.8 
+upsample_param:  !!null
+sample_wt_ratio:  !!null
