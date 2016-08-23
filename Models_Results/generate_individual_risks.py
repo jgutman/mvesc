@@ -106,13 +106,14 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
     else:
         risk_probas = clf.decision_function(features_processed)
 
-    top_individual_features = []
-    for i in range(features_processed.shape[0]):
-        x = np.array(features_processed.iloc[i, :])
-        top_feature_names_raw = [colnames_processed2raw[c] for c in topK_features_logit(clf, x, features_processed.columns, topK=topK)]
-        top_individual_features.append(top_feature_names_raw)
-    top_risk_factor_names = ['risk_factor_'+str(i) for i in range(1, topK+1)]
-    top_individual_features = pd.DataFrame(top_individual_features, 
+    if model_name == 'logit':
+        top_individual_features = []
+        for i in range(features_processed.shape[0]):
+            x = np.array(features_processed.iloc[i, :])
+            top_feature_names_raw = [colnames_processed2raw[c] for c in topK_features_logit(clf, x, features_processed.columns, topK=topK)]
+            top_individual_features.append(top_feature_names_raw)
+        top_risk_factor_names = ['risk_factor_'+str(i) for i in range(1, topK+1)]
+        top_individual_features = pd.DataFrame(top_individual_features, 
                                            columns=top_risk_factor_names)
 
     # individual risk score, level & factors
@@ -124,25 +125,28 @@ def build_individual_risk_df(clf, topK, grade, features_processed, features_raw,
     percentiles = individual_scores_factors.risk_score.quantile(q=threshold_percentiles)
     student_risk_levels = [risk_score2level(s, percentiles, risk_levels) for s in individual_scores_factors.risk_score]
     individual_scores_factors['risk_level'] = student_risk_levels
-    individual_scores_factors = pd.concat([individual_scores_factors, top_individual_features], axis=1)
+    if model_name == 'logit':
+        individual_scores_factors = pd.concat([individual_scores_factors, top_individual_features], axis=1)
 
     # get top risk values
-    top_feature_values = {'risk_factor_'+str(i):[] for i in range(1, topK+1)}
-    for risk_i in top_feature_values:
-        for student_i in range(features_processed.shape[0]):
-            column_in_features_raw = individual_scores_factors.ix[student_i, risk_i]
-            top_feature_values[risk_i].append(str(features_raw[column_in_features_raw].iloc[student_i]))
-    top_feature_values = pd.DataFrame(top_feature_values)
-    top_feature_values = top_feature_values.rename(columns={x:x+'_value' for x in top_feature_values.columns})
-    individual_scores_factors = pd.concat([individual_scores_factors, top_feature_values], axis=1)
+    if model_name == 'logit':
+        top_feature_values = {'risk_factor_'+str(i):[] for i in range(1, topK+1)}
+        for risk_i in top_feature_values:
+            for student_i in range(features_processed.shape[0]):
+                column_in_features_raw = individual_scores_factors.ix[student_i, risk_i]
+                top_feature_values[risk_i].append(str(features_raw[column_in_features_raw].iloc[student_i]))
+        top_feature_values = pd.DataFrame(top_feature_values)
+        top_feature_values = top_feature_values.rename(columns={x:x+'_value' for x in top_feature_values.columns})
+        individual_scores_factors = pd.concat([individual_scores_factors, top_feature_values], axis=1)
     
-    # subset the data to only include current students and corrent grades
+    # subset the data to only include current students and current grade
     individual_scores_factors = get_school_district(individual_scores_factors, grade)
 
     # model and its file name
     individual_scores_factors['model'] = model_name
     individual_scores_factors['model_file'] = filename
-    individual_scores_factors = reorder_columns(individual_scores_factors, topK)
+    if model_name == 'logit':
+        individual_scores_factors = reorder_columns(individual_scores_factors, topK)
     individual_scores_factors.sort_values(by=['district', 'school_code', 'risk_score'],inplace=True, ascending=False)
     return individual_scores_factors
 
@@ -200,10 +204,10 @@ def main():
     #                  '08_17_2016_grade_9_param_set_16_logit_jg_111',
     #                  '08_17_2016_grade_10_param_set_22_logit_jg_122']
 
-    filename_list = ['08_17_2016_grade_7_param_set_17_RF_jg_138'
-                     '08_17_2016_grade_8_param_set_16_RF_jg_144'
-                     '08_17_2016_grade_10_param_set_16_RF_jg_151'
-                     '08_17_2016_grade_6_param_set_8_RF_jg_155'
+    filename_list = ['08_17_2016_grade_7_param_set_17_RF_jg_138',
+                     '08_17_2016_grade_8_param_set_16_RF_jg_144',
+                     '08_17_2016_grade_10_param_set_16_RF_jg_151',
+                     '08_17_2016_grade_6_param_set_8_RF_jg_155',
                      '08_17_2016_grade_9_param_set_16_RF_jg_179' ]
 
     if options.filename_list:
@@ -227,19 +231,28 @@ def main():
             grade = options['prediction_grade_level']
             
             # fetch and process feature data
-            features_processed, features_raw = build_test_feature_set(options, current_year=2016, return_raw=True)
-            features_processed = test_impute_and_scale(features_processed, options)
+            features_processed, features_raw = build_test_feature_set(options,
+                                        current_year=2016, return_raw=True)
+            features_processed, _ = test_impute_and_scale(features_processed, 
+                                                          options)
             individual_scores_factors = build_individual_risk_df(clf, topK, grade, 
                                                                  features_processed, features_raw, model_name, 
                                                                  filename)
         else:
             model_name = filename.split('_')[-3]
+            clf, options = read_in_model(filename,model_name)
+            grade = options['prediction_grade_level']
             features_processed, features_raw = build_test_feature_set(options, current_year=2016, return_raw=True)
             features_processed, scaler = test_impute_and_scale(features_processed, options)
+            # not including top_k:
+            individual_scores_factors = build_individual_risk_df(clf, topK, grade,
+                                                                 features_processed, features_raw, model_name,
+                                                                 filename)
             cts_columns, binary_columns = split_columns(features_processed, options['estimator_features'])
-            binary_dict = categorical_feature_dict(all_features_path, binary_columns)
-            students = features_processed.index
-            I_cts = cts_feature_importance(model, students, cts_columns, features_raw, features_processed,
+            binary_dict = categorical_feature_dict(os.path.join(base_pathname, 'Features/all_features.yaml'),
+                                                   binary_columns)
+            students = individual_scores_factors.index.intersection(features_processed.index)
+            I_cts = cts_feature_importance(clf, students, cts_columns, features_raw, features_processed,
                                            scaler, 1)
             I_binary = []
             with Timer('binary_features') as t:
@@ -248,7 +261,9 @@ def main():
                     I_binary.append(temp)
                     print('student {0} after {1} sec', student, t.time_check())
             I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
-            individual_scores_factors = build_top_k_df(all_I, students, 3)
+            top_k_df = build_top_k_df(all_I, students, 3)
+            individual_scores_factors = individual_scores_factors.join(top_k_df)
+            individual_scores_factors = reorder_columns(individual_scores_factors, topK)
 
         schema, table = 'model', 'individual_risks_{}'.format(model_name)
 

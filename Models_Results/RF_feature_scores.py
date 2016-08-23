@@ -20,7 +20,7 @@ import yaml
 from sklearn.metrics import precision_score, recall_score
 from sklearn.preprocessing import RobustScaler
 
-def scale_features(train, val, test, strategy):
+def scale_features_plus_scaler(train, val, test, strategy):
     """
     Scales features based on the training values with the given strategy   
     Modified here to also return the scaler
@@ -394,8 +394,7 @@ def cts_feature_importance(model, students, cts_columns, train_X_pre, train_X,
                 # feature is raising student's risk
                 I['direction'].loc[feature] = 'risky'
             I['current_val'].loc[feature] = X[current_ind*3+1].loc[feature]
-            I['was_null'].loc[feature] = np.isnan(train_X_pre[feature]\
-                                                  .loc[student])
+            I['was_null'].loc[feature] = np.isnan(train_X_pre[feature].loc[s])
         I['var_type'] = 'continuous'
         I_list.append(I)
     return I_list
@@ -450,7 +449,7 @@ def build_top_k_df(all_I, students, k):
     return top_k
 
 def top_k(filename, students):
-    all_features_path = os.join(base_pathname, 'Features/all_features.yaml')
+    all_features_path = os.path.join(base_pathname, 'Features/all_features.yaml')
     with Timer('feature importances'):
         all_I = get_feature_importances(filename, students, 
                                         all_features_path, 1)

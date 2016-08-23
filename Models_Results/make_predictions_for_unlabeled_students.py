@@ -11,6 +11,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 
 from estimate_prediction_model import *
+from RF_feature_scores import scale_features_plus_scaler
 from write_to_database import write_scores_to_db
 
 def read_in_model(filename, model_name,
@@ -100,17 +101,17 @@ def test_impute_and_scale(test_outcomes, options):
         test_outcomes[col] = 0
     test_outcomes = test_outcomes.filter(train.columns)
 
-    # re-set column  order 
-    train = train.filter(column_set)
-    val = val.filter(column_set)
-    test_outcomes = test_outcomes.filter(column_set)
+    # # re-set column  order 
+    # train = train.filter(column_set)
+    # val = val.filter(column_set)
+    # test_outcomes = test_outcomes.filter(column_set)
 
     # imputation for missing values in features
     train, val, test_outcomes = impute_missing_values(train, val, test_outcomes,
         options['missing_impute_strategy'])
 
     # feature scaling
-    train, val, test_outcomes = scale_features(train, val, test_outcomes,
+    train, val, test_outcomes, scaler = scale_features_plus_scaler(train, val, test_outcomes,
         options['feature_scaling'])
 
     train = train.filter(column_set)
@@ -118,6 +119,7 @@ def test_impute_and_scale(test_outcomes, options):
 
     assert (all(train.columns == test_outcomes.columns)),\
         "train and current_students have different columns"
+    
     return test_outcomes, scaler
 
 def make_and_save_predictions(future_predictions, clf, filename,
