@@ -56,8 +56,6 @@ missing description about individual function names & brief summary of operation
 
 ## 3. Consolidating the Raw Tables in Public & Into the 'clean' Schema
 
-### Consolidating Tables
-
 (`consolidating_tables.py` + `json\snapshot_column_names.json`, `json\grade_column_names.json`, and `json\absence_column_names.json`)
 This is a Python script used to consolidate the yearly snapshots into `clean.all_snapshots`, all provided grades into `clean.all_grades`, and all fine-grained absence data into `clean.all_absences`. It relies on the handmade JSON files, which maps various different spellings of raw column names to the preferred clean column names.
 
@@ -96,7 +94,6 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 ## Summarized Order of Operations
 
 1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
-	- [missing] Use SQL code to automatically back these up into 'raw' schema
 
 2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
