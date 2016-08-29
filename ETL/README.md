@@ -63,7 +63,7 @@ This is a Python script used to consolidate the yearly snapshots into `clean.all
 
 Output = `clean.all_snapshots`, `clean.all_grades`, `clean.all_absences`
 
-## Cleaning & Standardizing the Consolidated Tables
+## 4. Cleaning & Standardizing the Consolidated Tables
 
 (`sql/clean_absences.sql`)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
@@ -79,7 +79,7 @@ This script cleans the test score data of Ohio Achievement Assessment and Ohio G
 (`sql/cleaning_all_snapshots.sql`, `json/student_status.json`)
 This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
 
-## 4. Creation of Helpful Additional Tables
+## 5. Creation of Helpful Additional Tables
 
 Finally, the last step of our ETL is creating some other tables to be of help going forward.
 
