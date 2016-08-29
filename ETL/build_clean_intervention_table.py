@@ -28,19 +28,9 @@ def main():
                        'KG':0, 'PS':-1, '12':12, '11':11, '09':9,'10':10,
                        '07':7, '08':8, '23':23, 'UG':None, 'GR':None, '13':13}
     codes_converter = {231101:231001, 231105:231005}
-    dict_group2abbrev = {'Post-secondary Enrollment Options Program':'post_secondary',
-               'Academic Intervention':'academic_inv',
-               'Specialized Instructions':'spec_instruc',
-               'Placement Options':'placement',
-               'Disadvantaged Pupil Programs (DPPF)':'DPPF',
-               'Title I':'titlei', 'Vocational Programs':'vocational',
-               'Extracurricular/Intracurricular Programs and Services':'extracurr_program',
-               'Academic Intracurricular Descriptions (Vocational)':'academic_intracurr',
-               'School Related Service Program':'school_program',
-               'Interscholastic Athletics':'atheletics',
-               'Other':'other',
-               'Dropout':'dropout'}
-
+    with open('./json/intervention_types_long2short.json', 'r') as f:
+        dict_group2abbrev = json.load(f)
+ 
     table_df = {}
 
     print(" - Reading intervention tables of different districts...")

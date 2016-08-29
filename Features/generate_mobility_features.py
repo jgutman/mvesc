@@ -172,7 +172,7 @@ def find_midyear_withdrawals(cursor, grade_range, table,
     return(col_names[1:])
 
 def generate_mobility(replace = False,
-        sql_script = 'mobility_changes_inprogress.sql',
+        sql_script = 'build_intermediate_mobility_tables.sql',
         schema = 'model', table = 'mobility'):
     """
     Creates a table in the model schema with relevant mobility related features.
@@ -266,7 +266,7 @@ def generate_mobility(replace = False,
 def set_table_negative_null(table='mobility', schema='model'):
     """
     Set negative data points to NULL in a table
-   
+
     :param str table: table name
     :param str schema: schema name
     :return None:
