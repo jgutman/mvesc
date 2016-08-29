@@ -4,7 +4,7 @@ This is the order of operations used for preparing and transforming the tables f
 
 ## 1. Raw Data Types Received
 
-There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
+There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county, which starts in 2007). Other districts have varying degrees of completeness. 
 
 Below is a list of the style of the raw data that we received and the information contained in the raw data
 
@@ -56,14 +56,12 @@ missing description about individual function names & brief summary of operation
 
 ## 3. Consolidating the Raw Tables in Public & Into the 'clean' Schema
 
-### Consolidating Tables
-
 (`consolidating_tables.py` + `json\snapshot_column_names.json`, `json\grade_column_names.json`, and `json\absence_column_names.json`)
 This is a Python script used to consolidate the yearly snapshots into `clean.all_snapshots`, all provided grades into `clean.all_grades`, and all fine-grained absence data into `clean.all_absences`. It relies on the handmade JSON files, which maps various different spellings of raw column names to the preferred clean column names.
 
 Output = `clean.all_snapshots`, `clean.all_grades`, `clean.all_absences`
 
-## Cleaning & Standardizing the Consolidated Tables
+## 4. Cleaning & Standardizing the Consolidated Tables
 
 (`sql/clean_absences.sql`)
 This script details the choices made in cleaning and standardizing the absence data so that it's able to be used.
@@ -79,7 +77,7 @@ This script cleans the test score data of Ohio Achievement Assessment and Ohio G
 (`sql/cleaning_all_snapshots.sql`, `json/student_status.json`)
 This script cleans most of the columns of all_snapshots, with an additional call to the utility function clean_column necessary for the student_status column.
 
-## 4. Creation of Helpful Additional Tables
+## 5. Creation of Helpful Additional Tables
 
 Finally, the last step of our ETL is creating some other tables to be of help going forward.
 
@@ -93,14 +91,9 @@ This builds a table tracking (`clean.wrk_tracking_students`) the yearly (longitu
 This adds to the table built in `build_student_tracking.py` (`clean.wrk_tracking_students`) in order to get
 coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes.
 
-## 5. Future Work To Do
-
-- make the utility functions into a package
-
 ## Summarized Order of Operations
 
 1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
-	- [missing] Use SQL code to automatically back these up into 'raw' schema
 
 2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
