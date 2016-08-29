@@ -4,7 +4,7 @@ This is the order of operations used for preparing and transforming the tables f
 
 ## 1. Raw Data Types Received
 
-There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county that starts in 2007 actually). In the rest of this ETL, we are discussing the data for those 7 districts. In a later section of this README, we discuss the data from the other districts.
+There are 14 districts that MVESC works with. Of those, we have complete longitudinal data for 7 of those districts going back to 2006-2007 school year (except Ridgewood county, which starts in 2007). Other districts have varying degrees of completeness. 
 
 Below is a list of the style of the raw data that we received and the information contained in the raw data
 
@@ -92,10 +92,6 @@ This builds a table tracking (`clean.wrk_tracking_students`) the yearly (longitu
 (`build_cohort_tree_counts.py`)
 This adds to the table built in `build_student_tracking.py` (`clean.wrk_tracking_students`) in order to get
 coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket`) for the students who are old enough to have outcomes.
-
-## 5. Future Work To Do
-
-- make the utility functions into a package
 
 ## Summarized Order of Operations
 
