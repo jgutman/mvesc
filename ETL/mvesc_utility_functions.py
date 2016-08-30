@@ -23,8 +23,20 @@ import json
 from contextlib import contextmanager
 import os
 
+############ Environment Variables ############
+# clean_schema = os.getenv('CLEAN_SCHEMA')
+# raw_schema = os.getenv('RAW_SCHEMA')
+# model_schema = os.getenv('MODEL_SCHEMA')
+# pass_file = os.getenv('PASS_FILE')
+
+clean_schema = 'new_clean'
+model_schema = 'new_model'
+raw_schema = 'public'
+pass_file = '/mnt/data/mvesc/pgpass'
+
 ############ ETL Functions ############
-def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
+
+def postgres_engine_generator(pass_file=pass_file):
     """ Generate a sqlalchemy engine to mvesc database
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
@@ -43,7 +55,7 @@ def postgres_engine_generator(pass_file="/mnt/data/mvesc/pgpass"):
     engine = create_engine(sql_eng_str)
     return engine
 
-def execute_sql_script(sql_script, pass_file="/mnt/data/mvesc/pgpass"):
+def execute_sql_script(sql_script, pass_file=pass_file):
     """ Executes the given sql script
     Note: you can only run it on the mvesc server
     :param str sql_script: filename of an sql script
@@ -62,7 +74,7 @@ def execute_sql_script(sql_script, pass_file="/mnt/data/mvesc/pgpass"):
 
 
 @contextmanager
-def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
+def postgres_pgconnection_generator(pass_file=pass_file):
     """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
     :param str pass_file: file with the credential information
@@ -81,7 +93,8 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
 
 
 ############ Reterive Database Information ############
-def get_all_table_names(cursor, schema): # defaulted to public
+
+def get_all_table_names(cursor, schema=raw_schema):
     """ Get all the table names as a list from a `schema` in mvesc
 
     :param pg cursor object cursor: cursor for psql database
@@ -111,7 +124,7 @@ def get_specific_table_names(cursor, column_name):
         table_names.remove(t)
     return table_names
 
-def get_column_names(cursor, table, schema='public'):
+def get_column_names(cursor, table, schema=raw_schema):
     """Get column names of a ntable  in a schema
 
     :param pg cursor object cursor: cursor for psql database
@@ -124,7 +137,8 @@ def get_column_names(cursor, table, schema='public'):
     columns = cursor.fetchall()
     return [c[0] for c in columns]
 
-def read_table_to_df(connection, table_name, columns=['*'], schema='public', nrows=20):
+def read_table_to_df(connection, table_name, columns=['*'], 
+                     schema=raw_schema, nrows=20):
     """ Read the first n rows of a table
 
     :param pg connection object connection: connection to psql database
@@ -156,7 +170,7 @@ def get_column_type(cursor, table_name, column_name):
     return column_type
 
 def clean_column(cursor, values, old_column_name, table_name,
-                 new_column_name=None, schema_name='clean',
+                 new_column_name=None, schema_name=clean_schema, 
                  replace = 1, exact = 1):
     """
     Cleans the given column by replacing values according to the given
@@ -273,7 +287,7 @@ def barplot_df(dfbar, figname=None, save=False, savedir='./',
         return(None)
 
 
-def read_model_topN_feature_importance(filename, topN=10, schema='model', table='feature_scores'):
+def read_model_topN_feature_importance(filename, topN=10, schema=model_schema, table='feature_scores'):
     """
     Read top N feature importance from features scores table
     :param str filename: filename in the filename column
@@ -295,7 +309,7 @@ def read_model_topN_feature_importance(filename, topN=10, schema='model', table=
     return df
 
 
-def barplot_feature_importance(filename, topN=10, schema='model', table='feature_scores',
+def barplot_feature_importance(filename, topN=10, schema=model_schema, table='feature_scores',
                                figname=None, save=False, savedir='./',
                                name_column='feature', value_column='importance',
                                xlabel='Importance', ylabel='Feature', title='',
@@ -382,7 +396,7 @@ def read_csv_noheader(filepath):
     df = df.rename(columns=colnames)
     return df
 
-def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema="raw"):
+def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema=raw_schema):
     """ Upload csv file to postgres database
 
     :param str filepath: file path name
@@ -421,7 +435,7 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
     return table_name
 
 
-def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema='raw'):
+def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema=raw_schema):
     """ Upload a directory of csv files to postgres database
 
     :param str filepath: file path name
@@ -443,7 +457,7 @@ def csv2postgres_dir(directory, header=False, nrows=-1, if_exists='fail', schema
     return table_names
 
 # copied directly from excel2postgres python file
-def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema='raw'):
+def df2postgres(df, table_name, nrows=-1, if_exists='fail', schema=raw_schema):
     """ dump dataframe object to postgres database
 
     :param pandas.DataFrame df: dataframe

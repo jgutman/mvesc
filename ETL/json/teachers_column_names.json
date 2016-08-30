@@ -1,5 +1,4 @@
 { "column_names": {
-    "student_lookup" : {"name" : ["studentLookup"], "type" : "int"},
     "school_code" : {"name" : ["SchoolCode"], "type" : "text"},
     "gender" : {"name" : ["Gender"], "type" : "text"},
     "grade" : {"name" : ["GradeLevelCode"], "type" : "text"},
@@ -21,6 +20,6 @@
     "calendar_period": {"name" : ["CalendarPeriodCode"], "type" : "text"},
     "rotation_days": {"name" : ["RotationDays"], "type" : "text"},
     "school_year": {"name" : ["syear"], "type" : "text"},
-    "district": {"name" : ["district"], "type" : "text"},
+    "district": {"name" : ["district"], "type" : "text"}
 }    
 }
