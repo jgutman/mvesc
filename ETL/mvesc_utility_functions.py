@@ -81,7 +81,7 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
 
 
 ############ Reterive Database Information ############
-def get_all_table_names(cursor, schema='public'):
+def get_all_table_names(cursor, schema): # defaulted to public
     """ Get all the table names as a list from a `schema` in mvesc
 
     :param pg cursor object cursor: cursor for psql database
