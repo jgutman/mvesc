@@ -24,6 +24,7 @@ def scale_features_plus_scaler(train, val, test, strategy):
     """
     Scales features based on the training values with the given strategy   
     Modified here to also return the scaler
+    Note: used in make_predictions_for_unlabeled_students
 
     :param pd.DataFrame train:
     :param pd.DataFrame val:  
