@@ -295,19 +295,7 @@ def main():
             where table_schema='public' and lower(table_name) like 
             '%grade%'""")
             grades_tables = cursor.fetchall()
-            grades_tables = [a[0] for a in grades_tables]
-            
-            cursor.execute("""select table_name from information_schema.tables 
-            where table_schema='public' and lower(table_name) like 
-            '%teacher%'""")
-            teachers_tables = cursor.fetchall()
-            teachers_tables = [a[0] for a in teachers_tables]
-
-            cursor.execute("""select table_name from information_schema.tables 
-            where table_schema='public' and lower(table_name) like 
-            '%testingaccom%'""")
-            accommodations_tables = cursor.fetchall()
-            accommodations_tables = [a[0] for a in accommodations_tables]
+            grades_tables = [a[0] for a in grades_tables]           
 
             table_names = get_specific_table_names(cursor, "StudentLookup")
 
@@ -323,13 +311,6 @@ def main():
             cursor.execute(all_snapshots_query(cursor, snapshot_tables,
                                                "./json/snapshot_column_names.json"))
             print('all_snapshots table built')
-            cursor.execute(all_generic_query(cursor, teachers_tables,
-                                            "./json/teachers_column_names.json",
-                                            student_lookup_spelling = "studentLookup"))
-            print('all_teachers table built')
-            cursor.execute(all_generic_query(cursor, accommodations_tables,
-                                            "./json/accommodations_column_names.json"))
-            print('all_accommodations table built')
         connection.commit()
 
 if __name__ == '__main__':
