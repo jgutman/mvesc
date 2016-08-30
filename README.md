@@ -4,6 +4,14 @@
 
 *Installation*
 
+On a new AWS EC2 instance that runs Ubuntu 14.04 (and that has security groups that allow you to SSH into it), you should first install a few packages:
+```
+sudo apt-get update
+sudo apt-get install python-virtualenv libcairo2-dev libjpeg8-dev libpango1.0-dev libgif-dev build-essential g++ python-dev python3-dev
+```
+
+Then make a Python3 virtual envirovnment and activate it: `virtualenv -p /usr/bin/python3.4 env` and `source env/bin/activate`.
+
 Install all other dependencies using `pip install -r requirements.txt`. Note that `pycairo` is installed directly from `git+http://git.cairographics.org/git/pycairo`. If you encounter difficulties, try installing pycairo separately with `pip install git+http://git.cairographics.org/git/pycairo`.
 
 *ETL*

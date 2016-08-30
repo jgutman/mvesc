@@ -92,6 +92,7 @@ def consecutive_aggregate(df, desc_str='absence'):
 def main():
     chunksize = 200
     schema, table = 'clean', 'all_absences'
+    int_schema, int_abs_table, int_tdy_table = 'clean', 'aggregated_absence_intermediate', 'aggregated_tardy_intermediate'
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
@@ -113,16 +114,18 @@ def main():
 
             print(' - writing agg-dataframes to public...')
             eng = postgres_engine_generator()
-            final_abs_df.to_sql('intermed_abs_agg', eng, index=False, if_exists='replace')
-            final_tdy_df.to_sql('intermed_tdy_agg', eng, index=False, if_exists='replace')
+            final_abs_df.to_sql(int_abs_table, eng, index=False, if_exists='replace', schema=int_schema)
+            final_tdy_df.to_sql(int_tdy_table, eng, index=False, if_exists='replace', schema=int_schema)
 
-            sql_index_intermed="""create index public_intmed_abs_sl on public.intermed_abs_agg (student_lookup);
-            create index public_intmed_tdy_sl on public.intermed_tdy_agg (student_lookup);
-            create index public_intmed_abs_sl_dt on public.intermed_abs_agg (student_lookup, absence_starting_date);
-            create index public_intmed_tdy_sl_dt on public.intermed_tdy_agg (student_lookup, tardy_starting_date);
-            """
+            sql_index_intermed="""
+            create index {s}_{t_abs}_index on {s}.{t_abs} (student_lookup);
+            create index {s}_{t_tdy}_index on {s}.{t_tdy} (student_lookup);
+            create index {s}_{t_abs}_index_sl_dt on {s}.{t_abs} (student_lookup, absence_starting_date);
+            create index {s}_{t_tdy}_index_sl_dt on {s}.{t_tdy} (student_lookup, tardy_starting_date);
+            """.format(s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table)
             cursor.execute(sql_index_intermed)
-            print(' - Done: generated consec tables for absence(intermed_abs_agg) and tardy(intermed_tdy_agg) in public;')
+            print(""" - Done: generated table '{s}.{t_abs}' and table '{s}.{t_tdy}'!""".format(
+                      s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table))
 
 
 if __name__=='__main__':
