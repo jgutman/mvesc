@@ -101,11 +101,6 @@ def test_impute_and_scale(test_outcomes, options):
         test_outcomes[col] = 0
     test_outcomes = test_outcomes.filter(train.columns)
 
-    # # re-set column  order 
-    # train = train.filter(column_set)
-    # val = val.filter(column_set)
-    # test_outcomes = test_outcomes.filter(column_set)
-
     # imputation for missing values in features
     train, val, test_outcomes = impute_missing_values(train, val, test_outcomes,
         options['missing_impute_strategy'])

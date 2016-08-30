@@ -8,7 +8,8 @@ sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
 import pickle
 from estimate_prediction_model import *
-from make_predictions_for_unlabeled_students import *
+from make_predictions_for_unlabeled_students import \
+    test_impute_and_scale, read_in_model
 from RF_feature_scores import build_top_k_df, cts_feature_importance, \
     binary_feature_importance, split_columns, categorical_feature_dict
 import pandas as pd

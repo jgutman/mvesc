@@ -24,6 +24,7 @@ def scale_features_plus_scaler(train, val, test, strategy):
     """
     Scales features based on the training values with the given strategy   
     Modified here to also return the scaler
+
     :param pd.DataFrame train:
     :param pd.DataFrame val:  
     :param pd.DataFrame test: 
@@ -74,10 +75,13 @@ def scale_features_plus_scaler(train, val, test, strategy):
               .format('standard', 'robust', 'none'))
         return train, val, test
 
-def read_and_preprocess(filename, future=None):
+def read_and_preprocess(filename):
     """
     Reads in a pickeled model file and rebuilds the training, test, and 
-    validation data. If `future` is a year, then all students in TODO:
+    validation data. This function works returns features for the original
+    training, validation, and test students. For a similar function for current
+    students, see `test_impute_and_scale` in 
+    `make_predictions_for_unlabeled_students.py`.
     Returns features for all the students, both scaled and unscaled, 
     the scaler, the column-order, and the model itself.
     
@@ -125,7 +129,8 @@ def read_and_preprocess(filename, future=None):
 def split_columns(X, columns):
     """
     Splits the list of feature names into binary features and continuous 
-    features
+    features.
+    This function is called in generate_individual_risks.py.
     
     :param pd.DataFrame X: feature values for students
     :param list columns: list of strings indicating the desired order for 
@@ -141,9 +146,10 @@ def split_columns(X, columns):
 
 def categorical_feature_dict(all_features_path, binary_columns):
     """
-    Generates a dictionary maping binary columns to their appropriate 
+    Generates a dictionary mapping binary columns to their appropriate 
     categorical base feature name
-    
+    This function is called in generate_individual_risks.py.    
+
     :param str all_features_path: path from current directory to 
     all_features.yaml in the Features folder
     :param list binary_columns: list of column names for binary features
@@ -181,6 +187,21 @@ def categorical_feature_dict(all_features_path, binary_columns):
 
 def plot_binary_features(model, student, binary_dict, train_X, 
                          save_location=None):
+    """
+    Generates plots of the effect of each binary or categorical feature
+    on a particular student's risk score.
+
+    :param sklearn.estimator model: model object to generate risk scores
+    :param int student: student lookup number
+    :param dict binary_dict: dictionary mapping categorical variables to their 
+        respective indicator variable names, can be drawn from 
+        `categorical_feature_dict`
+    :param pd.DataFrame train_X: feature matrix with `student` as one of the
+        indices
+    :param str save_location: optional, if present images will be saved to this
+        directory
+    :rtype: None
+    """
     X_student = train_X.loc[student]
     I = pd.DataFrame(columns = ['delta','direction', 'current_val',\
                                 'var_type', 'was_null'], 
@@ -266,6 +287,26 @@ def plot_binary_features(model, student, binary_dict, train_X,
     return I
 
 def binary_feature_importance(model, student, binary_dict, train_X):
+    """
+    Calculates the importance of each binary or categorical feature to the 
+    risk of a given student.
+    Note: calling this function in a loop for all students is very slow,
+    it could be sped up by restructuring so all students are run through 
+    the model at the same time - see cts_feature_importance for an quick 
+    attempt at a similar optimization.
+    This function is called in generate_individual_risks.py.
+
+    :param sklearn.estimator model: model object to generate risk scores
+    :param int student: student lookup number
+    :param dict binary_dict: dictionary mapping categorical variables to their 
+        respective indicator variable names, can be drawn from 
+        `categorical_feature_dict`
+    :param pd.DataFrame train_X: feature matrix with `student` as one of the
+        indices
+    :returns: all binary/categorical feature importances for each student
+    :rtype: list[pd.DataFrame]
+    """
+
     X_student = train_X.loc[student]
     I = pd.DataFrame(columns = ['delta','direction', 'current_val','var_type',
                                 'was_null'], index=binary_dict.keys())
@@ -321,6 +362,23 @@ def binary_feature_importance(model, student, binary_dict, train_X):
 
 def plot_cts_features(model, student, cts_columns, train_X_pre, train_X, \
                       scaler, save_location=None):
+    """
+    Generates plots of the effect of each continuous feature
+    on a particular student's risk score.
+
+    :param sklearn.estimator model: model object to generate risk scores
+    :param int student: student lookup number
+    :param list cts_columns: list of columns names containing cts features
+    :param pd.DataFrame train_X_pre: feature matrix prior to imputation 
+        and scaling
+    :param pd.DataFrame train_X: feature matrix with `student` as one of the
+        indices
+    :param sklearn.preprocessing.scaler scaler: scaler used to transform 
+        train_X_pre into train_X
+    :param str save_location: optional, if present images will be saved to this
+        directory
+    :rtype: None
+    """
     X_student = train_X.loc[student]
     n_steps = 100
     for feature in cts_columns:
@@ -354,6 +412,26 @@ def plot_cts_features(model, student, cts_columns, train_X_pre, train_X, \
 
 def cts_feature_importance(model, students, cts_columns, train_X_pre, train_X,
                            scaler, shift):
+    """
+    Generates plots of the effect of each continuous feature
+    on a particular student's risk score.
+    This function is called in generate_individual_risks.py.
+
+    :param sklearn.estimator model: model object to generate risk scores
+    :param list[int] students: list of student lookup numbers
+    :param list cts_columns: list of columns names containing cts features
+    :param pd.DataFrame train_X_pre: feature matrix prior to imputation 
+        and scaling
+    :param pd.DataFrame train_X: feature matrix with `students` as a subset 
+        of indices
+    :param sklearn.preprocessing.scaler scaler: scaler used to transform 
+        train_X_pre into train_X
+    :param numeric shift: amount to shift the value of the feature, as a
+        multiple of a standard deviation
+    :returns: all feature cts importances for each student
+    :rtype: list[pd.DataFrame]
+    """
+
     train_std = train_X.std(axis=0)
     n_features = len(cts_columns)
     n_students = len(students)
@@ -401,8 +479,18 @@ def cts_feature_importance(model, students, cts_columns, train_X_pre, train_X,
 
 def plot_features(model_filename, student, all_features_path, 
                   save_location=None): 
-    X, X_pre, scaler, column_order, model = read_and_preprocess(filename, 
-                                                                future)
+    """
+    Generates plots of the effect of each feature
+    on a particular student's risk score.
+
+    :param str model_filename: identifier of model object saved as a pkl
+    :param int student: student lookup number
+    :param str all_feature_path: path to all_features.yaml (in Features dir)
+    :param str save_location: optional, if present images will be saved to this
+        directory
+    :rtype: None
+    """
+    X, X_pre, scaler, column_order, model = read_and_preprocess(filename)
     cts_columns, binary_columns = split_columns(X, column_order)
     binary_dict = categorical_feature_dict(all_features_path, binary_columns)
     x,y,current, current_prob = plot_cts_features(model, student, cts_columns,
@@ -412,9 +500,21 @@ def plot_features(model_filename, student, all_features_path,
     return x,y,current, current_prob
 
 def get_feature_importances(model_filename, students, 
-                            all_features_path, shift, future):
-    X, X_pre, scaler, column_order, model = read_and_preprocess(filename,
-                                                                future)
+                            all_features_path, shift):
+    """
+    Calculates the effect of each feature on a particular student's risk score.
+    Note: this is very slow, see binary_feature_importance doc string for
+    suggestions for possible optimization
+
+    :param str model_filename: identifier of model object saved as a pkl
+    :param list[int] students: list of student lookup numbers
+    :param str all_feature_path: path to all_features.yaml (in Features dir)
+    :param numeric shift: amount to shift the value of the feature, as a
+        multiple of a standard deviation
+    :returns: all feature importances for each student
+    :rtype: list[pd.DataFrame]
+    """
+    X, X_pre, scaler, column_order, model = read_and_preprocess(filename)
     cts_columns, binary_columns = split_columns(X, column_order)
     binary_dict = categorical_feature_dict(all_features_path, binary_columns)
     I_cts = cts_feature_importance(model, students, cts_columns, X_pre, X, 
@@ -426,10 +526,22 @@ def get_feature_importances(model_filename, students,
     I_all = [pd.concat([c,b]) for c,b in zip(I_cts, I_binary)]
     return I_all
 
-def build_top_k_df(all_I, students, k):
+def build_top_k_df(I_all, students, k):
     """
-    Note: ordering of students list must match ordering of all_I list
+    Builds a datafame with the top k risk factors and their direction and 
+    current value for each student
+
+    Note: ordering of students list must match ordering of I_all list
     If `students` was used as input to get_feature_importances, this holds true
+    
+    This function is called in generate_individual_risks.py.
+
+    :param list[pd.DataFrame] I_all: list of individual feature importance 
+        dataframes, one for each student
+    :param list[int] students: list of student_lookup numbers
+    :param int k: number of risk factors returned
+    :returns: dataframe indexed by `students` with top k risk factors
+    :rtype: pd.DataFrame
     """
     columns = []
     for i in range(k):
@@ -438,7 +550,7 @@ def build_top_k_df(all_I, students, k):
         columns.append('risk_factor_{}_direction'.format(i+1))
     top_k = pd.DataFrame(columns=columns, index=students)
     for i, s in enumerate(students):
-        top = all_I[i][np.logical_not(all_I[i]['was_null'])]\
+        top = I_all[i][np.logical_not(I_all[i]['was_null'])]\
                 .sort_values('delta', ascending=False).head(3)
         for j in range(3):
             top_k.loc[s,'risk_factor_{}'.format(j+1)] = top.index[j]
@@ -448,8 +560,18 @@ def build_top_k_df(all_I, students, k):
                     top['direction'].iloc[j]
     return top_k
 
-def top_k(filename, students):
-    all_features_path = os.path.join(base_pathname, 'Features/all_features.yaml')
+def top_3(filename, students):
+    """
+    Returns a dataframe with the top 3 risk factors/values/directions
+
+    :param str filename: identifier for a model saved as a pkl
+    :param list[int] students: list of student_lookup numbers
+    :returns: dataframe with the top 3 risk factors/values/directions 
+    :rtype: pd.DataFrame
+    """
+
+    all_features_path = os.path.join(base_pathname, 
+                                     'Features/all_features.yaml')
     with Timer('feature importances'):
         all_I = get_feature_importances(filename, students, 
                                         all_features_path, 1)
@@ -473,9 +595,9 @@ def main():
     filename = '08_17_2016_grade_10_param_set_16_RF_jg_139'
     train_students, val_students, test_students = student_list(filename)
     students = val_students[:10]
-    print(top_k(filename, students))
+    print(top_3(filename, students))
 
-    # one-off plot for figure
+    # one-off plot for poster
     # plt.figure()
     # plt.hold='on'
     # plt.plot(x, y, color='k');
@@ -492,3 +614,6 @@ def main():
     #                     'student_{0}_{1}_clean'\
     #                     .format(student,'math_normalized_gr_8')),
     #             bbox_inches='tight')
+
+if __name__=='__main__':
+    main()
