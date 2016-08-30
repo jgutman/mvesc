@@ -1,4 +1,3 @@
-from mvesc_utility_functions import *
 import os, sys
 
 pathname = os.path.dirname(sys.argv[0])
@@ -6,6 +5,8 @@ full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
 base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
+from mvesc_utility_functions import *
+
 
 '''
 Joint note from JG and ZZ:
@@ -222,7 +223,7 @@ def main():
             #print(cohort_survival_analysis(2006, 2015, 6))
             print(build_wide_format(cursor))
         connection.commit()
-    execute_sql_script(os.path.join(parentdir,
+    execute_sql_script(os.path.join(parentdir,'sql',
         'remove_duplicate_withdrawals_from_tracking.sql'))
     
     print('done!')
