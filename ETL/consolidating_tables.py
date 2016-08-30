@@ -6,28 +6,29 @@ import json
 from mvesc_utility_functions import *
 from contextlib import contextmanager
 
-def student_lookup_query(table_names):
+def student_lookup_query(table_names, schema):
     """
     Writes a SQL query to drop the current all_student_lookups table 
     and create a new one using all the StudentLookup numbers in the 
     given list of tables
 
     :param list table_names: list of table names
-    :retype: string
+    :param str schema: schema to read tables from
+    :rtype: string
     """
 
-    my_query = "drop table if exists clean.all_student_lookups; "
-    my_query += "create table clean.all_student_lookups as "
+    my_query = "drop table if exists {}.all_student_lookups; ".format(schema)
+    my_query += "create table {}.all_student_lookups as ".format(schema)
     for t in table_names:
         my_query += "select \"StudentLookup\" as student_lookup from "
         my_query += "\"" + t + "\""
         union_clause = " union \n"
-        my_query += union_clause
+        my_query += union_clause 
     my_query = my_query[:-len(union_clause)] + ";"
     return my_query
 
 
-def all_grades_query(cursor, grades_tables, grades_cols_json):
+def all_grades_query(cursor, grades_tables, grades_cols_json, schema):
     """
     Writes a SQL query to drop the current all_grades table 
     and create a new one
@@ -36,6 +37,7 @@ def all_grades_query(cursor, grades_tables, grades_cols_json):
     :param list grades_tables: list of tables to include
     :param str grades_cols_json: name of a json file with mapping between
     old and new column names 
+    :param str schema: clean schema 
     :rtype: string
     """
     # json file with column name and type matchings
@@ -44,10 +46,10 @@ def all_grades_query(cursor, grades_tables, grades_cols_json):
     new_cols = new_cols_file[u'column_names']
     
     grades_query = """
-    drop table if exists clean.all_grades;
-    create table clean.all_grades as
+    drop table if exists {schema}.all_grades;
+    create table {schema}.all_grades as
     select "StudentLookup" as student_lookup,
-    """
+    """.format(schema=schema)
     for t in grades_tables:
         old_cols = get_column_names(cursor,t)
         #for each new column name
@@ -90,7 +92,7 @@ def all_grades_query(cursor, grades_tables, grades_cols_json):
     grades_query = grades_query[:-len(union_clause)]+";"
     return grades_query
 
-def all_absences_query(cursor, absence_tables, absence_cols_json):
+def all_absences_query(cursor, absence_tables, absence_cols_json, schema):
     """
     Writes a SQL query to drop the current all_grades table 
     and create a new one
@@ -99,6 +101,7 @@ def all_absences_query(cursor, absence_tables, absence_cols_json):
     :param list absence_tables: list of tables to include
     :param str absence_cols_json: name of a json file with mapping between
     old and new column names 
+    :param str schema: clean schema 
     :rtype: string
     """
     # json file with column name and type matchings
@@ -107,8 +110,8 @@ def all_absences_query(cursor, absence_tables, absence_cols_json):
     new_cols = new_cols_file[u'column_names']
     
     absence_query = """
-    drop table if exists clean.all_absences;
-    create table clean.all_absences as
+    drop table if exists {schema}.all_absences;
+    create table {schema}.all_absences as
     select "StudentLookup" as student_lookup,
     """
     for t in absence_tables:
@@ -151,7 +154,7 @@ def all_absences_query(cursor, absence_tables, absence_cols_json):
     return absence_query
 
 
-def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
+def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json, schema):
     """
     Writes a SQL query to drop the current all_snapshots table 
     and create a new one
@@ -160,6 +163,7 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
     :param list snapshot_tables: list of tables to include
     :param str snapshot_cols_json: name of a json file with mapping between 
     old and new column names
+    :param str schema: clean schema name
     :rtype: string 
     """
     # json file with column name and type matchings
@@ -168,10 +172,10 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
     new_cols = new_cols_file[u'column_names']
     
     snapshot_query = """
-    drop table if exists clean.all_snapshots;
-    create table clean.all_snapshots as
+    drop table if exists {schema}.all_snapshots;
+    create table {schema}.all_snapshots as
     select "StudentLookup" as student_lookup,
-    """
+    """.format(schema=schema)
     for t in snapshot_tables:
         old_cols = get_column_names(cursor,t)
         #for each new column name
@@ -212,28 +216,30 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json):
     return snapshot_query
 
 def main():
+    raw_schema = 'public'
+    clean_schema = 'clean'
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             cursor.execute("""select table_name from information_schema.tables
-            where table_schema='public' and table_name like
-            'Districts%' and table_name not like '%dates%'""")
+            where table_schema={raw_schema} and table_name like
+            'Districts%' and table_name not like '%dates%'""".format(raw_schema))
             snapshot_tables = cursor.fetchall()
             snapshot_tables = [a[0] for a in snapshot_tables]
             cursor.execute("""select table_name from information_schema.tables 
-            where table_schema='public' and lower(table_name) 
-            like '%absence%'""")
+            where table_schema={raw_schema} and lower(table_name) 
+            like '%absence%'""".format(raw_schema))
             absence_tables = cursor.fetchall()
             absence_tables = [a[0] for a in absence_tables]
             
             cursor.execute("""select table_name from information_schema.tables 
-            where table_schema='public' and lower(table_name) like 
-            '%grade%'""")
+            where table_schema={raw_schema} and lower(table_name) like 
+            '%grade%'""".format(raw_schema))
             grades_tables = cursor.fetchall()
             grades_tables = [a[0] for a in grades_tables]
             
-            table_names = get_specific_table_names(cursor, "StudentLookup")
+            table_names = get_specific_table_names(cursor, "StudentLookup", raw_schema)
 
-            cursor.execute(student_lookup_query(table_names))
+            cursor.execute(student_lookup_query(table_names, raw_schema))
             print('student lookup table built')
             cursor.execute(all_grades_query(cursor, grades_tables,
                                             "./json/grade_column_names.json"))

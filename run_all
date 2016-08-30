@@ -1,0 +1,4 @@
+CLEAN_SCHEMA="clean"
+MODEL_SCHEMA="model"
+RAW_SCHEMA="public"
+
