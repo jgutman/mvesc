@@ -93,7 +93,7 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 
 ## Summarized Order of Operations
 
-1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
+1. Take the '.bak' files (those are Microsoft SQL Server dumps) at `/mnt/data/mvesc/PartnerData/SQL_backups`, and convert them from the SQL Server format to Postgres by following [these instructions](https://github.com/dssg/wiki/wiki/SQL-Server-to-Postgres). The data should end up in the public schema of the project's Postgres DB.
 
 2. Run `csv2postgres_mvesc.py` on all the directories or files of received data
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
