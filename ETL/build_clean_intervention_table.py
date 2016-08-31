@@ -16,19 +16,26 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
 
-def main():
+def main(argv):
     # Parameters to read and clean the tables
-    schema = 'public'
+    schema = argv[0] # raw_schema
+    clean_schema = argv[1]
+
     clean_table = 'intervention'
-    public_tables = ['INV_06_16_CO_M', 'INV_06_16_FR_M', 'INV_06_16_MA_M', 'INV_06_16_RV_M', 'INV_06_16_RW_M', 
-                     'INV_06_16_TV_M', 'INV_06_16_WM_M', 'INV_10_16_CEVSD_M', 'INV_10_16_EM_M']
+    public_tables = ['INV_06_16_CO_M', 'INV_06_16_FR_M', 'INV_06_16_MA_M', 
+                     'INV_06_16_RV_M', 'INV_06_16_RW_M', 
+                     'INV_06_16_TV_M', 'INV_06_16_WM_M', 
+                     'INV_10_16_CEVSD_M', 'INV_10_16_EM_M']
     new_column_names = ['student_lookup', 'status', 'grade', 'gender', 'hmrm', 
-                        'membership_code', 'description', 'school_year', 'district']
+                        'membership_code', 'description', 'school_year', 
+                        'district']
     grade_converter = {'06':6, '05':5, '04':4, '03':3, '02':2, '01':1,
                        'KG':0, 'PS':-1, '12':12, '11':11, '09':9,'10':10,
                        '07':7, '08':8, '23':23, 'UG':None, 'GR':None, '13':13}
     codes_converter = {231101:231001, 231105:231005}
-    with open('./json/intervention_types_long2short.json', 'r') as f:
+    with open(os.path.join(base_pathname, 'ETL', 
+                           'json/intervention_types_long2short.json'), 
+                           'r') as f:
         dict_group2abbrev = json.load(f)
  
     table_df = {}
@@ -38,15 +45,20 @@ def main():
         with conn.cursor() as cursor:
             for tab in public_tables:
                 nrows = -1
-                table_df[tab] = read_table_to_df(conn, tab, schema=schema, nrows=nrows)
-            table_df['INV_06_16_CO_M']['District'] = 'Coshocton' # add missed `district` column in table for CO
-            codes_df = read_table_to_df(conn, 'INV_MembershipCodes', schema=schema, nrows=nrows) 
+                table_df[tab] = read_table_to_df(conn, tab, schema=schema, 
+                                                 nrows=nrows)
+            table_df['INV_06_16_CO_M']['District'] = 'Coshocton' 
+            # add missed `district` column in table for CO
+            codes_df = read_table_to_df(conn, 'INV_MembershipCodes', 
+                                        schema=schema, nrows=nrows) 
 
             
-    dict_code2group = {codes_df.membership_code[i]:codes_df.membership_group[i] for i in range(codes_df.shape[0])}
+    dict_code2group = {codes_df.membership_code[i]:codes_df.membership_group[i]
+                       for i in range(codes_df.shape[0])}
     df = pd.DataFrame()
     for t in table_df:
-        new_col_dict = {table_df[t].columns[i]:new_column_names[i] for i in range(len(new_column_names))}
+        new_col_dict = {table_df[t].columns[i]:new_column_names[i] for i 
+                        in range(len(new_column_names))}
         table_df[t] = table_df[t].rename(columns=new_col_dict)
         df = df.append(table_df[t])
 
@@ -59,7 +71,8 @@ def main():
     inv_groups = ['']*df.shape[0]
     for i in range(df.shape[0]):
         if df.membership_code[i] in codes_converter:
-            df.ix[i, 'membership_code'] = codes_converter[df.membership_code[i]]
+            df.ix[i, 'membership_code'] = \
+              codes_converter[df.membership_code[i]]
         if df.grade[i] in grade_converter:
             new_grades[i] = grade_converter[df.grade[i]]
         if df.membership_code[i] in dict_code2group:
@@ -67,7 +80,8 @@ def main():
 
     df.drop(['grade'], axis=1, inplace=True)
     def int_nonNone(x):
-        """ Convert float to int and others None
+        """ 
+        Convert float to int and others None
         """
         if x==None or isinstance(x, str):
             return None
@@ -79,11 +93,13 @@ def main():
     df['inv_group'] = inv_groups
 
     print(" - Saving intervention data frame to postgres... ")
-    df2postgres(df, clean_table, nrows=-1, if_exists='replace', schema='clean')
+    df2postgres(df, clean_table, nrows=-1, if_exists='replace', 
+                          schema=clean_schema)
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
-            sql_index = 'create index {t}_lookup on clean.{t} (student_lookup)'.format(t=clean_table)
+            sql_index = 'create index {t}_lookup on {s}.{t} (student_lookup)'\
+              .format(t=clean_table,s=clean_schema)
             cursor.execute(sql_index)
 
 

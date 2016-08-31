@@ -22,7 +22,21 @@ sys.path.insert(0,parentdir)
 from optparse import OptionParser
 from mvesc_utility_functions import *
 
-def call_main(schema='clean', column='student_lookup'):
+def main():
+    parser = OptionParser()
+    parser.add_option('-s','--schema', dest='schema',
+                      help="schema to create index")
+    parser.add_option('-c','--column', dest='column',
+                      help="column name to create index; default 'student_lookup' ")
+    (options, args) = parser.parse_args()
+
+    ### Parameters to entered from the options or use default####
+    schema = options.schema
+
+    column = 'student_lookup'
+    if options.column:
+        column = options.column
+
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
@@ -39,22 +53,6 @@ def call_main(schema='clean', column='student_lookup'):
                     print(' - ', e)
             connection.commit()
 
+
 if __name__=='__main__':
-    parser = OptionParser()
-    parser.add_option('-s','--schema', dest='schema',
-                      help="schema to create index; default 'clean' ")
-    parser.add_option('-c','--column', dest='column',
-                      help="column name to create index; default 'student_lookup' ")
-    (options, args) = parser.parse_args()
-
-    ### Parameters to entered from the options or use default####
-    schema = 'clean'
-    if options.schema:
-        schema = options.schema
-
-    column = 'student_lookup'
-    if options.column:
-        column = options.column
-
-    call_main(schema=schema, column=column)
-
+    main()

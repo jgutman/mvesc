@@ -29,8 +29,6 @@ import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-
-
 def chunks(l, n):
     """Yield successive n-sized chunks from l.
     
@@ -42,7 +40,7 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
-def read_absences_lookups(conn, lookups = None, table='all_absences', schema='clean'):
+def read_absences_lookups(conn, schema, lookups = None, table='all_absences'):
     """ Read data of certain lookup-chunk
 
     :param pg.connection conn: postgres connector
@@ -89,15 +87,17 @@ def consecutive_aggregate(df, desc_str='absence'):
     return(sumdf.drop('date', axis=1))
 
 
-def main():
+def main(argv):
     chunksize = 200
-    schema, table = 'clean', 'all_absences'
-    int_schema, int_abs_table, int_tdy_table = 'clean', 'aggregated_absence_intermediate', 'aggregated_tardy_intermediate'
+    schema, table = argv[0], 'all_absences'
+    int_schema, int_abs_table, int_tdy_table = schema, 'aggregated_absence_intermediate', 'aggregated_tardy_intermediate'
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
             print('------ Running generate_consec_absence_columns.py -------')
-            lookups = list(pd.read_sql_query('select distinct student_lookup from clean.all_absences;', connection).student_lookup)
+            lookups = list(pd.read_sql_query(
+                'select distinct student_lookup from {s}.all_absences;', 
+                connection).student_lookup)
             random.shuffle(lookups) # shuffle lookup list so that we have roughly uniform workload for each chunk of students
             lookups_len = len(lookups)
 
@@ -106,7 +106,8 @@ def main():
             final_tdy_df = pd.DataFrame()
             processed_len = 0.0
             for chunk_lookups in chunks(lookups, chunksize):
-                df = read_absences_lookups(connection, lookups=chunk_lookups)
+                df = read_absences_lookups(connection,schema, 
+                                           lookups=chunk_lookups)
                 final_abs_df = final_abs_df.append(consecutive_aggregate(df, desc_str='absence'), ignore_index=True)
                 final_tdy_df = final_tdy_df.append(consecutive_aggregate(df, desc_str='tardy'), ignore_index=True)
                 processed_len = processed_len + len(chunk_lookups)
@@ -124,8 +125,7 @@ def main():
             create index {s}_{t_tdy}_index_sl_dt on {s}.{t_tdy} (student_lookup, tardy_starting_date);
             """.format(s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table)
             cursor.execute(sql_index_intermed)
-            print(""" - Done: generated table '{s}.{t_abs}' and table '{s}.{t_tdy}'!""".format(
-                      s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table))
+            print(""" - Done: generated table '{s}.{t_abs}' and table '{s}.{t_tdy}'!""".format(s=int_schema, t_abs=int_abs_table, t_tdy=int_tdy_table))
 
 
 if __name__=='__main__':

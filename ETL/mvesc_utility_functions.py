@@ -50,7 +50,7 @@ def postgres_engine_generator(pass_file=pass_file):
     port = passinfo[1]
     user_name = passinfo[2]
     name_of_database = passinfo[3]
-    user_password = passinfo[4]
+    user_password = "".join(passinfo[4:])
     sql_eng_str = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
     engine = create_engine(sql_eng_str)
     return engine
@@ -68,7 +68,7 @@ def execute_sql_script(sql_script, pass_file=pass_file):
     port = passinfo[1]
     user_name = passinfo[2]
     name_of_database = passinfo[3]
-    user_password = passinfo[4]
+    user_password = "".join(passinfo[4:])
     conn_info = "postgresql://"+user_name+":"+user_password+"@"+host_address+'/'+name_of_database
     os.system("psql -d {0} -f {1}".format(conn_info,sql_script))
 
@@ -87,7 +87,7 @@ def postgres_pgconnection_generator(pass_file=pass_file):
     port = passinfo[1]
     user_name = passinfo[2]
     name_of_database = passinfo[3]
-    user_password = passinfo[4]
+    user_password = "".join(passinfo[4:])
     yield pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
 
 

@@ -9,9 +9,10 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
-def add_id(cursor, table, schema='clean'):
+def add_id(cursor, table, schema):
     """
-    Adds an id column to the given table for easy indexing of individual records
+    Adds an id column to the given table for easy indexing of individual 
+    records
 
     :param pg cursor object cursor: cursor for psql database
     :param str table: table name in the database
@@ -20,8 +21,8 @@ def add_id(cursor, table, schema='clean'):
     cursor.execute("alter table {}.{} add column id serial"\
                    .format(schema,table))
 
-def remove_residents(cursor, value='resident', column='status',
-    table='all_snapshots', schema='clean'):
+def remove_residents(cursor, schema, value='resident', column='status',
+    table='all_snapshots'):
     """
     Removes records with the given condition
 
@@ -35,7 +36,7 @@ def remove_residents(cursor, value='resident', column='status',
                    .format(schema=schema,table=table,col=column, value=value)
     cursor.execute(delete_query)
 
-def remove_duplicates(cursor, cols, table, schema='clean'):
+def remove_duplicates(cursor, cols, table, schema):
     """
     Replaces the given table with one distinct on the given column list
     Max values taken for all other columns
@@ -75,7 +76,7 @@ def remove_duplicates(cursor, cols, table, schema='clean'):
     """.format(schema=schema, table=table))
     print('duplicates removed from {}.{}!'.format(schema,table))
 
-def remove_trails(cursor):
+def remove_trails(cursor,clean_schema):
     """
     Removes trailing records (more than two consecutive years in the same grade
     in the same school) from clean.all_snapshots
@@ -88,10 +89,12 @@ def remove_trails(cursor):
     select student_lookup, """
     for g in range(1,13):
         grade_count_query += \
-        "sum(case when grade={gr} then 1 else 0 end) as num_{gr}, ".format(gr=g)
+        "sum(case when grade={gr} then 1 else 0 end) as num_{gr}, "\
+            .format(gr=g)
 
     grade_count_query = grade_count_query[:-2] + \
-                        " from clean.all_snapshots group by student_lookup;"
+                        " from {s}.all_snapshots group by student_lookup;"\
+                        .format(s=schema)
     cursor.execute(grade_count_query)
 
     # grabs the maximum and the grade level in which that maximum occured
@@ -119,43 +122,47 @@ def remove_trails(cursor):
     create temp table to_keep as
     select distinct on (student_lookup, grade, district)
     t1.*, max_num, max_num_grade
-    from clean.all_snapshots as t1
+    from {s}.all_snapshots as t1
     left join
     grade_counts as t2
     on t1.student_lookup = t2.student_lookup
     order by student_lookup,grade, district, school_year
-    """)
+    """.format(s=clean_schema))
 
     # joining grade counts onto snapshots table
     cursor.execute("""
     create temp table joined_grade_counts as select t1.id,max_num,max_num_grade
-    from clean.all_snapshots as t1
+    from {s}.all_snapshots as t1
     left join
     grade_counts as t2
     on t1.student_lookup = t2.student_lookup;
-    """)
+    """.format(s=clean_schema))
 
     # keeps all records where
     # (a) student is in the same school/grade pair for less than 3 years or
     # (b) the first record in a long string in the same school/grade
     cursor.execute("""
-    delete from clean.all_snapshots as s using joined_grade_counts
+    delete from {s}.all_snapshots as s using joined_grade_counts
     where s.id not in (select id from to_keep)
         and (joined_grade_counts.id = s.id
             and max_num > 2
             and grade = max_num_grade)
-    """)
+    """.format(s=clean_schema))
+
     print('trails deleted!')
 
 
-def main():
+def main(argv):
+    
+    clean_schema = argv[0]
+
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             cols = ['student_lookup', 'district', 'school_code', 'grade',
                     'school_year']
-            add_id(cursor, 'all_snapshots')
-            remove_residents(cursor)
-            remove_duplicates(cursor, cols, 'all_snapshots')
+            add_id(cursor, 'all_snapshots', clean_schema)
+            remove_residents(cursor, clean_schema)
+            remove_duplicates(cursor, cols, 'all_snapshots', clean_schema)
             connection.commit()
             remove_trails(cursor)
             connection.commit()

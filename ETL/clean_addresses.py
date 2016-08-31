@@ -27,7 +27,10 @@ def parse_addresses(addresses, shortened):
         for address in addresses]
     return addresses
 
-def main():
+def main(argv):
+    
+    clean_schema = argv[0]
+
     with open(os.path.join(base_pathname,
         'ETL/clean_addresses.yaml'), 'r') as f:
         shortened = yaml.load(f)
@@ -36,8 +39,9 @@ def main():
         with connection.cursor() as cursor:
             query_start_over = """drop table if exists all_snapshots;
                 drop table if exists snapshots_updated;
-                create table all_snapshots as
-                select * from clean.all_snapshots"""
+                create temp table all_snapshots as
+                select * from {s}.all_snapshots;
+            """.format(s=clean_schema)
             query_create_street_index = """create index old_streets on
                 all_snapshots (street)"""
             cursor.execute(query_start_over)
@@ -65,12 +69,13 @@ def main():
                     set street_clean_bare=%(new_address)s
                     where street=%(old_address)s
                 """, rows)
-                cursor.execute("""drop table clean.all_snapshots;
-                    create table clean.all_snapshots as
+                cursor.execute("""drop table {s}.all_snapshots;
+                    create table {s}.all_snapshots as
                     select *, coalesce(street_clean_bare, street) street_clean
                         from all_snapshots;
-                    alter table clean.all_snapshots
-                    drop column street_clean_bare""")
+                    alter table {s}.all_snapshots
+                    drop column street_clean_bare;"""\
+                               .format(s=clean_schema))
             connection.commit()
 
 if __name__ == '__main__':

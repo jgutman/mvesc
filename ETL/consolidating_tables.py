@@ -1,9 +1,16 @@
+import sys, os
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+parentdir = os.path.join(base_pathname, "ETL")
+sys.path.insert(0,parentdir)
+
 import pandas as pd
 import numpy as np
 import psycopg2 as pg
 import itertools
 import json
-import sys
 from mvesc_utility_functions import *
 from contextlib import contextmanager
 
@@ -237,9 +244,10 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json,
     snapshot_query = snapshot_query[:-len(union_clause)]+";"
     return snapshot_query
 
-def main():
-    raw_schema = 'public'
-    clean_schema = 'new_clean'
+def main(argv):
+    raw_schema = argv[0]
+    clean_schema = argv[1]
+
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             
@@ -282,28 +290,33 @@ def main():
             print('student lookup table built')
             # using specialized query to get district from table name
             cursor.execute(all_grades_query(cursor, grades_tables,
-                                            "./json/grade_column_names.json",
+                                            os.path.join(base_pathname,'ETL',
+                                            "json/grade_column_names.json"),
                                             clean_schema, raw_schema))
             print('all_grades table built')
             # using specialized query to get year from table name
             cursor.execute(all_snapshots_query(cursor, snapshot_tables,
-                                         "./json/snapshot_column_names.json",
+                                            os.path.join(base_pathname,'ETL',
+                                         "json/snapshot_column_names.json"),
                                                clean_schema, raw_schema))
             print('all_snapshots table built')
             cursor.execute(consolidate_query(cursor, teachers_tables,
-                                         "./json/teachers_column_names.json",
+                                            os.path.join(base_pathname,'ETL',
+                                         "json/teachers_column_names.json"),
                                         clean_schema, raw_schema,
                                         "all_teachers",
                                          student_lookup_spelling = \
                                              "studentLookup"))
             print('all_teachers table built')
             cursor.execute(consolidate_query(cursor, absence_tables,
-                                            "./json/absence_column_names.json",
+                                            os.path.join(base_pathname,'ETL',
+                                            "json/absence_column_names.json"),
                                             clean_schema, raw_schema,
                                             "all_absences"))
             print('all_absences table built')
             cursor.execute(consolidate_query(cursor, accommodations_tables,
-                                     "./json/accommodations_column_names.json",
+                                            os.path.join(base_pathname, 'ETL',
+                                     "json/accommodations_column_names.json"),
                                      clean_schema, raw_schema,
                                      "all_accommodations"))
             print('all_accommodations table built')

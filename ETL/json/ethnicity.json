@@ -1,0 +1,9 @@
+{
+"M":["*","6","m","multi","multiple mark","multi%racial"],
+"B":["3","b","black%","%afr%"],
+"H":["4","h","hispanic"],
+"W":["5","w","white%"],
+"A":["2","a","p","asian%","%pacific%"],
+"I":["1", "i","%am%indian","%alaska%"]
+"O":["7","other"]
+}

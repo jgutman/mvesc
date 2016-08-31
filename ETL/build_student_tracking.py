@@ -30,9 +30,10 @@ As for conflicting withdrawals for a student,
     and reason. Each of 37,914 students is in table at least once. (JG)
 '''
 
-def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
-    schema = 'clean', snapshots = 'all_snapshots',
-    tracking = 'wrk_tracking_students'):
+def build_wide_format(cursor, schema, grade_begin=6, 
+                      year_begin=0, year_end=3000,
+                      snapshots = 'all_snapshots',
+                      tracking = 'wrk_tracking_students'):
 
     """ Gets the range of school years covered by the data in the snapshots
     table, and generates the appropriate sql query to track all students in
@@ -75,7 +76,7 @@ def build_wide_format(cursor, grade_begin=6, year_begin=0, year_end=3000,
     return(cohort_results)
 
 def sql_gen_tracking_students(year_begin, year_end,
-    schema = 'clean', snapshots = 'all_snapshots',
+    schema, snapshots = 'all_snapshots',
     table = 'wrk_tracking_students'):
 
     """ Generates sql query to create a table that tracks a student's
@@ -209,7 +210,95 @@ def cohort_survival_analysis(year_begin, year_end, grade_begin,
     joined_query += """ order by school_year;"""
     return(joined_query)
 
-def main():
+
+def remove_duplicates(cursor, clean_schema):
+    cursor.execute("""
+    create or replace function idx(anyarray, anyelement)
+    returns int as
+    $$
+    select i from (
+        select generate_series(array_lower($1,1),array_upper($1,1))
+    ) g(i)
+    where $2 like $1[i]
+    limit 1;
+    $$ language SQL immutable;
+
+    create temporary table tracking_students_experiment as
+    select * from {s}.wrk_tracking_students;
+    drop table {s}.wrk_tracking_students;
+
+
+    create temporary table sorted_withdrawal_reasons as
+    (select *
+        from tracking_students_experiment
+        where student_lookup in (
+        select student_lookup from tracking_students_experiment
+        group by student_lookup
+        having count(distinct withdraw_reason) > 1
+        or count(distinct withdrawn_to_irn) > 1)
+        order by student_lookup,
+        idx(array['graduate','dropout%','withdrew%','expelled',
+      'transferred%', '%'], withdraw_reason));
+
+    create table {s}.wrk_tracking_students as
+    (select distinct on (student_lookup) *
+    from sorted_withdrawal_reasons
+    order by student_lookup,
+      idx(array['graduate','dropout%','withdrew%','expelled',
+      'transferred%', '%'], withdraw_reason))
+    union
+    (select * from tracking_students_experiment
+      where student_lookup not in
+       (select distinct student_lookup from sorted_withdrawal_reasons));
+    """.format(s=clean_schema))
+
+def updated_irns(raw_schema, clean_schema):
+    # create a temporary table of new IRNs with better column names
+    cursor.execute("""
+    create temporary table explore_new_withdrawal_irns as
+    select "StudentLookup" student_lookup, "SentToIRN" withdrawn_to_irn,
+    "SenttoDistrict" withdrawn_to_district, "School" school, 
+    "District" district
+    from {raw}."Miss_transfer_MLF_71916";
+    """.format(r=raw_schema))
+
+    # replace the new irns in the withdrawn to irn column where new irn 
+    # is not null  
+    cursor.execute("""
+    create temporary table joined_new_irns as
+    (select *, coalesce(new_irns.new_irn, tracking.withdrawn_to_irn) 
+    keep_irn from
+    (select * from {s}.wrk_tracking_students) as tracking
+    left join
+    (select student_lookup, withdrawn_to_irn new_irn from
+    explore_new_withdrawal_irns
+    where withdrawn_to_irn is not null) as new_irns
+    using(student_lookup));
+    """.format(s=clean_schema))
+
+    # remove unmerged versions of withdrawn_to_irn 
+    cursor.execute("""
+    alter table joined_new_irns
+    drop column withdrawn_to_irn,
+    drop column new_irn;
+    alter table joined_new_irns
+    rename column keep_irn to withdrawn_to_irn;
+    """.format(r=raw_schema))
+
+    # replace tracking table with updated version 
+    cursor.execute("""
+    drop table clean.wrk_tracking_students;
+    create table clean.wrk_tracking_students as
+    select * from joined_new_irns;
+    """.format(r=raw_schema))
+
+    # drop temporary tables
+    cursor.execute("""
+    drop table joined_new_irns;
+    drop table explore_new_withdrawal_irns;
+    """.format(r=raw_schema))
+    
+def main(argv):
     """
     Build a table (clean.wrk_tracking_students) that shows for all students in
     clean.all_snapshots, what grade they were in during each school year, and
@@ -217,14 +306,14 @@ def main():
     information. Student may be duplicated if there are records of them
     attending different conflicting grades during same school year.
     """
+    raw_schema = argv[0]
+    clean_schema = argv[1]
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            #print(sql_gen_tracking_students(2006, 2015))
-            #print(cohort_survival_analysis(2006, 2015, 6))
-            print(build_wide_format(cursor))
+            print(build_wide_format(cursor, clean_schema))
+            remove_duplicates(cursor, clean_schema)
+            updated_irns(cursor, raw_schema, clean_schema)
         connection.commit()
-    execute_sql_script(os.path.join(parentdir,'sql',
-        'remove_duplicate_withdrawals_from_tracking.sql'))
     
     print('done!')
 
