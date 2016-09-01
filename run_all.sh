@@ -1,12 +1,13 @@
 #!/bin/bash
 
-CLEAN_SCHEMA="clean2"
-MODEL_SCHEMA="model2"
-RAW_SCHEMA="raw"
-PYTHON_PATH="/home/jgutman/env/bin/python"
-PASS_FILE='/mnt/data/mvesc/pgpass'
-CURRENT_YEAR=2016
-
+export CLEAN_SCHEMA="clean2"
+export MODEL_SCHEMA="model2"
+export RAW_SCHEMA="raw"
+export PYTHON_PATH="/home/jgutman/env/bin/python"
+export PASS_FILE='/mnt/data/mvesc/pgpass'
+export CURRENT_YEAR=2016
+# schema names and pass_file are read into mvesc_utility_functions
+# using python os.getenv
 
 ########### Uploading directories #########
 echo "Uploading csvs in directories/files listed in filelist.txt"
