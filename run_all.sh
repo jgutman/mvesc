@@ -10,18 +10,18 @@ export CURRENT_YEAR=2016
 # using python os.getenv
 
 ########### Uploading directories #########
-echo "Uploading csvs in directories/files listed in filelist.txt"
+# echo "Uploading csvs in directories/files listed in filelist.txt"
 
-while read p; do
-    echo "-- uploading " $p
-    $PYTHON_PATH ETL/raw2postgres/csv2postgres_mvesc.py -d $p -s $RAW_SCHEMA
-done <ETL/filelist.txt
+# while read p; do
+#     echo "-- uploading " $p
+#     $PYTHON_PATH ETL/raw2postgres/csv2postgres_mvesc.py -d $p -s $RAW_SCHEMA
+# done <ETL/filelist.txt
 
 
 ######### Uploading Excel Files #########
 
-echo "Uploading exvel files in excel2postgres_mvesc.py"
-$PYTHON_PATH ETL/raw2postgres/excel2postgres_mvesc.py
+echo "Uploading excel files in excel2postgres_mvesc.py"
+$PYTHON_PATH ETL/raw2postgres/excel2postgres_mvesc.py -s $RAW_SCHEMA
 
 # ############ Cleaning Tables ############
 

@@ -21,6 +21,7 @@ How to use this script
 	python csv2postgres_mvesc.py -h
 """
 import os, sys
+import pdb
 pathname = os.path.dirname(sys.argv[0])
 full_pathname = os.path.abspath(pathname)
 split_pathname = full_pathname.split(sep="mvesc")
@@ -77,7 +78,7 @@ def fetch_or_add_file2table_jsonfile(datafile, jsonfile='../json/file_to_table_n
 
 
 
-def main():
+def main(argv):
     # options of this script
     parser = OptionParser()
     parser.add_option('-f','--file', dest='filename_to_upload',
@@ -93,8 +94,9 @@ def main():
     parser.add_option('-e', '--ifexists', dest='if_exists',
 		      help='option if the table exists in the schema: \'fail\' or \'replace\'; default: \'fail\'')
     
-    (options, args) = parser.parse_args()
-    
+    print(argv)
+    (options, args) = parser.parse_args(argvn)
+
     ### Parameters to entered from the options or use default####
     schema = 'raw'
     if options.schema_to_upload:
@@ -139,4 +141,4 @@ def main():
         print("No files specified to upload...quiting\n")
 
 if __name__ == '__main__':
-    main()
+    main(argv[1:])
