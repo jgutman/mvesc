@@ -1,0 +1,10 @@
+/mnt/data/mvesc/PartnerData/teacherList06_16/
+/mnt/data/mvesc/PartnerData/06_16Membership/
+/mnt/data/mvesc/PartnerData/AbsenceDaysDetail/
+/mnt/data/mvesc/PartnerData/Submittal2_712016/
+/mnt/data/mvesc/PartnerData/DistrictsNewLexingtonNorthern/
+/mnt/data/mvesc/PartnerData/IEPTestingAccomodations/
+/mnt/data/mvesc/PartnerData/Submittal_712016/
+/mnt/data/mvesc/PartnerData/DistrictGrades2006_16/
+/mnt/data/mvesc/PartnerData/AbsenceDaysDetail/
+

@@ -11,17 +11,21 @@ Top functions:
 4. `get_column_names(table, schema='public')`: returns all column names as a list from a schema
 5. `read_table_to_df(table, schema='public', nrows=20)`: returns a pd.dataframe of first nrows;
 """
+import os, sys
+
+pathname = os.path.dirname(sys.argv[0])
+full_pathname = os.path.abspath(pathname)
+split_pathname = full_pathname.split(sep="mvesc")
+base_pathname = os.path.join(split_pathname[0], "mvesc")
+
 import numpy as np
 import pandas as pd
 import psycopg2 as pg
 import re
 from sqlalchemy import create_engine
 import sqlalchemy
-import sys
-import os
 import json
 from contextlib import contextmanager
-import os
 
 ############ Environment Variables ############
 # clean_schema = os.getenv('CLEAN_SCHEMA')
@@ -29,8 +33,8 @@ import os
 # model_schema = os.getenv('MODEL_SCHEMA')
 # pass_file = os.getenv('PASS_FILE')
 
-clean_schema = 'new_clean'
-model_schema = 'new_model'
+clean_schema = 'clean2'
+model_schema = 'model2'
 raw_schema = 'public'
 pass_file = '/mnt/data/mvesc/pgpass'
 
@@ -421,7 +425,10 @@ def csv2postgres_file(filepath, header=False, nrows=-1, if_exists='fail', schema
 
     #write the data frame to postgres
     file_name = filepath.split('/')[-1]
-    file_table_names = json.load(open('./json/file_to_table_name.json','r')) # load json of mapping from filenames to table names
+    json_path = os.path.join(base_pathname, 'ETL','json',
+                             'file_to_table_name.json'   )
+    file_table_names = json.load(open(json_path,'r')) 
+    # load json of mapping from filenames to table names
     table_name = file_table_names[file_name] # get the table name
 
     # check existing tables in sql first to avoid errors
