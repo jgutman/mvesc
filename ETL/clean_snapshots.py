@@ -23,9 +23,9 @@ def add_missing_grads(cursor, raw_schema, clean_schema):
     ) where exists (
     select * from {r}."Districts1516MissingGraddates" t2
     where t2."StudentLookup"=t1.student_lookup
-    );""".format(r="raw_schema",s="clean_schema"))
+    );""".format(r=raw_schema,s=clean_schema))
 
-def clean_snapshots(clean_schema):
+def clean_snapshots(raw_schema, clean_schema):
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
 
@@ -55,7 +55,7 @@ def clean_snapshots(clean_schema):
             end;""".format(s=clean_schema))
             
             # diplomas
-            cusor.execute("""
+            cursor.execute("""
             alter table {s}.all_snapshots alter column diploma_type 
             type text using
             case
@@ -117,7 +117,7 @@ def clean_snapshots(clean_schema):
               else section_504_plan 
             end;
             alter table {s}.all_snapshots alter column section_504_plan 
-            using section_504_plan::bool;
+            type int using section_504_plan::int;
             """.format(s=clean_schema))
 
             # disadvantagement
@@ -242,11 +242,13 @@ def clean_snapshots(clean_schema):
             end;""".format(s=clean_schema))
 
             # student status
-            clean_column(cursor, values="student_status.json",
+            clean_column(cursor, values=os.path.join(
+                base_pathname,'ETL',"json/student_status.json"),
                          old_column_name="status_code",
                          table_name="all_snapshots", replace=1,
                          exact=0)
-            clean_column(cursor, values="student_status.json",
+            clean_column(cursor, values=os.path.join(
+                base_pathname,'ETL',"json/student_status.json"),
                          old_column_name="status_desc",
                          table_name="all_snapshots", replace=1,
                          exact=0)

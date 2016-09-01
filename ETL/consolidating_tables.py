@@ -247,6 +247,8 @@ def all_snapshots_query(cursor, snapshot_tables, snapshot_cols_json,
 def main(argv):
     raw_schema = argv[0]
     clean_schema = argv[1]
+    
+    print("entered consolidating_tables")
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:

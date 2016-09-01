@@ -94,7 +94,7 @@ def remove_trails(cursor,clean_schema):
 
     grade_count_query = grade_count_query[:-2] + \
                         " from {s}.all_snapshots group by student_lookup;"\
-                        .format(s=schema)
+                        .format(s=clean_schema)
     cursor.execute(grade_count_query)
 
     # grabs the maximum and the grade level in which that maximum occured
@@ -164,7 +164,7 @@ def main(argv):
             remove_residents(cursor, clean_schema)
             remove_duplicates(cursor, cols, 'all_snapshots', clean_schema)
             connection.commit()
-            remove_trails(cursor)
+            remove_trails(cursor, clean_schema)
             connection.commit()
 
     # as of 7/28 data this left 4 students with conflicting grade levels
