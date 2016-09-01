@@ -77,7 +77,7 @@ def fetch_or_add_file2table_jsonfile(datafile, jsonfile='../json/file_to_table_n
 
 
 
-if __name__ == '__main__':
+def main():
     # options of this script
     parser = OptionParser()
     parser.add_option('-f','--file', dest='filename_to_upload',
@@ -137,3 +137,6 @@ if __name__ == '__main__':
         print("\nTables uploaded:\n",table_names, "\n")
     else:
         print("No files specified to upload...quiting\n")
+
+if __name__ == '__main__':
+    main()

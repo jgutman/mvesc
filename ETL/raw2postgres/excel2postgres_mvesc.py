@@ -1,7 +1,7 @@
 """ Script to process and upload excel files to postgres
 - will be updated regularly
 - each section marked by '#++++++' is for one excel file
-- procedure is commented briefly in script and more in ETL_README (coming after Jul 8)
+- procedure is commented briefly in script and more in ETL_README
 """ 
 import os, sys
 pathname = os.path.dirname(sys.argv[0])
@@ -11,6 +11,7 @@ base_pathname = os.path.join(split_pathname[0], "mvesc")
 parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0, parentdir)
 from mvesc_utility_functions import *
+import csv2postgres_mvesc
 import pandas as pd
 import os
 import re
@@ -95,10 +96,9 @@ new_irn_df = irn_df.rename(columns=raw_irn_newoldcol_dict)
 new_irn_csv_name = irn_file.split('.')[0]+'.csv'
 new_irn_df.to_csv(new_irn_csv_name, index=False)
 print('Excel file column names corrected and saved as ', new_irn_csv_name)
-print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
-/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s public").read())
-#print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
-#/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.csv -s raw").read())
+csv2postgres_mvesc.main(['-f',irn_file[:-3]+'csv' ,'s', schema])
+
+
 
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/IRN_DORP_GRAD_RATE1415.xls ++++++#
@@ -106,8 +106,7 @@ print(os.popen("/home/jgutman/env/bin/python csv2postgres_mvesc.py -f\
 # -2. upload sheets one by one
 filepath = '/mnt/data/mvesc/PartnerData/MVESC_DistrictRatings.xlsx'
 excel_name = "DistrictRating"
-schema1='raw'
-schema2='public'
+schema='public'
 print('\n--- processing: ', filepath)
 xl = pd.ExcelFile(filepath)
 for sheet_name in xl.sheet_names:
@@ -126,8 +125,7 @@ for sheet_name in xl.sheet_names:
     newnames = [name[:63] for name in newnames]
     newnames_dict={names[i]:newnames[i] for i in range(len(names))}
     df = df.rename(columns=newnames_dict)
-#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("sheet-table uploaded to mvesc: ", table_name)
 
 
@@ -136,8 +134,7 @@ for sheet_name in xl.sheet_names:
 # -2. upload sheets one by one
 filepath='/mnt/data/mvesc/PartnerData/MVESC_Mobility.xlsx'
 table_name = "Mobility_2010_2015"
-schema1 = 'raw'
-schema2 = 'public'
+
 print('\n--- processing: ', filepath)
 tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
@@ -153,16 +150,14 @@ else:
     new_colnames_dict = {df_Mobility.columns[i]:new_colnames[i] for i in range(len(new_colnames))}
     df_Mobility=df_Mobility.rename(columns=new_colnames_dict)
     df_Mobility=df_Mobility.drop('metrics', axis=1)
-#    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(df_Mobility, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("table uploaded to mvesc: ", table_name)
 
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
 # -1. read Excel file 
 # -2. upload the table
-schema1 = 'raw'
-schema2 = 'public'
+
 jvsd_fn = '/mnt/data/mvesc/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx'
 table_name = 'JVSD_Contact'
 print('\n--- processing: ', jvsd_fn)
@@ -173,16 +168,14 @@ tab_name_json = add_file2table_jsonfile(jvsd_fn.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-#    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(jvs_df, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("table uploaded to mvesc: ", table_name)
 
 
 #++++++ ~/PartnerData/IRNSandWithdrawalCodes/JVSD_Contact_Information_20160531.xlsx ++++++#
 # -1. read Excel file 
 # -2. upload the table
-schema1 = 'raw'
-schema2 = 'public'
+
 filepath = '/mnt/data/mvesc/PartnerData/2013-School-District-Typology.xlsx'
 table_name = 'School_District_Typology'
 print('\n--- processing: ', filepath)
@@ -194,16 +187,14 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("table uploaded to mvesc: ", table_name)
 
 
 #++++++ ~/PartnerData/Sent_to_District_MLF_71916.xlsx ++++++#
 # -1. read Excel file 
 # -2. upload the table
-schema1 = 'raw'
-schema2 = 'public'
+
 filepath = '/mnt/data/mvesc/PartnerData/Sent_to_District_MLF_71916.xlsx'
 table_name = 'Miss_transfer_MLF_71916'
 print('\n--- processing: ', filepath)
@@ -214,16 +205,14 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("table uploaded to mvesc: ", table_name)
 
 
 #++++++ ~/PartnerData/MembershipCodes_72116_with_categories.xlsx ++++++#
 # -1. read Excel file 
 # -2. upload the table
-schema1 = 'raw'
-schema2 = 'public'
+
 filepath = '/mnt/data/mvesc/PartnerData/MembershipCodes_72116_with_categories.xlsx'
 table_name = 'INV_MembershipCodes'
 print('\n--- processing: ', filepath)
@@ -234,8 +223,7 @@ tab_name_json = add_file2table_jsonfile(filepath.split('/')[-1], table_name)
 if tab_name_json==None:
     print("""Error: File "{}":"{}": table name mapping conflict! Uploading suspended! """.format(filepath.split('/')[-1], table_name))
 else:
-#    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema1)
-    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema2)
+    table_name = df2postgres(df, table_name, nrows=-1, if_exists='replace', schema=schema)
     print("table uploaded to mvesc: ", table_name)
 
 
