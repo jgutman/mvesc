@@ -4,7 +4,7 @@ sys.path.insert(0,parentdir)
 from feature_utilities import *
 import yaml
 
-def create_temp_table_of_raw_data_from_snapshots(cursor,
+def create_temp_table_of_raw_data_from_snapshots(cursor, clean_schema,
     grade_range = range(1,13)):
     """ Contains a manually made list of raw features from the snapshots
     to create a column for each grade level. It collapses the raw data from
@@ -88,8 +88,9 @@ def create_temp_table_of_raw_data_from_snapshots(cursor,
     sql_create_temp_table = """drop table if exists temp_snapshot_table;
     create temp table temp_snapshot_table as
         ({sql_query_individual_columns}
-        from clean.all_snapshots group by student_lookup);""".\
-        format(sql_query_individual_columns = sql_query_individual_columns[:-2]) # the -2 is for the last comma
+        from {s}.all_snapshots group by student_lookup);""".\
+        format(s = clean_schema,
+            sql_query_individual_columns = sql_query_individual_columns[:-2]) # the -2 is for the last comma
 
     cursor.execute(sql_create_temp_table)
     sql_create_index = "create index lookup_index on temp_snapshot_table(student_lookup)"
@@ -97,17 +98,17 @@ def create_temp_table_of_raw_data_from_snapshots(cursor,
 
     return list_of_created_grade_specific_columns
 
-def generate_raw_snapshot_features(replace=False):
-    schema, table = "model", "snapshots"
+def generate_raw_snapshot_features(clean_schema, model_schema,replace=False):
+    table = "snapshots"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             create_feature_table(cursor, table, replace=replace)
 
             # generate temp table for raw snapshot features
-            list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor)
+            list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor, clean_schema)
 
             # merge in with snapshots
-            update_column_with_join(cursor, table,
+            update_column_with_join(cursor, table, model_schema
                                     column_list = list_of_temp_cols,
                                     source_table = 'temp_snapshot_table')
             print('Finished adding raw features from snapshots')

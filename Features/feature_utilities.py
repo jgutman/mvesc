@@ -8,7 +8,7 @@ parentdir = os.path.join(base_pathname, "ETL")
 sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 
-def create_feature_table(cursor, table, schema = 'model', replace = False):
+def create_feature_table(cursor, table, schema, replace = False):
     """
     The current feature table is dropped and re-created with a single column
     containing unique student lookups numbers, set as an index
@@ -42,8 +42,8 @@ def create_feature_table(cursor, table, schema = 'model', replace = False):
         print(""" - Table {schema}.{table} created!"""\
         .format(schema=schema, table=table))
 
-def update_column_with_join(cursor, table, column_list, source_table,
-                            source_schema = None, schema='model'):
+def update_column_with_join(cursor, table, schema, column_list, source_table,
+                            source_schema = None):
     """
     Update column using join to match another table
     :param pg.cursor cursor: pg cursor

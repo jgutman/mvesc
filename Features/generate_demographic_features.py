@@ -17,7 +17,7 @@ sys.path.insert(0,parentdir)
 from mvesc_utility_functions import *
 from feature_utilities import *
 
-def create_temp_table(cursor, schema='clean', table='all_snapshots',
+def create_temp_table(cursor, schema, table='all_snapshots',
     temp='single_gender', feature='gender'):
 
     # include max(school_year) because in case there are ties for
@@ -43,8 +43,8 @@ def create_temp_table(cursor, schema='clean', table='all_snapshots',
     cursor.execute(query_drop_rows)
 
 def main():
-    schema, table = "model" ,"demographics"
-    source_schema, source_table = "clean", "all_snapshots"
+    schema, table = argv[1] ,"demographics"
+    source_schema, source_table = argv[0], "all_snapshots"
 
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
@@ -62,7 +62,7 @@ def main():
 #
 #            print(""" - Table {schema}.{table} created!""".format(schema=schema, table=table))
 
-            create_feature_table(cursor, table, replace=True) 
+            create_feature_table(cursor, table, schema, replace=True) 
             # updated the 10 lines with this function; replace is set True to have the same function 
             # as the above 10 lines and to avoid conflicts in join 
 
@@ -74,7 +74,7 @@ def main():
             create_temp_table(cursor, schema=source_schema,
                 table=source_table, temp=temp_table, feature=feature)
             column_list = [feature]
-            update_column_with_join(cursor, table, column_list, temp_table)
+            update_column_with_join(cursor, table, schema, column_list, temp_table)
 
             # add gender - if multiple genders select the most frequent
             feature = 'gender'
@@ -82,7 +82,7 @@ def main():
             create_temp_table(cursor, schema=source_schema,
                 table=source_table, temp=temp_table, feature=feature)
             column_list = [feature]
-            update_column_with_join(cursor, table, column_list, temp_table)
+            update_column_with_join(cursor, table, schema, column_list, temp_table)
 
             connection.commit()
 

@@ -9,8 +9,8 @@ sys.path.insert(0,parentdir)
 
 from mvesc_utility_functions import *
 
-def create_temp_mobility(cursor, grade_range, table = 'mobility_counts',
-    source_schema = 'clean', source_table = 'all_snapshots'):
+def create_temp_mobility(cursor, grade_range, source_schema, 
+                         table = 'mobility_counts', source_table = 'all_snapshots'):
     """
     Creates a temporary table containing the first set of mobility features,
     count-based cumulative counts and averages for number of distinct addresses,
@@ -118,7 +118,7 @@ def join_mobility_transitions(cursor, grade_range,
     return(col_names[1:])
 
 def find_midyear_withdrawals(cursor, grade_range, table,
-        source_schema='clean', source_table='all_snapshots'):
+        source_schema, source_table='all_snapshots'):
     """
 
     """
@@ -171,9 +171,9 @@ def find_midyear_withdrawals(cursor, grade_range, table,
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
 
-def generate_mobility(replace = False,
+def generate_mobility(schema, clean_schema, replace = False,
         sql_script = 'build_intermediate_mobility_tables.sql',
-        schema = 'model', table = 'mobility'):
+        table = 'mobility'):
     """
     Creates a table in the model schema with relevant mobility related features.
     features: [n_addresses_to*, n_districts_to*, n_cities_to*, n_records_to*,
@@ -196,15 +196,15 @@ def generate_mobility(replace = False,
             if replace:
                 cursor.execute("drop table if exists {}.{}".format(
                     schema, table))
-                create_feature_table(cursor, table)
+                create_feature_table(cursor, table, schema)
 
             # call fn to build temporary table with counts/avgs of all addresses,
             # districts, and cities lived in up until grade x, for all grades
             # in the specified grade range and return a list of column names
-            column_list = create_temp_mobility(cursor, grade_range=range(3,13))
+            column_list = create_temp_mobility(cursor, grade_range=range(3,13), source_schema)
             # take all columns from temporary mobility_counts table and join
             # into feature table with student_lookup index
-            update_column_with_join(cursor, table, column_list,
+            update_column_with_join(cursor, table, schema, column_list,
                 'mobility_counts')
 
         # model.mobility now contains first set of mobility Features
@@ -243,7 +243,7 @@ def generate_mobility(replace = False,
                 grade_range=range(3,13))
             # take all columns from temporary mobility_transitions_wide table
             # and join into feature table with student_lookup index
-            update_column_with_join(cursor, table, column_list,
+            update_column_with_join(cursor, table, schema,column_list,
                 'mobility_transitions_wide')
             print("{}.{} updated with mobility_transitions_wide".format(
                 schema, table))
@@ -253,17 +253,19 @@ def generate_mobility(replace = False,
             # city_transition_in*]
 
             column_list = find_midyear_withdrawals(cursor,
-                grade_range=range(3,13), table='midyear_withdrawals_wide')
+                                                   grade_range=range(3,13), 
+                                                   'midyear_withdrawals_wide', 
+                                                   source_schema)
             # take all columns from temporary midyear_withdrawals_wide table
             # and join into feature table with student_lookup index
-            update_column_with_join(cursor, table, column_list,
+            update_column_with_join(cursor, table, schema, column_list,
                 'midyear_withdrawals_wide')
             print("{}.{} updated with midyear_withdrawals_wide".format(
                 schema, table))
 
         connection.commit()
 
-def set_table_negative_null(table='mobility', schema='model'):
+def set_table_negative_null(schema,table='mobility'):
     """
     Set negative data points to NULL in a table
 
@@ -289,11 +291,9 @@ def set_table_negative_null(table='mobility', schema='model'):
             connection.commit()
     return None
 
-
-
 def main():
-    generate_mobility(replace=True)
-    set_table_negative_null(table='mobility', schema='model');
+    generate_mobility(model_schema, clean_schema,replace=True)
+    set_table_negative_null(model_schema, table='mobility');
 
 if __name__ == '__main__':
     main()

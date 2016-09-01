@@ -36,7 +36,7 @@ from feature_utilities import *
 
 
 
-def set_null_as_0(cursor, columns, schema='model', table='intervention'):
+def set_null_as_0(cursor, columns, schema, table='intervention'):
     """ Set null data points as 0 (be careful to assume so)
     :param pg.connection.cursor cursor: postgres cursor
     :param str columns: a list of column names 
@@ -51,8 +51,10 @@ def set_null_as_0(cursor, columns, schema='model', table='intervention'):
         cursor.execute(sqlcmd)
     return None
 
-def create_temp_intervention(cursor, grade_range, table = 'intervention_1type_temp_table',
-    source_schema = 'clean', type_str = 'academic_inv', source_table = 'intervention'):
+def create_temp_intervention(cursor, grade_range, source_schema,
+                             table = 'intervention_1type_temp_table',
+                             type_str = 'academic_inv', 
+                             source_table = 'intervention'):
     """
     Create temp table to update model.intervention
     
@@ -120,11 +122,11 @@ def main():
             # academic intervention
             for feature_desc in features2run:
                 inv_type = feature_desc
-                columns = create_temp_intervention(cursor, grades, table = temp_table,
-                                                   source_schema = source_schema, type_str = inv_type, 
+                columns = create_temp_intervention(cursor, grades, source_schema, table = temp_table,
+                                                   type_str = inv_type, 
                                                    source_table = source_table)
-                update_column_with_join(cursor, table, columns, source_table=temp_table)
-                set_null_as_0(cursor, columns, schema=schema, table=table)
+                update_column_with_join(cursor, table, schema, columns, source_table=temp_table)
+                set_null_as_0(cursor, columns, schema, table=table)
                 #print(pd.read_sql_query("select * from model.{t} limit 20".format(t=table), conn))
             conn.commit()
             print(" - Intervention features generated")

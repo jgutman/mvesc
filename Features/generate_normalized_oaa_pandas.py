@@ -10,7 +10,7 @@ import yaml
 ## Note: This is relatively slow because of (1) for loop and (2) writing to Postgres
 
 
-def get_table_of_student_in_grade_which_year(students_with_outcomes):
+def get_table_of_student_in_grade_which_year(students_with_outcomes,clean_schema):
     """ Looks at clean.all_snapshots and gets which year each student was in a grade.
     There are ~14 columns, one for each grade level.
     In each column, the value is the year a student was in that grade.
@@ -24,7 +24,7 @@ def get_table_of_student_in_grade_which_year(students_with_outcomes):
     with postgres_pgconnection_generator() as connection:
         # read in clean.oaaogt table
         # oaa_raw = read_table_to_df(connection, 'oaaogt_numeric', schema = 'clean', nrows = -1)
-        all_snapshots = read_table_to_df(connection, 'all_snapshots', schema = 'clean', nrows = -1)
+        all_snapshots = read_table_to_df(connection, 'all_snapshots', schema = clean_schema, nrows = -1)
     
     # summarize all_snapshots to figure out the year for each student's test grade
     #   use max year to choose
@@ -64,7 +64,7 @@ def get_table_of_student_in_grade_which_year(students_with_outcomes):
     return wide_year_took_oaa
 
 
-def convert_oaa_ogt_to_numeric(students_with_outcomes):
+def convert_oaa_ogt_to_numeric(students_with_outcomes,clean_schema):
     """ Gets the clean.oaaogt table and cleans it to numeric for normalization.
     This cleaning is required because some of the columns have string values denoting
     cheating or invalid scores. We also attempt to create a cheated indicator column.
@@ -76,7 +76,7 @@ def convert_oaa_ogt_to_numeric(students_with_outcomes):
     """
     with postgres_pgconnection_generator() as connection:
         # read in clean.oaaogt table
-        oaa_raw = read_table_to_df(connection, 'oaaogt', schema = 'clean', nrows = -1)
+        oaa_raw = read_table_to_df(connection, 'oaaogt', schema = clean_schema, nrows = -1)
     
     # drop ogt columns
     oaa_raw = oaa_raw.loc[:, 'student_lookup':'eighth_socstudies_ss']
@@ -163,7 +163,7 @@ def get_max_aggregate_oaa(oaa_numeric, list_of_year_test_types):
     return(max_agg_oaa)
 
 def generate_normalized_oaa_scores(grade_year_pairs, oaa_df, list_of_year_test_types,
-                                   table_name):
+                                   table_name, model_schema):
     """ 
     Merges these two and then uses the grade_year_pairs info to group students together
     by year and get a year-normalized z-scores and percentile ranks for each year.
@@ -228,7 +228,7 @@ def generate_normalized_oaa_scores(grade_year_pairs, oaa_df, list_of_year_test_t
     oaa_normalized.reset_index('student_lookup', inplace = True)
 
     print(" - OAA Normalized and Placement Table Made")
-    df2postgres(oaa_normalized, table_name, schema = 'model', if_exists = 'replace')
+    df2postgres(oaa_normalized, table_name, schema = model_schema, if_exists = 'replace')
     print(" - OAA Normalized Uploaded to Postgres")
     return(oaa_normalized)
 
@@ -282,16 +282,17 @@ def wordGrade_to_numGrade(column):
         return('')
 
 
-def main():
+def main(argv):
     # constant parameters
     # only keep students with outcomes
-    schema, table = 'model', 'oaa_normalized'
+    clean_schema = argv[0]
+    schema, table = argv[1], 'oaa_normalized'
     with postgres_pgconnection_generator() as connection:
             # read in clean.oaaogt table
             students_with_outcomes = pd.read_sql_query("""
             select distinct student_lookup 
-            from clean.wrk_tracking_students
-            where outcome_category is not null;""", connection)
+            from {c}.wrk_tracking_students
+            where outcome_category is not null;""".format(c=clean_schema, connection)
     # set index for merging
     students_with_outcomes.set_index('student_lookup', drop=False, inplace = True)
 
@@ -305,7 +306,7 @@ def main():
     # generate and upload table
     oaa_normalized = generate_normalized_oaa_scores(grade_year_pairs, oaa_numeric_no_dup, 
                                                     list_of_year_test_types,
-                                                    table_name = table)
+                                                    table, model_schema)
     
     # update column names [third ~ eighth] to gr_[3-8]
     with postgres_pgconnection_generator() as conn:

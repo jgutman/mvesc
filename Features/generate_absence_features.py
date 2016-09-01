@@ -36,7 +36,7 @@ import numpy as np
 import pandas as pd
 from feature_utilities import *
 
-def set_null_as_0(cursor, column, schema='clean', table='absence'):
+def set_null_as_0(cursor, column, schema, table='absence'):
     """ Set null data points as 0 (be careful to assume so)
 
     :param pg.connection.cursor cursor: postgres cursor
@@ -53,7 +53,7 @@ def set_null_as_0(cursor, column, schema='clean', table='absence'):
 
 
 def create_simple_temp_table(cursor, temp_table, source_table, source_column,
-                             new_column, grade, source_schema='clean'):
+                             new_column, grade, source_schema):
     """
     Create simple temp table using `create table as select *`
     :param pg.cursor curosr: postgres pg.cursor
@@ -78,7 +78,7 @@ def create_simple_temp_table(cursor, temp_table, source_table, source_column,
     return None
 
 def create_absence_type_temp_table(cursor, temp_table, source_table,
-                                   new_column, type_str, grade, source_schema='clean'):
+                                   new_column, type_str, grade, source_schema):
     """
     Create temp table for only certain type of absences
     :param pg.cursor curosr: postgres pg.cursor
@@ -102,7 +102,7 @@ def create_absence_type_temp_table(cursor, temp_table, source_table,
     return None
 
 def create_absence_wkd_type_temp_table(cursor, temp_table, source_table,
-                                   new_column, type_str, grade, wkd, source_schema='clean'):
+                                       new_column, type_str, grade, wkd, source_schema):
     """
     Create temp table for only certain type of absences at a certain weekday
     :param pg.cursor curosr: postgres pg.cursor
@@ -130,7 +130,7 @@ def create_absence_wkd_type_temp_table(cursor, temp_table, source_table,
 
 
 def create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
-                                     new_column, grade, source_schema='clean'):
+                                     new_column, grade, source_schema):
     """
     Create temp table for only consecutive absences
     :param pg.cursor curosr: postgres pg.cursor
@@ -211,14 +211,15 @@ def main():
             print(' - updating clean.absence by joining...')
             update_absence(cursor, table='clean.all_absences', col='absence') # changed from absence_test to absence; run again
             update_absence(cursor, table='clean.all_absences', col='tardy')
-            create_feature_table(cursor, table, schema = 'model', replace = True)
+            create_feature_table(cursor, table, schema, replace = True)
 
             # days_absent columns
             source_table, source_column, new_col_name = tab_snapshots, 'days_absent', 'absence'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
-                create_simple_temp_table(cursor, temp_table, source_table, source_column, column, grade=grd)
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                create_simple_temp_table(cursor, temp_table, source_table, source_column, 
+                                         column, grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
 
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
@@ -228,8 +229,9 @@ def main():
 
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
-                create_simple_temp_table(cursor, temp_table, source_table, source_column, column, grade=grd)
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                create_simple_temp_table(cursor, temp_table, source_table, source_column, 
+                                         column, grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema,[column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
 
@@ -238,8 +240,8 @@ def main():
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
                 create_absence_type_temp_table(cursor, temp_table, source_table, column,
-                                               type_str=new_col_name, grade=grd, source_schema='clean')
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                               type_str=new_col_name, grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # tardy_unexecused
@@ -247,8 +249,8 @@ def main():
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
                 create_absence_type_temp_table(cursor, temp_table, source_table, column,
-                                               type_str=new_col_name, grade=grd, source_schema='clean')
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                               type_str=new_col_name, grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema,[column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # med
@@ -256,8 +258,8 @@ def main():
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_gr_' + str(grd)
                 create_absence_type_temp_table(cursor, temp_table, source_table, column,
-                                               type_str='med', grade=grd, source_schema='clean')
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                               type_str='med', grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema,[column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # consecutive absence days
@@ -266,8 +268,8 @@ def main():
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_consec_gr_' + str(grd)
                 create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
-                                                 column, grade=grd, source_schema='clean')
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                                 column, grade=grd, source_schema=source_schema)
+                update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # consecutive tardy days
@@ -276,8 +278,8 @@ def main():
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name + '_consec_gr_' + str(grd)
                 create_consec_absence_temp_table(cursor, temp_table, source_table, source_column,
-                                                 column, grade=grd, source_schema='clean')
-                update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                                 column, grade=grd,source_schema=source_schema)
+                update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
             # absence & tardy on weekend
@@ -290,8 +292,8 @@ def main():
                     for grd in range(gr_min, gr_max+1):
                         temp_table = column = new_col_name +'_wkd_'+str(wkd)+'_gr_' + str(grd)
                         create_absence_wkd_type_temp_table(cursor, temp_table, source_table, column,
-                                               type_str=abs_type, grade=grd, wkd=wkd, source_schema='clean')
-                        update_column_with_join(cursor, table, [column], source_table=temp_table, schema=schema)
+                                               type_str=abs_type, grade=grd, wkd=wkd, source_schema=source_schema)
+                        update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
                         set_null_as_0(cursor, column, schema=schema, table=table)
 
             connection.commit()

@@ -5,21 +5,23 @@ Procedures:
 """
 from feature_utilities import *
 
-def generate_gpa(grade_range=range(3,10),replace=False):
-    schema, table = "model", "grades"
+def generate_gpa(clean_schema, model_schema, 
+                 grade_range=range(3,12),replace=False):
+    table =  "grades"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
             # creating base table (if not existing)
-            create_feature_table(cursor, table, replace=replace)
+            create_feature_table(cursor, table, model_schema, replace=replace)
             
             # grabbing relevant grades
             cursor.execute("""
             create temp table grades as select * from 
-            clean.all_grades where
+            {c}.all_grades where
             student_lookup in
-            (select student_lookup from model.outcome)
+            (select student_lookup from {m}.outcome)
             and grade <= {max_yr} and grade >= {min_yr};
-            """.format(max_yr=max(grade_range),min_yr=min(grade_range)))
+            """.format(max_yr=max(grade_range),min_yr=min(grade_range)),
+                           c=clean_schema, m=model_schema)
             
             # selecting numeric grades
             cursor.execute("""
@@ -128,8 +130,8 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             from standard_grades
             group by student_lookup, course_code;
             
-            drop table if exists clean.final_grades;
-            create table clean.final_grades as 
+            drop table if exists {c}.final_grades;
+            create table {c}.final_grades as 
             select distinct on (s.student_lookup, s.course_code) 
             s.student_lookup, s.course_code, s.course_name,  
             case when clean_term = 'final' then mark else avg_mark end       
@@ -142,14 +144,14 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             and s.course_code = a.course_code
             order by s.student_lookup, 
                 s.course_code,idx(array['final'], clean_term);
-            """)
+            """.format(c=clean_schema))
 
             # district gpas
             cursor.execute("""
             create temp table district_mean as
             select district, sum(final_mark * course_length)/sum(course_length) 
                 as district_gpa_mean
-            from clean.final_grades 
+            from {c}.final_grades 
             group by district;
 
             create temp table district_grades as
@@ -163,18 +165,18 @@ def generate_gpa(grade_range=range(3,10),replace=False):
             on f.district = d.district
             group by d.district
             ) as n on n.district = m.district;
-            """)
+            """.format(c=clean_schema))
 
             cursor.execute( """
             create temp table district_zscores as 
             select student_lookup, grade, course_length,
                 (final_mark - district_gpa_mean)/district_gpa_std 
                    as district_zscore
-            from clean.final_grades as f
+            from {c}.final_grades as f
             left join
             district_grades as d
             on f.district = d.district
-            """)
+            """.format(c=clean_schema))
             
             print('district stats calculated')
 
@@ -198,9 +200,9 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                      then course_length end)
                 end as gpa_gr_{grade}, """.format(grade=grade)
             gpa_query = gpa_query[:-2] + """
-                from clean.final_grades
+                from {c}.final_grades
                 group by student_lookup;
-                """
+                """.format(c=clean_schema)
             cursor.execute(gpa_query)
             cursor.execute("""
             create index gpa_lookup_index on gpa(student_lookup)
@@ -306,9 +308,9 @@ def generate_gpa(grade_range=range(3,10),replace=False):
                         as num_{subject}_classes_gr_{grade}, """\
                         .format(grade=grade, subject=subject, i=i)
             subject_gpa_query = subject_gpa_query[:-2] + """
-            from clean.final_grades
+            from {c}.final_grades
             group by student_lookup;
-            """
+            """.format(c=clean_schema)
             subject_dict = dict(zip([str(i) for i in range(len(subject_list))],
                                     subject_list))
             cursor.execute(subject_gpa_query, subject_dict)
@@ -326,23 +328,26 @@ def generate_gpa(grade_range=range(3,10),replace=False):
 
             #cursor.execute("drop table clean.final_grades;")
 
-            update_column_with_join(cursor,table, 
+            update_column_with_join(cursor,table, model_schema,
                                     column_list=subject_gpa_counts_cols,
                                     source_table='subject_gpa_counts')
-            update_column_with_join(cursor,table, column_list=gpa_col_list,
+            update_column_with_join(cursor,table, model_schema,
+                                    column_list=gpa_col_list,
                                     source_table='gpa')
-            update_column_with_join(cursor, table, 
+            update_column_with_join(cursor, table, model_schema,
                                     column_list=pf_col_list,
                                     source_table='pf_features')
-            update_column_with_join(cursor, table,
+            update_column_with_join(cursor, table,model_schema
                                     column_list = district_gpa_zscores_col_list,
                                     source_table = 'district_gpa_zscores')
             print(' - All features added to grades table!')
                                         
         connection.commit()
 
-def main():
-    generate_gpa(range(3,13),replace=True)
+def main(argv):
+    clean_schema=argv[0]
+    model_schema=argv[1]
+    generate_gpa(clean_schema, model_schema,range(3,13),replace=True)
 
 if __name__=='__main__':
     main()
