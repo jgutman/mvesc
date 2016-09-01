@@ -65,7 +65,8 @@ def execute_sql_script(sql_script, pass_file="/mnt/data/mvesc/pgpass"):
 def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     """ Generate a psycopg2 connection (to use in a with statement)
     Note: you can only run it on the mvesc server
-    :param str pass_file: file with the credential information
+    :param str pass_file: file with the credential information in PGPASS format
+			  hostname:port:database:username:password 
     :yield pg.connection generator: connection to database
     """
     with open(pass_file, 'r') as f:
@@ -73,8 +74,8 @@ def postgres_pgconnection_generator(pass_file="/mnt/data/mvesc/pgpass"):
     passinfo = passinfo.strip().split(':')
     host_address = passinfo[0]
     port = passinfo[1]
-    user_name = passinfo[2]
-    name_of_database = passinfo[3]
+    name_of_database = passinfo[2]
+    user_name = passinfo[3]
     user_password = passinfo[4]
     yield pg.connect(host=host_address, database=name_of_database, user=user_name, password=user_password)
 
