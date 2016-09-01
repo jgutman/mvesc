@@ -140,4 +140,4 @@ def main(argv):
         print("No files specified to upload...quiting\n")
 
 if __name__ == '__main__':
-    main(argv[1:])
+    main(sys.argv)

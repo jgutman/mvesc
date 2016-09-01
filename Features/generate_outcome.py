@@ -140,4 +140,4 @@ def main(argv):
                 schema=schema, table=table))
 
 if __name__=='__main__':
-    main()
+    main(sys.argv)

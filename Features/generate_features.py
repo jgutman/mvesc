@@ -38,4 +38,4 @@ def main(argv):
     add_outcome(clean_schema, model_schema)
 
 if __name__=='__main__':
-    main()
+    main(sys.argv)

@@ -81,4 +81,4 @@ def main(argv):
     print('indices created or checked for tables in schema `clean`')
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
