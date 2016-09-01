@@ -94,8 +94,7 @@ def main(argv):
     parser.add_option('-e', '--ifexists', dest='if_exists',
 		      help='option if the table exists in the schema: \'fail\' or \'replace\'; default: \'fail\'')
     
-    print(argv)
-    (options, args) = parser.parse_args(argvn)
+    (options, args) = parser.parse_args(argv)
 
     ### Parameters to entered from the options or use default####
     schema = 'raw'
