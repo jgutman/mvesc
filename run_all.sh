@@ -4,6 +4,7 @@ CLEAN_SCHEMA="clean2"
 MODEL_SCHEMA="model2"
 RAW_SCHEMA="raw"
 PYTHON_PATH="/home/jgutman/env/bin/python"
+PASS_FILE='/mnt/data/mvesc/pgpass'
 CURRENT_YEAR=2016
 
 

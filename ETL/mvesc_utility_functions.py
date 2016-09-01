@@ -28,15 +28,10 @@ import json
 from contextlib import contextmanager
 
 ############ Environment Variables ############
-# clean_schema = os.getenv('CLEAN_SCHEMA')
-# raw_schema = os.getenv('RAW_SCHEMA')
-# model_schema = os.getenv('MODEL_SCHEMA')
-# pass_file = os.getenv('PASS_FILE')
-
-clean_schema = 'clean2'
-model_schema = 'model2'
-raw_schema = 'public'
-pass_file = '/mnt/data/mvesc/pgpass'
+clean_schema = os.getenv('CLEAN_SCHEMA')
+raw_schema = os.getenv('RAW_SCHEMA')
+model_schema = os.getenv('MODEL_SCHEMA')
+pass_file = os.getenv('PASS_FILE')
 
 ############ ETL Functions ############
 
