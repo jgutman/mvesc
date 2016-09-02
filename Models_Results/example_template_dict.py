@@ -2,6 +2,9 @@ import estimate_prediction_model
 from generate_yaml import generate_yaml
 
 # includes all options for each field
+# Note: The only field here that takes a range of values (in the sense that generate_yaml
+#       would produce the crossproduct of those ranges) is model_classes. Don't give
+#       sets of parameters to anything else.
 
 template_options = {
     'batch_name' : 'name_for_folder_with_all_yamls_for_batch',
@@ -21,16 +24,17 @@ template_options = {
     'random_seed': 2851,
     'cv_criterion': 'custom_precision_10', # can replace precision with recall and use any number 0-100 or, can also use f1, average_precision
     # features can be the string 'all', or a dictionary where keys are table names
-    # the table names can have a list of features, the string 'all', 
+    # the table names can have a list of features (i.e., columns in the table), the string 'all', 
     # or a dictionary with the single key 'except', then a list of features to exclude
     # 'all' values are drawn from the all_features yaml file in Features, 
-    # so check there if you are getting unexpected results
+    # so check there if you are getting unexpected results.
+    # If you are putting * after a column name, it gives all grades in the feature_grade_range.
     'features': {
         'grades': {'except':['gpa*']},
         'demographics': ['gender'],
         'mobility': 'all'
     },
-    'outcome': 'definite', # not_on_time, is_dropout, definite
+    'outcome': 'definite', # not_on_time, is_dropout, definite, definite_plus_ogt
     'imputation': 'median_plus_dummies', # median_plus_dummies, mean_plus_dummies, none
     'scaling': 'robust', # robust, standard, none
     'debug': True # True or False
