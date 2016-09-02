@@ -72,7 +72,7 @@ def create_temp_mobility(cursor, grade_range, source_schema,
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
 
-def join_mobility_transitions(cursor, grade_range,
+def join_mobility_transitions(cursor, source_schema, grade_range,
     table = 'mobility_transitions_wide', source_table = 'transition_counts'):
     """
     Creates a temporary table containing the second set of mobility features,
@@ -94,8 +94,8 @@ def join_mobility_transitions(cursor, grade_range,
     query_join_mobility_features = """create temporary table {t} as
     select * from
         (select distinct(student_lookup)
-        from {source_table}) student_list
-    """.format(t=table, source_table=source_table)
+        from {c}.{source_table}) student_list
+    """.format(t=table, source_table=source_table, c=source_schema)
 
     # for each student, return true or false for whether or not their address
     # has changed at least once since their address from the previous grade
@@ -105,9 +105,9 @@ def join_mobility_transitions(cursor, grade_range,
             (num_different_street >=1) street_transition_in_gr_{gr},
             (num_different_district >=1) district_transition_in_gr_{gr},
             (num_different_city >=1) city_transition_in_gr_{gr}
-        from {source_table} where grade = {gr}) mobility_transition_gr_{gr}
+        from {c}.{source_table} where grade = {gr}) mobility_transition_gr_{gr}
         using(student_lookup)
-        """.format(gr=grade, source_table=source_table)
+        """.format(gr=grade, source_table=source_table,c=source_schema)
         query_join_mobility_features += mobility_count_changes
 
     cursor.execute(query_join_mobility_features)
@@ -118,7 +118,7 @@ def join_mobility_transitions(cursor, grade_range,
     return(col_names[1:])
 
 def find_midyear_withdrawals(cursor, grade_range, table,
-        source_schema, source_table='all_snapshots'):
+                             source_schema, source_table='all_snapshots'):
     """
 
     """
@@ -140,9 +140,9 @@ def find_midyear_withdrawals(cursor, grade_range, table,
     select student_lookup, grade,
     count(case when withdraw_month < {summer_start} or
         withdraw_month > {summer_end} then 1 end) as mid_year_withdraw
-    from withdrawals_by_month
+    from {c}.withdrawals_by_month
     group by student_lookup, grade
-    """.format(summer_start = 5, summer_end = 9)
+    """.format(summer_start = 5, summer_end = 9, c=source_schema)
 
     cursor.execute(query_multiple_records_per_year)
     cursor.execute(query_temp_midyear_withdrawals_long_format)
@@ -171,8 +171,7 @@ def find_midyear_withdrawals(cursor, grade_range, table,
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
 
-def generate_mobility(schema, clean_schema, replace = False,
-        sql_script = 'build_intermediate_mobility_tables.sql',
+def generate_mobility(source_schema, schema, replace = False,
         table = 'mobility'):
     """
     Creates a table in the model schema with relevant mobility related features.
@@ -198,28 +197,83 @@ def generate_mobility(schema, clean_schema, replace = False,
                     schema, table))
                 create_feature_table(cursor, table, schema)
 
-            # call fn to build temporary table with counts/avgs of all addresses,
-            # districts, and cities lived in up until grade x, for all grades
-            # in the specified grade range and return a list of column names
+            # call fn to build temporary table with counts/avgs 
+            # of all addresses,
+            # districts, and cities lived in up until grade x, 
+            # for all grades
+            # in the specified grade range and return a list of 
+            # column names
             column_list = create_temp_mobility(cursor,range(3,13), source_schema)
-            # take all columns from temporary mobility_counts table and join
-            # into feature table with student_lookup index
+            # take all columns from temporary mobility_counts table 
+            # and join into feature table with student_lookup index
             update_column_with_join(cursor, table, schema, column_list,
                 'mobility_counts')
 
-        # model.mobility now contains first set of mobility Features
-        # i.e. [n_addresses_to*, n_districts_to*, n_cities_to*, n_records_to*,
-        # avg_address_change_to*, avg_district_change_to*, avg_city_change_to*]
-        connection.commit()
-        print("{}.{} updated with mobility_counts".format(schema, table))
+            # model.mobility now contains first set of mobility Features
+            # i.e. [n_addresses_to*, n_districts_to*, n_cities_to*, 
+            # n_records_to*,
+            # avg_address_change_to*, avg_district_change_to*, 
+            # avg_city_change_to*]
+            connection.commit()
+            print("{}.{} updated with mobility_counts".format(schema,
+                                                              table))
+            
+            # generate intermediate tables mobility_changes and 
+            # mobility_transitions
+            # to use in generating transition based mobility features
+            
+            cursor.execute("""
+            create or replace function idx(anyarray, anyelement)
+            returns int as
+            $$
+              select i from (
+              select generate_series(array_lower($1,1),
+                                     array_upper($1,1))
+              ) g(i)
+            where $2 like $1[i]
+            limit 1;
+            $$ language SQL immutable;
 
-    # generate intermediate tables mobility_changes and mobility_transitions
-    # to use in generating transition based mobility features
-    execute_sql_script(os.path.join(base_pathname, 'Features', sql_script))
-    print('intermediate tables built from sql script')
+            -- replace intermediate tables in public schema 
+            drop table if exists {c}.mobility_changes;
+            drop table if exists {c}.mobility_transitions;
+            
+            -- street_clean is the preferred column for student 
+            -- addresses
+            -- select one address, district, city row from snapshots 
+            -- per student/school_year
 
-    with postgres_pgconnection_generator() as connection:
-        with connection.cursor() as cursor:
+            create table {c}.mobility_changes as
+            select distinct on (student_lookup, school_year)
+            student_lookup, school_year, grade, status, street_clean, 
+            district, city,
+            district_withdraw_date, district_admit_date from 
+            {c}.all_snapshots
+            order by student_lookup, school_year,
+            idx(array['active','foster','inactive', '%'], status),
+            district_admit_date desc;
+
+            -- now that we have one address per student per school_year
+            -- check if address, district, city are the same as 
+            -- previous year
+            -- different_street, different_district, different_city 
+            -- are boolean             
+            -- null if there is no previous year to compare to 
+            create table {c}.mobility_transitions as
+            select * from
+            (select student_lookup, grade, school_year,
+            street_clean != lag(street_clean) over 
+            (partition by student_lookup
+            order by school_year) as different_street,
+            district != lag(district) over (partition by student_lookup
+            order by school_year) as different_district,
+            city != lag(city) over (partition by student_lookup
+            order by school_year) as different_city
+            from {c}.mobility_changes) compare_street;
+            """.format(c=source_schema))
+
+            print('intermediate tables built')
+            
             # using boolean transition based features from intermediate tables
             # count the number of true num_different_x by student, by grade
             # only one per school_year, but may be multiple school_years
@@ -234,24 +288,23 @@ def generate_mobility(schema, clean_schema, replace = False,
             group by student_lookup, grade;
             """
             cursor.execute(query_count_transitions)
-
+            
             # call fn to build temporary table with counts of transitions
             # between or during grades, ie. is address, district, city all the
             # same as last years, grade by grade for all grades
             # in the specified grade range and return a list of column names
             column_list = join_mobility_transitions(cursor,
-                grade_range=range(3,13))
-            # take all columns from temporary mobility_transitions_wide table
+                                                    grade_range=range(3,13))            # take all columns from temporary mobility_transitions_wide table
             # and join into feature table with student_lookup index
             update_column_with_join(cursor, table, schema,column_list,
-                'mobility_transitions_wide')
+                                    'mobility_transitions_wide')
             print("{}.{} updated with mobility_transitions_wide".format(
-                schema, table))
-
+            schema, table))
+            
             # model.mobility now contains second set of mobility features
             # i.e. [street_transition_in*, district_transition_in*,
             # city_transition_in*]
-
+            
             column_list = find_midyear_withdrawals(cursor,range(3,13), 
                                                    'midyear_withdrawals_wide', 
                                                    source_schema)
@@ -292,8 +345,8 @@ def set_table_negative_null(schema,table='mobility'):
 
 def main(argv):
     clean_schema = argv[0]
-    source_schema = argv[1]
-    generate_mobility(model_schema, clean_schema,replace=True)
+    model_schema = argv[1]
+    generate_mobility(clean_schema, model_schema,replace=True)
     set_table_negative_null(model_schema, table='mobility');
 
 if __name__ == '__main__':
