@@ -155,7 +155,7 @@ def create_consec_absence_temp_table(cursor, temp_table, source_table, source_co
     cursor.execute(sql_create_temp_index)
     return None
 
-def update_absence(cursor, table='clean.all_absences', col='absence'):
+def update_absence(cursor, schema, table='all_absences', col='absence'):
     """ Update the clean.all_absences using the consecutive aggregations 
     1. the reason to do this is the consecutive-dates-process takes 10~30 minutes to generate;
     2. keep the feature-generation process consistent with other features
@@ -165,12 +165,13 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
     :param str col: the column name to construct on, e.g. col+'agg'
 
     """
+    table = '{}.{}'.format(schema,table)
     col_date, dtype_date = col+'_starting_date', 'date'
     col_cnt, dtype_cnt = col+'_consec_count', 'int'
     if col=='absence':
-        table_intermed = 'clean.aggregated_absence_intermediate'
+        table_intermed = '{}.aggregated_absence_intermediate'.format(schema)
     else:
-        table_intermed='clean.aggregated_tardy_intermediate'
+        table_intermed='{}.aggregated_tardy_intermediate'.format(schema)
     sql_add_column = """
     alter table {table} drop column if exists {column};
     alter table {table} add column {column} {dtype} default null;
@@ -200,26 +201,31 @@ def update_absence(cursor, table='clean.all_absences', col='absence'):
             table=table, col1=col_date, col2=col_cnt, tab_int=table_intermed))
 
 
-def main():
-    schema, table = "model" ,"absence"
-    source_schema = "clean"
+def main(argv):
+    schema, table = argv[1] ,"absence"
+    source_schema = argv[0]
     tab_snapshots, tab_absence = "all_snapshots", "all_absences"
     gr_min, gr_max = 3, 12
     with postgres_pgconnection_generator() as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
             print(' - updating clean.absence by joining...')
-            update_absence(cursor, table='clean.all_absences', col='absence') # changed from absence_test to absence; run again
-            update_absence(cursor, table='clean.all_absences', col='tardy')
+            update_absence(cursor, schema = clean_schema,
+                           table='all_absences', col='absence') 
+            update_absence(cursor, schema = clean_schema,
+                           table='all_absences', col='tardy')
             create_feature_table(cursor, table, schema, replace = True)
 
             # days_absent columns
             source_table, source_column, new_col_name = tab_snapshots, 'days_absent', 'absence'
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
-                create_simple_temp_table(cursor, temp_table, source_table, source_column, 
-                                         column, grade=grd, source_schema=source_schema)
-                update_column_with_join(cursor, table, schema, [column], source_table=temp_table)
+                create_simple_temp_table(cursor, temp_table, source_table, 
+                                         source_column, 
+                                         column, grade=grd, 
+                                         source_schema=source_schema)
+                update_column_with_join(cursor, table, schema, [column], 
+                                        source_table=temp_table)
 
                 set_null_as_0(cursor, column, schema=schema, table=table)
 
@@ -229,8 +235,10 @@ def main():
 
             for grd in range(gr_min, gr_max+1):
                 temp_table = column = new_col_name+'_gr_'+str(grd)
-                create_simple_temp_table(cursor, temp_table, source_table, source_column, 
-                                         column, grade=grd, source_schema=source_schema)
+                create_simple_temp_table(cursor, temp_table, source_table, 
+                                         source_column, 
+                                         column, grade=grd, 
+                                         source_schema=source_schema)
                 update_column_with_join(cursor, table, schema,[column], source_table=temp_table)
                 set_null_as_0(cursor, column, schema=schema, table=table)
 

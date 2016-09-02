@@ -1,7 +1,7 @@
 # Feature Generation Modules
 
 This folder contains the scripts for extracting both features and outcome labels to be used for the prediction problem.
-These are stored in the database.
+These are stored in the database in the model schema.
 
 ### How to Generate features and outcomes
 Only 2 Python scripts are needed to be run, and all the rest will be called in these 2 Python scripts.

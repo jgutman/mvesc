@@ -19,7 +19,7 @@ def main(argv):
     schema, table = argv[1], "outcome"
     source_schema, source_table = argv[0], "wrk_tracking_students"
     snapshots = "all_snapshots"
-    current_year = argv[2]
+    current_year = int(argv[2])
     prediction_grade_range = list(range(5,10))
     prediction_outcome_name = 'future'
 
@@ -140,4 +140,4 @@ def main(argv):
                 schema=schema, table=table))
 
 if __name__=='__main__':
-    main(sys.argv)
+    main(sys.argv[1:])

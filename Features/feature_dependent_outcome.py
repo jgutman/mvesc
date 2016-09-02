@@ -114,7 +114,7 @@ def add_outcome(clean_schema, model_schema):
             select student_lookup, num_ogt_passed, num_ogt_took                 
             from ogt_pass_temp                                                  
             );""".format(m=model_schema))
-          cursor.execute("""                                                  
+            cursor.execute("""                                                  
             drop table if exists {m}.outcome_old;                               
             alter table {m}.outcome rename to outcome_old;                      
                                                                                 
@@ -149,9 +149,9 @@ def add_outcome(clean_schema, model_schema):
             group by student_lookup                                             
             ) as grades_10_12                                                   
             using(student_lookup)                                               
-          );""".format(m=model_schema))
-          
-          cursor.execute("""                                                  
+            );""".format(m=model_schema))
+            
+            cursor.execute("""                                                  
             alter table {m}.outcome drop column if exists definite_plus_ogt;    
             alter table {m}.outcome add column definite_plus_ogt int;           
             update {m}.outcome                                                  
@@ -171,6 +171,6 @@ def add_outcome(clean_schema, model_schema):
                                                                                 
             -- drop old outcome table                                           
             drop table {m}.outcome_old;                                         
-            """.forma(m=model_schema))
+            """.format(m=model_schema))
 
         connection.commit()

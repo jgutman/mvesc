@@ -43,7 +43,8 @@ def create_temp_table_of_raw_data_from_snapshots(cursor, clean_schema,
     'status' : 'max'
     }
 
-    with open('hard_code_imputation.yaml', 'r') as f:
+    with open(os.path.join(base_pathname, 'Features',
+                           'hard_code_imputation.yaml'), 'r') as f:
         hard_code_imputation = yaml.load(f)
 
     # this initiates a list to store the created column names in the temp table
@@ -102,7 +103,7 @@ def generate_raw_snapshot_features(clean_schema, model_schema,replace=False):
     table = "snapshots"
     with postgres_pgconnection_generator() as connection:
         with connection.cursor() as cursor:
-            create_feature_table(cursor, table, replace=replace)
+            create_feature_table(cursor, table,model_schema, replace=replace)
 
             # generate temp table for raw snapshot features
             list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor, clean_schema)
@@ -126,8 +127,10 @@ def generate_raw_snapshot_features(clean_schema, model_schema,replace=False):
             # optional parameters:
             #    source_column - if the source has a different name than desired
             #    source_schema - if the source is not a temporary table
-def main():
-    generate_raw_snapshot_features(replace=True)
+def main(argv):
+    clean_schema = argv[0]
+    model_schema = argv[1]
+    generate_raw_snapshot_features(clean_schema, model_schema, replace=True)
 
 if __name__ == '__main__':
     main()

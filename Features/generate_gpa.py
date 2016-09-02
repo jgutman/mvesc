@@ -337,7 +337,7 @@ def generate_gpa(clean_schema, model_schema,
             update_column_with_join(cursor, table, model_schema,
                                     column_list=pf_col_list,
                                     source_table='pf_features')
-            update_column_with_join(cursor, table,model_schema
+            update_column_with_join(cursor, table,model_schema,
                                     column_list = district_gpa_zscores_col_list,
                                     source_table = 'district_gpa_zscores')
             print(' - All features added to grades table!')

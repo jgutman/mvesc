@@ -96,9 +96,9 @@ def create_temp_intervention(cursor, grade_range, source_schema,
     col_names = [i[0] for i in cursor.description]
     return(col_names[1:])
 
-def main():
-    source_schema, source_table = 'clean', 'intervention'
-    schema, table = 'model', 'intervention' 
+def main(argv):
+    source_schema, source_table = argv[0], 'intervention'
+    schema, table = argv[1], 'intervention' 
     temp_table = 'intervention_1type_temp_table'
     min_grd, max_grd = 3, 12
     all_features_list = ['spec_instruc', 

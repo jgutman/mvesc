@@ -42,7 +42,7 @@ def create_temp_table(cursor, schema, table='all_snapshots',
     cursor.execute(query_rank_feature_by_count)
     cursor.execute(query_drop_rows)
 
-def main():
+def main(argv):
     schema, table = argv[1] ,"demographics"
     source_schema, source_table = argv[0], "all_snapshots"
 

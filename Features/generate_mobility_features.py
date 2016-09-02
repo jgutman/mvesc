@@ -252,8 +252,7 @@ def generate_mobility(schema, clean_schema, replace = False,
             # i.e. [street_transition_in*, district_transition_in*,
             # city_transition_in*]
 
-            column_list = find_midyear_withdrawals(cursor,
-                                                   grade_range=range(3,13), 
+            column_list = find_midyear_withdrawals(cursor,range(3,13), 
                                                    'midyear_withdrawals_wide', 
                                                    source_schema)
             # take all columns from temporary midyear_withdrawals_wide table
@@ -291,7 +290,9 @@ def set_table_negative_null(schema,table='mobility'):
             connection.commit()
     return None
 
-def main():
+def main(argv):
+    clean_schema = argv[0]
+    clean_schema = argv[1]
     generate_mobility(model_schema, clean_schema,replace=True)
     set_table_negative_null(model_schema, table='mobility');
 

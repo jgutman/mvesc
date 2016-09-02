@@ -4,6 +4,7 @@ sys.path.insert(0,parentdir)
 from feature_utilities import *
 
 import yaml
+import pdb
 
 ## Overall
 ## Makes normalization and corrections in Pandas and writes it to Postgres
@@ -287,12 +288,15 @@ def main(argv):
     # only keep students with outcomes
     clean_schema = argv[0]
     schema, table = argv[1], 'oaa_normalized'
+    print(clean_schema)
+
+
     with postgres_pgconnection_generator() as connection:
-            # read in clean.oaaogt table
-            students_with_outcomes = pd.read_sql_query("""
-            select distinct student_lookup 
-            from {c}.wrk_tracking_students
-            where outcome_category is not null;""".format(c=clean_schema, connection)
+        # read in clean.oaaogt table
+        students_with_outcomes = pd.read_sql_query("""
+        select distinct student_lookup 
+        from {c}.wrk_tracking_students
+        where outcome_category is not null;""".format(c=clean_schema), connection)
     # set index for merging
     students_with_outcomes.set_index('student_lookup', drop=False, inplace = True)
 
