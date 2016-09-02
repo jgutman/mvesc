@@ -2,6 +2,12 @@
 
 This folder contains the code to choose specific features to include in the model, the types of classifiers to run, and loop through these models, outputting and summarizing results.
 
+## Definitions
+
+'Cohort' does _not_ refer to the year of expected graduation upon enrollment into grade 9. It is used instead to denote the academic year in which a student is enrolled in a specific grade; for example, a student who is in 'grade 9 cohort for 2012' is enrolled in grade 9 in the academic year 2012.
+
+'Academic year' refers to the _fall_ calendar year; thus, the school year 2011-2012 would be listed as 2011.
+
 ## Running Instructions
 
 Provide a model options file (see required attributes in `example_template_dict.py`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as:
