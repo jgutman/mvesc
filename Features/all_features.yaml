@@ -54,6 +54,7 @@ mobility:
     - city_transition_in*
     - mid_year_withdraw*
 
+# oaa_normalized is not listed with asterik, because these features are not available for all grades
 oaa_normalized:
     - read_normalized_gr_3
     - read_percentile_gr_3
