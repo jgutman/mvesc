@@ -51,7 +51,7 @@ def update_column_with_join(cursor, table, schema, column_list, source_table,
     :param str column_list: list of column in source_table to add to table
     :param str source_table: table containing columns to add
     :param str source_schema: schema of source - None default for temp tables
-    :param str schema: schema to update - 'model' default
+    :param str schema: schema to update
     :return None:
     """
     # setting defaults

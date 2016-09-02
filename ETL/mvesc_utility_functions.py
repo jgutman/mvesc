@@ -31,7 +31,7 @@ from contextlib import contextmanager
 clean_schema = os.getenv('CLEAN_SCHEMA')
 raw_schema = os.getenv('RAW_SCHEMA')
 model_schema = os.getenv('MODEL_SCHEMA')
-pass_file = os.getenv('PASS_FILE')
+pass_file = os.getenv('PASS_FILE', '/mnt/data/mvesc/pgpass')
 
 ############ ETL Functions ############
 
