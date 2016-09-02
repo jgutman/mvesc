@@ -4,9 +4,11 @@ This folder contains the code to choose specific features to include in the mode
 
 ## Running Instructions
 
-Provide a model options file (see required attributes in `example_template_dict.py`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as
+Provide a model options file (see required attributes in `example_template_dict.py`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as:
 
 `python estimate_prediction_model.py -m model_options.yaml -g grid_search_full.yaml -o ../Reports`.
+
+The `batch_name` option also makes it easy to run batches of models in a loop - for exampls of these scripts, see the `batch_1` through `batch_4` folders. Further documentation of each of these batches is available in the technical plan. Some of these runs used previous iterations of the model options files, so earlier ones may not run, but they are included here for documentation of the different options we tried. All generated yaml files are saved in the `model_options` folder, and the `final_models` subfolder contains the yaml files for the models which we found to be the best performing.
 
 ### Saving the Model Details & Results
 
