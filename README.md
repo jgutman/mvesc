@@ -14,6 +14,12 @@ Then make a Python3 virtual envirovnment and activate it: `virtualenv -p /usr/bi
 
 Install all other dependencies using `pip install -r requirements.txt`. Note that `pycairo` is installed directly from `git+http://git.cairographics.org/git/pycairo`. If you encounter difficulties, try installing pycairo separately with `pip install git+http://git.cairographics.org/git/pycairo`.
 
+*Credentials*
+
+You need to set two variable in this folders' `config`
+- `PYTHON_PATH` needs to point to a Python3.4 executable
+- `PASS_FILE` needs to point to a PGPASS-styile formatted file that lists the credentials to a Postgres DB, which will be used throughout the project.
+
 *ETL*
 
 This folder contains scripts to process and clean our original raw data (e.g. SQL server backups, individual files). The scripts in this folder transform raw data into a cleaned and standardized format in our database (the `clean` schema)-- ready for feature extraction and generation.
