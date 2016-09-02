@@ -1,0 +1,17 @@
+#!/bin/bash
+
+export PYTHON_PATH="/home/jgutman/env/bin/python"
+# pass_file are read into mvesc_utility_functions using python os.getenv 
+export PASS_FILE='/mnt/data/mvesc/pgpass'
+export OUTPUT_PATH='/mnt/data/mvesc/model_output'
+
+# schema names are read into mvesc_utility_functions using python os.getenv 
+export CLEAN_SCHEMA="clean"
+export MODEL_SCHEMA="model2"
+export RAW_SCHEMA="public"
+
+export CURRENT_YEAR=2016
+# model_options may be a single yaml file or 
+# a directory containing several yaml files to run
+export MODEL_OPTIONS='Models_Results/model_options/final_models/grade_10_logit.yaml'
+export GRID_OPTIONS='Models_Results/grid_options/grid_options_bare.yaml'
