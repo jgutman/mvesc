@@ -44,4 +44,9 @@ We have several possible definition schemes for choosing outcomes. We create a c
 ### Feature Descriptions
 A full list of all features can be found in all_features.yaml, and any new feature must be manually added to that list before it can be used.
 An asterisk after a feature name indicates that it has a feature for each grade level (formatted as `_gr_x` for some grade level x).
+
 The scripts to generate each set of features is called in `generate_features.py`.
+
+When writing a new feature, you should write a new `generate_myFeature.py`, which needs to write a table to the `model` schema. That table needs to be indexed by `student_lookup`. If your feature is dependent on time (which is encoded by grade level), then the grades should be dummified; the columns need to end on `_gr_x`. If a student repeats a grade, then the feature should use data from the first time they were in a given grade.
+
+Look at `generate_example.py` for a feature generation template.
