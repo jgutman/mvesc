@@ -23,4 +23,4 @@ We measure performance in several ways. We primarily focus on precision and reca
 
 `generate_individual_risks` creates a new table (as well as saving a csv) for a given model which contains individual risk scores and individual risk factors for all current students. For logit models this process is very quick, but for other model types a different process is used for calculating individual feature importances and is very slow. 
 
-`generate_individual_risks` takes either option '-f' with a particular filename, 
+`generate_individual_risks` takes either option '-f' with a particular filename to generate the table for one model, or -m with 'logit' or 'RF' to generate the table for the best model for each grade level for that model class.

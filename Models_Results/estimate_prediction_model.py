@@ -580,7 +580,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
     # save python object as a pkl file on mnt drive
     file_name = saved_outputs['file_name'] +'_' + model_name + '.pkl'
     pkl_dir = 'pkls'
-    with open(os.path.join('/mnt/data/mvesc/Models_Results',
+    with open(os.path.join(save_location,
                            pkl_dir, file_name), 'wb') as f:
         pickle.dump(saved_outputs, f)
 

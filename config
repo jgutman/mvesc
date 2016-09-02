@@ -3,7 +3,6 @@
 export PYTHON_PATH="/home/jgutman/env/bin/python"
 # pass_file are read into mvesc_utility_functions using python os.getenv 
 export PASS_FILE='/mnt/data/mvesc/pgpass'
-export OUTPUT_PATH='/mnt/data/mvesc/model_output'
 
 # schema names are read into mvesc_utility_functions using python os.getenv 
 export CLEAN_SCHEMA="clean"
