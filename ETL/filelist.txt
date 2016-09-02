@@ -5,11 +5,13 @@
 /mnt/data/mvesc/PartnerData/DistrictsNewLexingtonNorthern/
 /mnt/data/mvesc/PartnerData/IEPTestingAccomodations/
 /mnt/data/mvesc/PartnerData/Submittal_712016/
-/mnt/data/mvesc/PartnerData/DistrictGrades2006_16/Attendance/
-/mnt/data/mvesc/PartnerData/DistrictGrades2006_16/Grades/
-/mnt/data/mvesc/PartnerData/DistrictGrades2006_16/Snapshots/
+/mnt/data/mvesc/PartnerData/DASL_AllData2010_16/Attendance
+/mnt/data/mvesc/PartnerData/DASL_AllData2010_16/Grades
+/mnt/data/mvesc/PartnerData/DASL_AllData2010_16/Snapshots
+/mnt/data/mvesc/PartnerData/DistrictGrades2006_16/
 /mnt/data/mvesc/PartnerData/AbsenceDaysDetail/
-/mnt/data/mvesc/PartnerData/stricts1516MissingGraddates.txt  
+
+/mnt/data/mvesc/PartnerData/Districts1516MissingGraddates.txt  
 /mnt/data/mvesc/PartnerData/RidgewoodAccommodations.txt
 /mnt/data/mvesc/PartnerData/OAAOGT_0616.txt                    
 /mnt/data/mvesc/PartnerData/RiverViewAccommodations.txt
