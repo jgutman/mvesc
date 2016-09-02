@@ -72,7 +72,7 @@ def define_clfs_params(filename):
 
     return clfs, grid
 
-def build_outcomes_plus_features(model_options, subset_n=None):
+def build_outcomes_plus_features(model_options,model_schema, subset_n=None):
     """
     Returns a pandas dataframe containing the student_lookup, cohort
     identifier, outcome variable, and all numerical or binarized features.
@@ -96,7 +96,7 @@ def build_outcomes_plus_features(model_options, subset_n=None):
     with postgres_pgconnection_generator() as connection:
         outcome_name = model_options['outcome_name']
         outcomes_with_student_lookup = read_table_to_df(connection,
-            table_name = 'outcome', schema = 'model', nrows = -1,
+            table_name = 'outcome', schema = model_schema, nrows = -1,
             columns = ['student_lookup', outcome_name,
             model_options['cohort_grade_level_begin']])
 
@@ -131,7 +131,7 @@ def build_outcomes_plus_features(model_options, subset_n=None):
                     assert grade < model_options['prediction_grade_level'], \
                            "feature {} after prediction window".format(c)
             features = read_table_to_df(connection, table_name = table,
-                schema = 'model', nrows = -1,
+                schema = model_schema, nrows = -1,
                 columns=(['student_lookup'] + column_names))
 
             # join to only keep features that have labeled outcomes
@@ -595,7 +595,7 @@ def write_out_predictions(model_options, model_name, clf, run_time,
     summary_to_db(saved_outputs)
 
 
-def run_all_models(model_options, clfs, params, save_location):
+def run_all_models(model_schema, model_options, clfs, params, save_location):
     """
     Runs all the models based on the given options
 
@@ -606,7 +606,8 @@ def run_all_models(model_options, clfs, params, save_location):
     """
     # get DataFrame with outcome and features specified in model_options
     subset_n = model_options['subset_n']
-    outcome_plus_features=build_outcomes_plus_features(model_options,subset_n)
+    outcome_plus_features=build_outcomes_plus_features(model_options,
+                                                       model_schema,subset_n)
 
     # drop these students with null values in cohort or outcome
     outcome_plus_features.dropna(subset=[model_options['outcome_name'],
@@ -707,6 +708,8 @@ def main(args=None):
     """
 
     parser = OptionParser()
+    parser.add_option('-s','--modelschema', dest='model_schema',
+        help="schema where features are stored and results will be written")
     parser.add_option('-m','--modelpath', dest='model_options_file',
         help="filename for model options; default 'model_options.yaml' ")
     parser.add_option('-g','--gridpath', dest='grid_options_file',
@@ -741,7 +744,7 @@ def main(args=None):
     clfs, params = define_clfs_params(grid_options_file)
 
     # run the models, generate markdown reports, and save results to database
-    run_all_models(model_options, clfs, params, save_location)
+    run_all_models(options.model_schema, model_options, clfs, params, save_location)
 
 if __name__ == '__main__':
     main()

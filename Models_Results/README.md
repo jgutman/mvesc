@@ -22,3 +22,5 @@ We measure performance in several ways. We primarily focus on precision and reca
 ### Feature Importances and Individual Risks
 
 `generate_individual_risks` creates a new table (as well as saving a csv) for a given model which contains individual risk scores and individual risk factors for all current students. For logit models this process is very quick, but for other model types a different process is used for calculating individual feature importances and is very slow. 
+
+`generate_individual_risks` takes either option '-f' with a particular filename, 
