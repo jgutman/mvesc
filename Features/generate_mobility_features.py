@@ -292,7 +292,7 @@ def set_table_negative_null(schema,table='mobility'):
 
 def main(argv):
     clean_schema = argv[0]
-    clean_schema = argv[1]
+    source_schema = argv[1]
     generate_mobility(model_schema, clean_schema,replace=True)
     set_table_negative_null(model_schema, table='mobility');
 
