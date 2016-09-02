@@ -4,22 +4,9 @@ This folder contains the code to choose specific features to include in the mode
 
 ## Running Instructions
 
-Provide a model options file (see required attributes in `model_options.yaml`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as
+Provide a model options file (see required attributes in `example_template_dict.py`) and a grid search options file (see required attributes in `grid_search_full.yaml`). Also provide the output directory for generating the markdown reports summarizing each model run. Run these models as
 
 `python estimate_prediction_model.py -m model_options.yaml -g grid_search_full.yaml -o ../Reports`.
-
-### Choosing Features to Include
-
-In the appropriate `model_options.yaml` file, specify all relevant features as:
-
-`table_a: [feature1, feature2, feature3]`
-
-`table_b: [feature4, feature5]`
-
-`table_c: [feature6]`
-
-### Estimating the Prediction Model
-Specify the types of classifiers to include in  `model_classes_selected` as a list, and specify the hyperparameter values for each model to search over in the `grid_options.yaml` file. Specify which cohorts to include in training and test sets, and the type of cross-validation scheme that should be used.
 
 ### Saving the Model Details & Results
 
@@ -28,4 +15,8 @@ For analysis and improvement of our models, it's important that we record all of
 * the results of the prediction performance
 
 We measure performance in several ways. We primarily focus on precision and recall, especially because our early warning risk prediction problem is imbalanced, with a large majority of students not labeled as at risk.
-`save_reports.py` generates detailed markdown reports and summary tables for each model run.
+`save_reports.py` generates detailed markdown reports and graphs, and write_to_database writes summary information to `model.reports` for each model run. If the `write_to_databse` option is set to true, then all the predictions and all the feature scores are also written to the database for easy analysis. 
+
+### Feature Importances and Individual Risks
+
+`generate_individual_risks` creates a new table (as well as saving a csv) for a given model which contains individual risk scores and individual risk factors for all current students. For logit models this process is very quick, but for other model types a different process is used for calculating individual feature importances and is very slow. 
