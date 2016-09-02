@@ -325,4 +325,4 @@ def main(argv):
         connection.commit()
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

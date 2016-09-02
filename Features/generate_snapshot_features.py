@@ -108,7 +108,7 @@ def generate_raw_snapshot_features(clean_schema, model_schema,replace=False):
             list_of_temp_cols = create_temp_table_of_raw_data_from_snapshots(cursor, clean_schema)
 
             # merge in with snapshots
-            update_column_with_join(cursor, table, model_schema
+            update_column_with_join(cursor, table, model_schema,
                                     column_list = list_of_temp_cols,
                                     source_table = 'temp_snapshot_table')
             print('Finished adding raw features from snapshots')

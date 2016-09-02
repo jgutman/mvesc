@@ -201,7 +201,7 @@ def generate_mobility(schema, clean_schema, replace = False,
             # call fn to build temporary table with counts/avgs of all addresses,
             # districts, and cities lived in up until grade x, for all grades
             # in the specified grade range and return a list of column names
-            column_list = create_temp_mobility(cursor, grade_range=range(3,13), source_schema)
+            column_list = create_temp_mobility(cursor,range(3,13), source_schema)
             # take all columns from temporary mobility_counts table and join
             # into feature table with student_lookup index
             update_column_with_join(cursor, table, schema, column_list,
