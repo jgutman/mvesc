@@ -112,7 +112,7 @@ coarse (`outcome_category`) and fine-grained outcome categories (`outcome_bucket
 
 Only step one needs to be done manually, 2-4 are accomplished by the run_all bash script in the top level directory. If new files are added, follow instructions in 2-4 to make sure all formatting is correct. 
 
-1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema)
+1. Manually import backup files into separate, temporary SQL server; convert to a PostgreSQL database (public schema). These BAK files contain the district snapshot files for seven districts
 
 2. Ensure that all csv files or directories to be uploaded are in filelist.txt -  the run_all bash script will execute `csv2postgres_mvesc.py` on each line of filelist.txt
 	- default options: `schema=raw`, `replace=False`, `nrows=-1` (uploading all rows), `header=True`;
@@ -123,5 +123,5 @@ Only step one needs to be done manually, 2-4 are accomplished by the run_all bas
 	- defult option is replacing existing table because all excel files are small and easy to upload
 
 4. Ensure that all tables that need to be cleaned have a cleaning script called in `clean_and_consolidate.py`
-     	- Currently `consolidating_tables.py` will try to add all tables in the `raw` schema whose name begins with `Districts` and does not contain the word `dates` to the `all_snapshots` table. All tables with names containing `grade`, `absence`, `testingaccom`, or `teacher` will go in `all_grades`, `all_absences`, `all_accomodations`, or `all_teachers`, respectively.
+     	- Currently `consolidating_tables.py` will try to add all tables in the `raw` schema whose name begins with `Districts` and does not contain the word `dates` to the `all_snapshots` table. All tables with names containing `grade`, `absence`, `testingaccom`, or `teacher` will go in `all_grades`, `all_absences`, `all_accomodations`, or `all_teachers`, respectively. `clean_and_consolidate.py` first calls `consolidating_tables.py`, which stacks tables that are split into files vertically. Next, it calls the various `clean_*.py` scripts that standardize values and names (oftentimes using custom JSON files for code standardization).
         - This script takes a while to run because of `build_cohort_tree_counts.py` and `generate_consec_absence_intermediate_tables.py`. Those can be commented out and run separately.
