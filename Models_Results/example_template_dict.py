@@ -11,7 +11,6 @@ template_options = {
     'name': 'name_for_specifice_param_set',
     'model_classes': ['logit','DT','RF','ET','AB','SVM','GB','NB','SGD','KNN'],
     'description': 'name_for_this_parameter_set',
-    'name': 'yaml_creation',
     'write_to_database': True, # True or False
     'user': 'ht', # ht, jg, xc, zz - this is case sensitive
     'test_set_type': 'temporal_cohort', # anything other text will result in a random split
